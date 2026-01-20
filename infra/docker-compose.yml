@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: learning-helper-postgres
+    environment:
+      POSTGRES_USER: learning_helper
+      POSTGRES_PASSWORD: learning_helper_dev
+      POSTGRES_DB: learning_helper
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U learning_helper"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: learning-helper-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-node:
+    build:
+      context: ../apps/api-node
+      dockerfile: Dockerfile
+    container_name: learning-helper-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://learning_helper:learning_helper_dev@postgres:5432/learning_helper
+      REDIS_URL: redis://redis:6379
+      PYTHON_SERVICE_URL: http://curriculum-python:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../apps/api-node/src:/app/src
+    profiles:
+      - full
+
+  curriculum-python:
+    build:
+      context: ../apps/curriculum-python
+      dockerfile: Dockerfile
+    container_name: learning-helper-curriculum
+    environment:
+      ENVIRONMENT: development
+      PORT: 8000
+      LLM_PROVIDER: gemini
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/curriculum-python/src:/app/src
+    profiles:
+      - full
+
+volumes:
+  postgres_data:
+  redis_data:

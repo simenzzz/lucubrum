@@ -62,44 +62,77 @@
       "type": "object"
     }
   },
-  "description": "Suggested YouTube search queries for a learning node.",
+  "description": "Result of validating a video against a learning topic.",
   "properties": {
     "schema_version": {
-      "const": "query_suggestions.v1",
-      "default": "query_suggestions.v1",
+      "const": "video_validation.v1",
+      "default": "video_validation.v1",
       "title": "Schema Version",
       "type": "string"
     },
+    "video_id": {
+      "description": "YouTube video ID",
+      "maxLength": 11,
+      "minLength": 11,
+      "title": "Video Id",
+      "type": "string"
+    },
     "plan_id": {
+      "description": "Associated plan UUID",
       "format": "uuid",
       "title": "Plan Id",
       "type": "string"
     },
     "node_id": {
-      "description": "Reference to node within plan",
+      "description": "Associated node ID within the plan",
       "title": "Node Id",
       "type": "string"
     },
-    "queries": {
-      "description": "1-5 search query strings",
+    "is_relevant": {
+      "description": "Whether the video is relevant to the node",
+      "title": "Is Relevant",
+      "type": "boolean"
+    },
+    "relevance_score": {
+      "description": "Relevance score from 0.0 to 1.0",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Relevance Score",
+      "type": "number"
+    },
+    "matched_objectives": {
+      "description": "Which node objectives this video covers",
       "items": {
         "type": "string"
       },
-      "maxItems": 5,
-      "minItems": 1,
-      "title": "Queries",
+      "title": "Matched Objectives",
       "type": "array"
+    },
+    "rejection_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "If not relevant, explanation why",
+      "title": "Rejection Reason"
     },
     "metadata": {
       "$ref": "#/$defs/ArtifactMetadata"
     }
   },
   "required": [
+    "video_id",
     "plan_id",
     "node_id",
-    "queries",
+    "is_relevant",
+    "relevance_score",
     "metadata"
   ],
-  "title": "QuerySuggestions",
+  "title": "VideoValidation",
   "type": "object"
 }

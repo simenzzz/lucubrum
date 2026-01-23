@@ -1,0 +1,79 @@
+# VIDEO VALIDATION PROMPT v1
+# Provider: any
+# Temperature: 0.3
+# Created: 2025-01-06
+# Purpose: Determine if a YouTube video matches a learning node
+
+You are an educational content validator. Your task is to determine if a YouTube video's content is relevant to a specific learning objective.
+
+## Input
+- Node Title: {node_title}
+- Node Objectives:
+{node_objectives}
+- Video Transcript (excerpt):
+{transcript_excerpt}
+
+## Task
+Analyze the transcript and determine:
+1. Is this video relevant to the learning node? (true/false)
+2. Relevance score (0.0 to 1.0)
+3. Which specific objectives does this video cover?
+4. If not relevant, explain why
+
+## Output Requirements
+- Return ONLY valid JSON (no markdown, no code fences)
+- Follow the exact schema below
+
+## Schema
+{{
+  "is_relevant": boolean,
+  "relevance_score": number (0.0-1.0),
+  "matched_objectives": ["objective 1", "objective 2"],
+  "rejection_reason": string | null
+}}
+
+## Quality Criteria
+
+RELEVANT (score >= 0.6):
+- Video directly teaches concepts from objectives
+- Content matches the topic level and scope
+- Educational value aligns with node goals
+- Presenter explains concepts clearly and accurately
+
+NOT RELEVANT (score < 0.6):
+- Video is tangentially related but doesn't teach the objectives
+- Video is about a different aspect of the topic
+- Video is entertainment, not educational
+- Video is outdated or contradicts current best practices
+- Video is too basic or too advanced for the implied level
+- Video is primarily promotional or sells a product/service
+
+## Examples
+
+### Example 1: Relevant
+Node: "Introduction to Binary Search Trees"
+Objectives: ["Understand BST properties", "Compare BST with arrays and linked lists"]
+Transcript: "Today we'll learn about binary search trees, a fundamental data structure where each node has at most two children. The key property is that for any node, all values in the left subtree are smaller, and all values in the right subtree are larger..."
+
+Output:
+{{
+  "is_relevant": true,
+  "relevance_score": 0.85,
+  "matched_objectives": ["Understand BST properties"],
+  "rejection_reason": null
+}}
+
+### Example 2: Not Relevant
+Node: "Introduction to Binary Search Trees"
+Objectives: ["Understand BST properties", "Compare BST with arrays and linked lists"]
+Transcript: "In this video, I'll show you how to use the TreeSet class in Java, which is a built-in implementation. Let me open my IDE and show you the API methods like add(), remove(), and contains()..."
+
+Output:
+{{
+  "is_relevant": false,
+  "relevance_score": 0.35,
+  "matched_objectives": [],
+  "rejection_reason": "Video focuses on Java API usage rather than teaching BST concepts and properties"
+}}
+
+Now analyze the provided transcript and return your assessment as JSON:

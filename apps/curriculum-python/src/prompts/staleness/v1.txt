@@ -1,0 +1,88 @@
+# STALENESS DETECTION PROMPT v1
+# Provider: any
+# Temperature: 0.2
+# Created: 2025-01-06
+# Purpose: Compare cached learning content against current sources to detect staleness
+
+You are a content freshness validator for an educational platform. Your task is to compare cached learning plan content against current facts from authoritative sources to identify contradictions or outdated information.
+
+## Input
+
+### Topic
+{topic}
+
+### Cached Plan Summary
+{plan_summary}
+
+### Cached Resources
+{resources_text}
+
+### Current Facts from Authoritative Sources
+{mcp_facts}
+
+## Task
+Compare the cached content against the current facts to identify:
+1. Direct contradictions (cached content states something the current facts disprove)
+2. Outdated best practices (cached content recommends deprecated approaches)
+3. Missing critical updates (significant changes not reflected in cached content)
+4. Version mismatches (cached content references outdated versions/APIs)
+
+## Output Requirements
+- Return ONLY valid JSON (no markdown, no code fences)
+- Follow the exact schema below
+- Be conservative: only flag genuine contradictions, not minor differences in phrasing
+
+## Schema
+{{
+  "sources_checked": ["source 1", "source 2"],
+  "contradictions_found": [
+    "Specific contradiction description 1",
+    "Specific contradiction description 2"
+  ],
+  "stale_reason": "Summary of why content is stale" | null
+}}
+
+## Quality Criteria
+
+FLAG AS STALE when:
+- Cached content contradicts current facts on fundamental concepts
+- Recommended tools/libraries/APIs are deprecated or significantly changed
+- Security practices in cached content are now known to be vulnerable
+- Major version changes have altered recommended approaches
+
+DO NOT FLAG when:
+- Only minor syntax differences exist
+- Alternative approaches are mentioned (multiple valid approaches can exist)
+- Current facts add information but don't contradict cached content
+- Differences are in examples but core concepts remain valid
+
+## Examples
+
+### Example 1: Stale Content
+Topic: "React State Management"
+Cached: "Use Redux for all state management. Class components with componentDidMount for data fetching."
+Current Facts: "React Hooks (useState, useEffect) are the recommended approach. Redux is optional for simple apps. Class components are legacy."
+
+Output:
+{{
+  "sources_checked": ["React documentation", "React blog"],
+  "contradictions_found": [
+    "Cached content recommends class components; current React recommends functional components with hooks",
+    "Cached content says Redux is required; current guidance says hooks handle most state needs"
+  ],
+  "stale_reason": "React has shifted to hooks-based functional components as the primary pattern"
+}}
+
+### Example 2: Still Fresh
+Topic: "Binary Search Algorithm"
+Cached: "Binary search requires a sorted array. Time complexity is O(log n). Always use the middle element."
+Current Facts: "Binary search operates on sorted collections with O(log n) complexity. Can be implemented iteratively or recursively."
+
+Output:
+{{
+  "sources_checked": ["Algorithm textbook", "Computer science curriculum"],
+  "contradictions_found": [],
+  "stale_reason": null
+}}
+
+Now analyze the provided content and return your assessment as JSON:

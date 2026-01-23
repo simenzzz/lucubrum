@@ -7,6 +7,7 @@ CREATE TABLE plans (
   user_id VARCHAR(255) NOT NULL,
   topic VARCHAR(500) NOT NULL,
   user_level VARCHAR(50) NOT NULL,
+  plan_size VARCHAR(20) NOT NULL DEFAULT 'moderate',
   metadata JSONB NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
@@ -44,6 +45,7 @@ CREATE TABLE resources (
   FOREIGN KEY (plan_id, node_id) REFERENCES nodes(plan_id, node_id) ON DELETE CASCADE
 );
 CREATE INDEX idx_resources_node ON resources(plan_id, node_id);
+CREATE INDEX idx_resources_plan_node_score ON resources(plan_id, node_id, rank_score DESC);
 
 -- Exercises - references composite key
 CREATE TABLE exercises (

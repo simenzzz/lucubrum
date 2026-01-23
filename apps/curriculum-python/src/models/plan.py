@@ -1,10 +1,29 @@
 """Learning plan models including Node, ScheduleItem, and Plan."""
 
+from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .metadata import ArtifactMetadata
+
+
+class PlanSize(str, Enum):
+    """Plan size options that determine the number of nodes."""
+
+    BASIC = "basic"
+    MODERATE = "moderate"
+    LARGE = "large"
+    DYNAMIC = "dynamic"
+
+
+# Node count ranges for each plan size
+PLAN_SIZE_RANGES: dict[PlanSize, tuple[int, int]] = {
+    PlanSize.BASIC: (4, 12),
+    PlanSize.MODERATE: (12, 20),
+    PlanSize.LARGE: (20, 30),
+    PlanSize.DYNAMIC: (4, 30),
+}
 
 
 class Node(BaseModel):
@@ -55,11 +74,24 @@ class Plan(BaseModel):
     schema_version: Literal["plan.v1"] = "plan.v1"
     topic: str = Field(..., min_length=3, max_length=500)
     user_level: Literal["beginner", "intermediate", "advanced"]
-    nodes: list[Node] = Field(
-        ..., min_length=4, max_length=30, description="4-30 learning nodes"
+    plan_size: PlanSize = Field(
+        default=PlanSize.MODERATE,
+        description="Plan scope: basic (4-12), moderate (12-20), large (20-30), dynamic (4-30)",
     )
+    nodes: list[Node] = Field(..., description="Learning nodes")
     schedule: list[ScheduleItem] = Field(..., description="Ordered learning schedule")
     metadata: ArtifactMetadata
+
+    @model_validator(mode="after")
+    def validate_node_count_for_size(self) -> "Plan":
+        """Validate node count matches plan_size constraints."""
+        min_nodes, max_nodes = PLAN_SIZE_RANGES[self.plan_size]
+        if not (min_nodes <= len(self.nodes) <= max_nodes):
+            raise ValueError(
+                f"Plan size '{self.plan_size.value}' requires {min_nodes}-{max_nodes} nodes, "
+                f"got {len(self.nodes)}"
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_plan_integrity(self) -> "Plan":

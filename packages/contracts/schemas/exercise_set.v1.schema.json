@@ -1,0 +1,482 @@
+{
+  "$defs": {
+    "ArtifactMetadata": {
+      "description": "Metadata attached to every LLM-generated artifact for auditing.",
+      "properties": {
+        "provider": {
+          "enum": [
+            "gemini",
+            "claude"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt_version": {
+          "description": "e.g., 'plan/v1'",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "raw_output_hash": {
+          "description": "SHA-256 hash of raw LLM response (64 hex chars)",
+          "title": "Raw Output Hash",
+          "type": "string"
+        },
+        "artifact_hash": {
+          "description": "SHA-256 hash of validated JSON artifact (64 hex chars)",
+          "title": "Artifact Hash",
+          "type": "string"
+        },
+        "validation_retry_count": {
+          "description": "Number of schema retries (0-2)",
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Validation Retry Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "prompt_version",
+        "created_at",
+        "request_id",
+        "raw_output_hash",
+        "artifact_hash",
+        "validation_retry_count"
+      ],
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "CodingAnswer": {
+      "description": "Answer specification for coding exercises.",
+      "properties": {
+        "language": {
+          "description": "Programming language",
+          "title": "Language",
+          "type": "string"
+        },
+        "solution": {
+          "description": "Reference solution code",
+          "title": "Solution",
+          "type": "string"
+        },
+        "test_cases": {
+          "description": "Test cases (1-20)",
+          "items": {
+            "$ref": "#/$defs/CodingTestCase"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Test Cases",
+          "type": "array"
+        }
+      },
+      "required": [
+        "language",
+        "solution",
+        "test_cases"
+      ],
+      "title": "CodingAnswer",
+      "type": "object"
+    },
+    "CodingExercise": {
+      "description": "Coding exercise with solution and test cases.",
+      "properties": {
+        "id": {
+          "description": "Unique exercise ID within the set",
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The exercise question/prompt",
+          "minLength": 10,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "rubric": {
+          "description": "Grading rubric",
+          "maxLength": 500,
+          "minLength": 20,
+          "title": "Rubric",
+          "type": "string"
+        },
+        "difficulty": {
+          "description": "Difficulty level (1-5)",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "type": {
+          "const": "coding",
+          "default": "coding",
+          "title": "Type",
+          "type": "string"
+        },
+        "correct_answer": {
+          "$ref": "#/$defs/CodingAnswer"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "rubric",
+        "difficulty",
+        "correct_answer"
+      ],
+      "title": "CodingExercise",
+      "type": "object"
+    },
+    "CodingTestCase": {
+      "description": "A single test case for coding exercises.",
+      "properties": {
+        "input": {
+          "description": "Test input value(s)",
+          "title": "Input"
+        },
+        "output": {
+          "description": "Expected output",
+          "title": "Output"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "title": "CodingTestCase",
+      "type": "object"
+    },
+    "FillBlankAnswer": {
+      "description": "Answer specification for fill-in-the-blank exercises.",
+      "properties": {
+        "answers": {
+          "description": "Acceptable answers (1-10)",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Answers",
+          "type": "array"
+        },
+        "match": {
+          "default": "case_insensitive",
+          "enum": [
+            "case_sensitive",
+            "case_insensitive"
+          ],
+          "title": "Match",
+          "type": "string"
+        },
+        "normalize_whitespace": {
+          "default": true,
+          "title": "Normalize Whitespace",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "answers"
+      ],
+      "title": "FillBlankAnswer",
+      "type": "object"
+    },
+    "FillBlankExercise": {
+      "description": "Fill-in-the-blank exercise with structured answer matching.",
+      "properties": {
+        "id": {
+          "description": "Unique exercise ID within the set",
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The exercise question/prompt",
+          "minLength": 10,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "rubric": {
+          "description": "Grading rubric",
+          "maxLength": 500,
+          "minLength": 20,
+          "title": "Rubric",
+          "type": "string"
+        },
+        "difficulty": {
+          "description": "Difficulty level (1-5)",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "type": {
+          "const": "fill_blank",
+          "default": "fill_blank",
+          "title": "Type",
+          "type": "string"
+        },
+        "correct_answer": {
+          "$ref": "#/$defs/FillBlankAnswer"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "rubric",
+        "difficulty",
+        "correct_answer"
+      ],
+      "title": "FillBlankExercise",
+      "type": "object"
+    },
+    "FlashcardExercise": {
+      "description": "Flashcard exercise for memorization.",
+      "properties": {
+        "id": {
+          "description": "Unique exercise ID within the set",
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The exercise question/prompt",
+          "minLength": 10,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "rubric": {
+          "description": "Grading rubric",
+          "maxLength": 500,
+          "minLength": 20,
+          "title": "Rubric",
+          "type": "string"
+        },
+        "difficulty": {
+          "description": "Difficulty level (1-5)",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "type": {
+          "const": "flashcard",
+          "default": "flashcard",
+          "title": "Type",
+          "type": "string"
+        },
+        "correct_answer": {
+          "description": "Expected recall answer",
+          "title": "Correct Answer",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "rubric",
+        "difficulty",
+        "correct_answer"
+      ],
+      "title": "FlashcardExercise",
+      "type": "object"
+    },
+    "MCQExercise": {
+      "description": "Multiple choice question with exactly 4 choices.",
+      "properties": {
+        "id": {
+          "description": "Unique exercise ID within the set",
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The exercise question/prompt",
+          "minLength": 10,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "rubric": {
+          "description": "Grading rubric",
+          "maxLength": 500,
+          "minLength": 20,
+          "title": "Rubric",
+          "type": "string"
+        },
+        "difficulty": {
+          "description": "Difficulty level (1-5)",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "type": {
+          "const": "mcq",
+          "default": "mcq",
+          "title": "Type",
+          "type": "string"
+        },
+        "choices": {
+          "description": "Exactly 4 choices",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "Choices",
+          "type": "array"
+        },
+        "correct_answer": {
+          "description": "Must match one of the choices",
+          "title": "Correct Answer",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "rubric",
+        "difficulty",
+        "choices",
+        "correct_answer"
+      ],
+      "title": "MCQExercise",
+      "type": "object"
+    },
+    "ShortAnswerExercise": {
+      "description": "Short answer exercise with a string answer.",
+      "properties": {
+        "id": {
+          "description": "Unique exercise ID within the set",
+          "title": "Id",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The exercise question/prompt",
+          "minLength": 10,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "rubric": {
+          "description": "Grading rubric",
+          "maxLength": 500,
+          "minLength": 20,
+          "title": "Rubric",
+          "type": "string"
+        },
+        "difficulty": {
+          "description": "Difficulty level (1-5)",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Difficulty",
+          "type": "integer"
+        },
+        "type": {
+          "const": "short_answer",
+          "default": "short_answer",
+          "title": "Type",
+          "type": "string"
+        },
+        "correct_answer": {
+          "description": "Expected answer",
+          "title": "Correct Answer",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "rubric",
+        "difficulty",
+        "correct_answer"
+      ],
+      "title": "ShortAnswerExercise",
+      "type": "object"
+    }
+  },
+  "description": "A set of exercises for a specific learning node.",
+  "properties": {
+    "schema_version": {
+      "const": "exercise_set.v1",
+      "default": "exercise_set.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "plan_id": {
+      "format": "uuid",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "node_id": {
+      "description": "Reference to node within plan",
+      "title": "Node Id",
+      "type": "string"
+    },
+    "user_level": {
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "title": "User Level",
+      "type": "string"
+    },
+    "exercises": {
+      "description": "At least 1 exercise",
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "coding": "#/$defs/CodingExercise",
+            "fill_blank": "#/$defs/FillBlankExercise",
+            "flashcard": "#/$defs/FlashcardExercise",
+            "mcq": "#/$defs/MCQExercise",
+            "short_answer": "#/$defs/ShortAnswerExercise"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/MCQExercise"
+          },
+          {
+            "$ref": "#/$defs/ShortAnswerExercise"
+          },
+          {
+            "$ref": "#/$defs/FillBlankExercise"
+          },
+          {
+            "$ref": "#/$defs/CodingExercise"
+          },
+          {
+            "$ref": "#/$defs/FlashcardExercise"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Exercises",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "required": [
+    "plan_id",
+    "node_id",
+    "user_level",
+    "exercises",
+    "metadata"
+  ],
+  "title": "ExerciseSet",
+  "type": "object"
+}

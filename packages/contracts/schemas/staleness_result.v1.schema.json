@@ -62,32 +62,58 @@
       "type": "object"
     }
   },
-  "description": "Suggested YouTube search queries for a learning node.",
+  "description": "Result of checking if cached content is stale.",
   "properties": {
     "schema_version": {
-      "const": "query_suggestions.v1",
-      "default": "query_suggestions.v1",
+      "const": "staleness_result.v1",
+      "default": "staleness_result.v1",
       "title": "Schema Version",
       "type": "string"
     },
-    "plan_id": {
-      "format": "uuid",
-      "title": "Plan Id",
+    "cache_key": {
+      "description": "Cache key being checked",
+      "title": "Cache Key",
       "type": "string"
     },
-    "node_id": {
-      "description": "Reference to node within plan",
-      "title": "Node Id",
-      "type": "string"
+    "is_stale": {
+      "description": "Whether the content is considered stale",
+      "title": "Is Stale",
+      "type": "boolean"
     },
-    "queries": {
-      "description": "1-5 search query strings",
+    "contradiction_rate": {
+      "description": "Rate of contradictions found (0.0-1.0)",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Contradiction Rate",
+      "type": "number"
+    },
+    "stale_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "If stale, explanation why",
+      "title": "Stale Reason"
+    },
+    "sources_checked": {
+      "description": "List of sources that were checked",
       "items": {
         "type": "string"
       },
-      "maxItems": 5,
-      "minItems": 1,
-      "title": "Queries",
+      "title": "Sources Checked",
+      "type": "array"
+    },
+    "contradictions_found": {
+      "description": "Specific contradictions discovered",
+      "items": {
+        "type": "string"
+      },
+      "title": "Contradictions Found",
       "type": "array"
     },
     "metadata": {
@@ -95,11 +121,11 @@
     }
   },
   "required": [
-    "plan_id",
-    "node_id",
-    "queries",
+    "cache_key",
+    "is_stale",
+    "contradiction_rate",
     "metadata"
   ],
-  "title": "QuerySuggestions",
+  "title": "StalenessResult",
   "type": "object"
 }

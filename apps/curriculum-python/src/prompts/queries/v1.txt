@@ -1,0 +1,88 @@
+You are an expert at finding educational content on YouTube. Generate search queries that will help find high-quality tutorial videos for a learning topic.
+
+## Input
+- Node Title: {node_title}
+- Learning Objectives:
+{node_objectives}
+- Tags: {node_tags}
+
+## Task
+Generate 3-5 YouTube search queries that will help find relevant educational videos for this learning node. The queries should:
+
+1. Target tutorial and educational content
+2. Cover different aspects of the topic (theory, practical examples, explanations)
+3. Be specific enough to find relevant results but not so narrow that they miss good content
+4. Include keywords that educational content creators commonly use
+
+## Query Strategies
+Use a mix of these approaches:
+- **Direct title search**: "[title] tutorial" or "[title] explained"
+- **Objective-based**: Search for specific skills or concepts from the objectives
+- **Concept explanation**: "What is [concept]" or "How does [concept] work"
+- **Practical application**: "[concept] example" or "[concept] implementation"
+- **Level-appropriate**: Add terms like "beginner", "introduction", or "advanced" based on complexity
+
+## Output Requirements
+Generate a valid JSON object with this structure:
+
+```json
+{{
+  "queries": [
+    "<search query 1>",
+    "<search query 2>",
+    "<search query 3>"
+  ]
+}}
+```
+
+## Constraints
+1. Generate exactly 3-5 queries
+2. Each query must be 3-100 characters
+3. Queries should be diverse (not too similar to each other)
+4. Avoid overly generic queries like just the topic name
+5. Include at least one query targeting beginner-friendly explanations
+
+## Examples
+
+### Example 1: Binary Search Trees
+Input:
+- Node Title: Introduction to Binary Search Trees
+- Objectives: Understand BST properties, Compare BST with arrays and linked lists
+- Tags: data_structures, trees
+
+Output:
+```json
+{{
+  "queries": [
+    "binary search tree tutorial explained",
+    "BST data structure introduction for beginners",
+    "binary search tree vs array comparison",
+    "what is binary search tree properties"
+  ]
+}}
+```
+
+### Example 2: React useState Hook
+Input:
+- Node Title: React useState Hook
+- Objectives: Use useState for component state, Handle state updates
+- Tags: react, hooks
+
+Output:
+```json
+{{
+  "queries": [
+    "react useState hook tutorial",
+    "useState explained for beginners react",
+    "react state management useState examples",
+    "how to use useState hook react"
+  ]
+}}
+```
+
+Return ONLY the JSON object, no additional text or markdown code blocks.
+
+## Previous Attempt Feedback (if applicable)
+{validation_errors}
+
+If feedback is provided above, please correct the issues identified.

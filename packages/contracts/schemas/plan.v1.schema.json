@@ -1,0 +1,219 @@
+{
+  "$defs": {
+    "ArtifactMetadata": {
+      "description": "Metadata attached to every LLM-generated artifact for auditing.",
+      "properties": {
+        "provider": {
+          "enum": [
+            "gemini",
+            "claude"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt_version": {
+          "description": "e.g., 'plan/v1'",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "raw_output_hash": {
+          "description": "SHA-256 hash of raw LLM response (64 hex chars)",
+          "title": "Raw Output Hash",
+          "type": "string"
+        },
+        "artifact_hash": {
+          "description": "SHA-256 hash of validated JSON artifact (64 hex chars)",
+          "title": "Artifact Hash",
+          "type": "string"
+        },
+        "validation_retry_count": {
+          "description": "Number of schema retries (0-2)",
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Validation Retry Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "prompt_version",
+        "created_at",
+        "request_id",
+        "raw_output_hash",
+        "artifact_hash",
+        "validation_retry_count"
+      ],
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "Node": {
+      "description": "A single learning node in the curriculum DAG.",
+      "properties": {
+        "node_id": {
+          "description": "Unique identifier within plan (snake_case)",
+          "pattern": "^[a-z0-9_]{3,100}$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 5,
+          "title": "Title",
+          "type": "string"
+        },
+        "objectives": {
+          "description": "Learning objectives (1-5 items)",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Objectives",
+          "type": "array"
+        },
+        "prerequisites": {
+          "description": "List of prerequisite node_ids",
+          "items": {
+            "type": "string"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "estimated_minutes": {
+          "maximum": 240,
+          "minimum": 5,
+          "title": "Estimated Minutes",
+          "type": "integer"
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tags"
+        }
+      },
+      "required": [
+        "node_id",
+        "title",
+        "objectives",
+        "estimated_minutes"
+      ],
+      "title": "Node",
+      "type": "object"
+    },
+    "PlanSize": {
+      "description": "Plan size options that determine the number of nodes.",
+      "enum": [
+        "basic",
+        "moderate",
+        "large",
+        "dynamic"
+      ],
+      "title": "PlanSize",
+      "type": "string"
+    },
+    "ScheduleItem": {
+      "description": "A single item in the learning schedule (ordered sequence).",
+      "properties": {
+        "order": {
+          "description": "Sequential order starting from 1",
+          "minimum": 1,
+          "title": "Order",
+          "type": "integer"
+        },
+        "node_id": {
+          "description": "Reference to a node in the plan",
+          "title": "Node Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "order",
+        "node_id"
+      ],
+      "title": "ScheduleItem",
+      "type": "object"
+    }
+  },
+  "description": "A complete learning plan with nodes and schedule.",
+  "properties": {
+    "schema_version": {
+      "const": "plan.v1",
+      "default": "plan.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "topic": {
+      "maxLength": 500,
+      "minLength": 3,
+      "title": "Topic",
+      "type": "string"
+    },
+    "user_level": {
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "title": "User Level",
+      "type": "string"
+    },
+    "plan_size": {
+      "$ref": "#/$defs/PlanSize",
+      "default": "moderate",
+      "description": "Plan scope: basic (4-12), moderate (12-20), large (20-30), dynamic (4-30)"
+    },
+    "nodes": {
+      "description": "Learning nodes",
+      "items": {
+        "$ref": "#/$defs/Node"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "schedule": {
+      "description": "Ordered learning schedule",
+      "items": {
+        "$ref": "#/$defs/ScheduleItem"
+      },
+      "title": "Schedule",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "required": [
+    "topic",
+    "user_level",
+    "nodes",
+    "schedule",
+    "metadata"
+  ],
+  "title": "Plan",
+  "type": "object"
+}

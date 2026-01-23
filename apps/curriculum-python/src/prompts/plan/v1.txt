@@ -1,0 +1,64 @@
+You are an expert curriculum designer. Create a structured learning plan for the given topic.
+
+## Input
+- Topic: {topic}
+- User Level: {user_level}
+- Plan Size: {plan_size}
+
+## Plan Size Guidelines
+Based on the plan_size, generate the appropriate number of nodes:
+- "basic": Create 4-12 nodes for a quick overview or refresher
+- "moderate": Create 12-20 nodes for standard depth learning
+- "large": Create 20-30 nodes for comprehensive, deep-dive coverage
+- "dynamic": Decide the appropriate number (4-30) based on topic complexity and breadth
+
+## Output Requirements
+Generate a valid JSON object with this structure:
+
+```json
+{{
+  "topic": "<topic>",
+  "user_level": "<beginner|intermediate|advanced>",
+  "plan_size": "<basic|moderate|large|dynamic>",
+  "nodes": [
+    {{
+      "node_id": "<snake_case_id>",
+      "title": "<5-200 chars>",
+      "objectives": ["<learning objective 1>", ...],
+      "prerequisites": ["<node_id>", ...],
+      "estimated_minutes": <5-240>,
+      "tags": ["<tag>", ...]
+    }}
+  ],
+  "schedule": [
+    {{"order": 1, "node_id": "<node_id>"}},
+    ...
+  ]
+}}
+```
+
+## Constraints
+1. node_id: lowercase alphanumeric with underscores, 3-100 chars (e.g., "intro_to_topic", "advanced_concepts")
+2. title: 5-200 characters, descriptive
+3. objectives: 1-5 learning objectives per node, non-empty strings
+4. prerequisites: list node_ids that must be completed first (empty list for starting nodes)
+5. estimated_minutes: realistic time estimate between 5-240 minutes
+6. tags: optional list of relevant tags
+7. schedule: must include ALL nodes exactly once, with sequential order starting from 1
+8. No cycles in prerequisites (DAG structure)
+9. Prerequisites must reference existing node_ids in the plan
+
+## Quality Guidelines
+- Structure content progressively from foundational to advanced
+- Ensure prerequisites form a valid learning path
+- Objectives should be specific and measurable
+- Time estimates should reflect actual learning time
+- Include practical/hands-on nodes where appropriate
+- Balance theory with application
+
+Return ONLY the JSON object, no additional text or markdown code blocks.
+
+## Previous Attempt Feedback (if applicable)
+{validation_errors}
+
+If feedback is provided above, please correct the issues identified.

@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "ArtifactMetadata": {
+      "description": "Metadata attached to every LLM-generated artifact for auditing.",
+      "properties": {
+        "provider": {
+          "enum": [
+            "gemini",
+            "claude"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt_version": {
+          "description": "e.g., 'plan/v1'",
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "raw_output_hash": {
+          "description": "SHA-256 hash of raw LLM response (64 hex chars)",
+          "title": "Raw Output Hash",
+          "type": "string"
+        },
+        "artifact_hash": {
+          "description": "SHA-256 hash of validated JSON artifact (64 hex chars)",
+          "title": "Artifact Hash",
+          "type": "string"
+        },
+        "validation_retry_count": {
+          "description": "Number of schema retries (0-2)",
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Validation Retry Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "prompt_version",
+        "created_at",
+        "request_id",
+        "raw_output_hash",
+        "artifact_hash",
+        "validation_retry_count"
+      ],
+      "title": "ArtifactMetadata",
+      "type": "object"
+    }
+  },
+  "description": "Result of grading a user's answer to an exercise.",
+  "properties": {
+    "schema_version": {
+      "const": "grade.v1",
+      "default": "grade.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "plan_id": {
+      "format": "uuid",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "node_id": {
+      "description": "Reference to node within plan",
+      "title": "Node Id",
+      "type": "string"
+    },
+    "exercise_id": {
+      "description": "Reference to the graded exercise",
+      "title": "Exercise Id",
+      "type": "string"
+    },
+    "score": {
+      "description": "Score from 0.0 to 1.0",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Score",
+      "type": "number"
+    },
+    "is_correct": {
+      "description": "Whether the answer is considered correct",
+      "title": "Is Correct",
+      "type": "boolean"
+    },
+    "feedback": {
+      "description": "Feedback for the learner",
+      "maxLength": 300,
+      "minLength": 20,
+      "title": "Feedback",
+      "type": "string"
+    },
+    "misconceptions": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Identified misconceptions (if any)",
+      "title": "Misconceptions"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "required": [
+    "plan_id",
+    "node_id",
+    "exercise_id",
+    "score",
+    "is_correct",
+    "feedback",
+    "metadata"
+  ],
+  "title": "Grade",
+  "type": "object"
+}

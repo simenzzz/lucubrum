@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Generic, TypeVar
 
@@ -16,7 +17,7 @@ T = TypeVar("T", bound=BaseModel)
 class RetryConfig:
     """Configuration for retry behavior."""
 
-    max_retries: int = 2
+    max_retries: int = int(os.getenv("LLM_MAX_RETRIES", 2))
     include_errors_in_prompt: bool = True
 
 

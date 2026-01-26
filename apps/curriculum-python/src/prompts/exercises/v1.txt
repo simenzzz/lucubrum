@@ -1,0 +1,136 @@
+You are an expert educational content creator. Generate exercises for a learning module.
+
+## Input
+- Topic: {topic}
+- Node Title: {node_title}
+- Learning Objectives: {objectives}
+- User Level: {user_level}
+- Difficulty Target: {difficulty_target} (1=easy, 5=hard)
+- Requested Exercise Types: {exercise_types}
+- Exercise Count: {count}
+
+## Web Search Inspiration (if available)
+{search_results}
+
+IMPORTANT: Use the search results above ONLY for inspiration about exercise formats, question styles, and topic coverage. Create ORIGINAL exercises - do NOT copy questions, answers, or phrasing from the search results.
+
+## Output Requirements
+Generate a valid JSON object with this structure:
+
+```json
+{{
+  "exercises": [
+    {{
+      "id": "<unique_id>",
+      "type": "<mcq|short_answer|fill_blank|coding|flashcard>",
+      "prompt": "<the question or exercise prompt>",
+      "rubric": "<grading criteria and expectations>",
+      "difficulty": <1-5>,
+      ... type-specific fields ...
+    }}
+  ]
+}}
+```
+
+## Exercise Type Specifications
+
+### MCQ (Multiple Choice)
+```json
+{{
+  "id": "ex_mcq_1",
+  "type": "mcq",
+  "prompt": "Question text (min 10 chars)",
+  "rubric": "Grading rubric (min 20, max 500 chars)",
+  "difficulty": 3,
+  "choices": ["Option A", "Option B", "Option C", "Option D"],
+  "correct_answer": "Option B"
+}}
+```
+- Must have exactly 4 choices
+- correct_answer must match one of the choices exactly
+
+### Short Answer
+```json
+{{
+  "id": "ex_sa_1",
+  "type": "short_answer",
+  "prompt": "Question text",
+  "rubric": "Expected answer key points and acceptable variations",
+  "difficulty": 3,
+  "correct_answer": "Expected answer"
+}}
+```
+
+### Fill in the Blank
+```json
+{{
+  "id": "ex_fb_1",
+  "type": "fill_blank",
+  "prompt": "Complete: The _____ is responsible for...",
+  "rubric": "Grading criteria",
+  "difficulty": 2,
+  "correct_answer": {{
+    "answers": ["correct", "also_correct"],
+    "match": "case_insensitive",
+    "normalize_whitespace": true
+  }}
+}}
+```
+- answers: list of 1-10 acceptable answers
+- match: "case_sensitive" or "case_insensitive"
+
+### Coding
+```json
+{{
+  "id": "ex_code_1",
+  "type": "coding",
+  "prompt": "Write a function that...",
+  "rubric": "Function requirements, edge cases, complexity",
+  "difficulty": 4,
+  "correct_answer": {{
+    "language": "python",
+    "solution": "def solution(x):\\n    return x * 2",
+    "test_cases": [
+      {{"input": 5, "output": 10}},
+      {{"input": 0, "output": 0}}
+    ]
+  }}
+}}
+```
+- test_cases: 1-20 test cases
+
+### Flashcard
+```json
+{{
+  "id": "ex_fc_1",
+  "type": "flashcard",
+  "prompt": "What is the definition of...?",
+  "rubric": "Key points that must be mentioned",
+  "difficulty": 1,
+  "correct_answer": "The expected recall answer"
+}}
+```
+
+## Constraints
+1. Generate exactly {count} exercises
+2. Each exercise must have a unique id (use pattern: ex_<type>_<n>)
+3. Only generate exercises of the requested types: {exercise_types}
+4. Target difficulty level {difficulty_target}, but vary by +/- 1 for diversity
+5. All prompts must be at least 10 characters
+6. All rubrics must be 20-500 characters
+7. Difficulty must be 1-5
+
+## Quality Guidelines
+- Write clear, unambiguous questions
+- For MCQ, make distractors plausible but clearly distinguishable
+- Align exercises with the stated learning objectives
+- Progress from simpler to more complex within the set
+- For coding exercises, include edge cases in test_cases
+- Make rubrics specific and actionable for grading
+
+Return ONLY the JSON object, no additional text or markdown code blocks.
+
+## Previous Attempt Feedback (if applicable)
+{validation_errors}
+
+If feedback is provided above, please correct the issues identified.

@@ -1,6 +1,7 @@
 """Plan generation API endpoint."""
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID
@@ -81,7 +82,8 @@ async def generate_plan(request: GeneratePlanRequest) -> GeneratePlanResponse:
 
         # Define generation function
         async def generate_fn(prompt: str) -> str:
-            return await provider.generate(prompt, temperature=0.7, max_tokens=8192)
+            temperature = float(os.getenv("LLM_TEMPERATURE_PLAN", 0.7))
+            return await provider.generate(prompt, temperature=temperature, max_tokens=8192)
 
         # Prepare prompt kwargs
         prompt_kwargs = {
@@ -91,7 +93,7 @@ async def generate_plan(request: GeneratePlanRequest) -> GeneratePlanResponse:
         }
 
         # Configure retry
-        config = RetryConfig(max_retries=2, include_errors_in_prompt=True)
+        config = RetryConfig(include_errors_in_prompt=True)
 
         # Call LLM with retry
         result = await retry_llm_with_validation(

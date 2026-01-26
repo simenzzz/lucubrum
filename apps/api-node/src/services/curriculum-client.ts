@@ -88,6 +88,66 @@ export interface GeneratePlanRequest {
   request_id: string;
 }
 
+// Exercise types
+export type ExerciseType = 'mcq' | 'short_answer' | 'fill_blank' | 'coding' | 'flashcard';
+
+export interface GenerateExercisesRequest {
+  plan_id: string;
+  node_id: string;
+  topic: string;
+  node_title: string;
+  objectives: string[];
+  user_level: 'beginner' | 'intermediate' | 'advanced';
+  exercise_types?: ExerciseType[];
+  count?: number;
+  difficulty_target?: number;
+  request_id: string;
+}
+
+export interface Exercise {
+  id: string;
+  type: ExerciseType;
+  prompt: string;
+  rubric: string;
+  difficulty: number;
+  choices?: string[];
+  correct_answer: unknown;
+}
+
+export interface ExerciseSet {
+  schema_version: string;
+  plan_id: string;
+  node_id: string;
+  user_level: string;
+  exercises: Exercise[];
+  metadata: ArtifactMetadata;
+}
+
+export interface GradeRequest {
+  plan_id: string;
+  node_id: string;
+  exercise_id: string;
+  exercise_type: ExerciseType;
+  prompt: string;
+  rubric: string;
+  correct_answer: unknown;
+  user_answer: unknown;
+  user_level: 'beginner' | 'intermediate' | 'advanced';
+  request_id: string;
+}
+
+export interface Grade {
+  schema_version: string;
+  plan_id: string;
+  node_id: string;
+  exercise_id: string;
+  score: number;
+  is_correct: boolean;
+  feedback: string;
+  misconceptions: string[] | null;
+  metadata: ArtifactMetadata;
+}
+
 // Request types
 export interface FetchTranscriptRequest {
   video_id: string;
@@ -298,6 +358,51 @@ class CurriculumClient {
           (data?.message as string) || error.message,
           error.response?.status || 500,
           (data?.error as string) || 'PLAN_GENERATION_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generate exercises for a learning node.
+   */
+  async generateExercises(request: GenerateExercisesRequest): Promise<ExerciseSet> {
+    try {
+      const response = await this.client.post<{ exercise_set: ExerciseSet }>(
+        '/llm/exercises',
+        request
+      );
+      return response.data.exercise_set;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'EXERCISE_GENERATION_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Grade a user's answer to an exercise.
+   */
+  async gradeAnswer(request: GradeRequest): Promise<Grade> {
+    try {
+      const response = await this.client.post<{ grade: Grade }>('/llm/grade', request);
+      return response.data.grade;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'GRADING_FAILED',
           data
         );
       }

@@ -1,6 +1,7 @@
 """Query suggestions API endpoint for YouTube search queries."""
 
 import logging
+import os
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -83,7 +84,8 @@ async def generate_queries(request: GenerateQueriesRequest) -> GenerateQueriesRe
 
         # Define generation function
         async def generate_fn(prompt: str) -> str:
-            return await provider.generate(prompt, temperature=0.5, max_tokens=1024)
+            temperature = float(os.getenv("LLM_TEMPERATURE_QUERIES", 0.5))
+            return await provider.generate(prompt, temperature=temperature, max_tokens=1024)
 
         # Format tags as comma-separated string or "none"
         tags_str = ", ".join(request.node_tags) if request.node_tags else "none"
@@ -96,7 +98,7 @@ async def generate_queries(request: GenerateQueriesRequest) -> GenerateQueriesRe
         }
 
         # Configure retry
-        config = RetryConfig(max_retries=2, include_errors_in_prompt=True)
+        config = RetryConfig(include_errors_in_prompt=True)
 
         # Call LLM with retry
         result = await retry_llm_with_validation(

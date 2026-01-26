@@ -1,6 +1,8 @@
 import express from 'express';
 import planRoutes from './routes/plan.routes';
 import authRoutes from './routes/auth.routes';
+import exerciseRoutes from './routes/exercise.routes';
+import masteryRoutes from './routes/mastery.routes';
 import logger from './utils/logger';
 import { db } from './db/client';
 import { redis } from './db/redis';
@@ -30,6 +32,8 @@ app.get('/health', async (_req, res) => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api/plan', planRoutes);
+app.use('/api/plan', exerciseRoutes);
+app.use('/api', masteryRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

@@ -10,12 +10,12 @@
 - ✅ **Phase 1: Plan Generation** - COMPLETE
 - ✅ **Phase 2: YouTube Resources** - COMPLETE
 - ✅ **Phase 3: Authentication** - COMPLETE
-- ❌ **Phase 4: Exercises & Grading** - Not started
+- ✅ **Phase 4: Exercises & Grading** - COMPLETE
 - ❌ **Phases 5-7** - Not started
 
-**Overall Progress: ~55% complete** (core plan generation, resource attachment, and authentication working end-to-end)
+**Overall Progress: ~70% complete** (core plan generation, resource attachment, authentication, and exercises/grading working end-to-end)
 
-**Next Priority**: Phase 4 (Exercises & Grading)
+**Next Priority**: Phase 5 (Recommendations & Evaluation)
 
 ### Key Principles
 1. **Schema-first**: Pydantic models are the source of truth; everything flows from them
@@ -90,9 +90,19 @@ Use the appropriate skill when working on each service:
 | POST /llm/validate-video | `src/api/validate_video.py` | ✅ 150 lines |
 | POST /llm/check-staleness | `src/api/staleness.py` | ✅ 197 lines |
 | POST /llm/plan | `src/api/plan.py` | ✅ 179 lines, full implementation |
-| POST /llm/exercises | `src/api/exercises.py` | ❌ Empty skeleton |
-| POST /llm/grade | `src/api/grade.py` | ❌ Empty skeleton |
+| POST /llm/exercises | `src/api/exercises.py` | ✅ Full implementation with web search |
+| POST /llm/grade | `src/api/grade.py` | ✅ Full implementation (local + LLM grading) |
 | POST /llm/queries | `src/api/queries.py` | ❌ Empty skeleton |
+
+**Utilities (100% Complete)**:
+| Utility | File | Status |
+|---------|------|--------|
+| Transcript fetcher | `src/utils/transcripts.py` | ✅ 192 lines, youtube-transcript-api |
+| Prompt loader | `src/utils/prompts.py` | ✅ 44 lines, LRU cached |
+| Hashing | `src/utils/hashing.py` | ✅ 28 lines, SHA-256 |
+| Logger | `src/utils/logger.py` | ✅ Uses Python logging module |
+| Retry logic | `src/utils/retry.py` | ✅ 216 lines, retry with validation |
+| Web search | `src/utils/web_search.py` | ✅ Google CSE integration with graceful degradation |
 
 **Prompts (Partial)**:
 | Prompt | File | Status |
@@ -100,8 +110,8 @@ Use the appropriate skill when working on each service:
 | validate_video/v1 | `src/prompts/validate_video/v1.txt` | ✅ 80 lines |
 | staleness/v1 | `src/prompts/staleness/v1.txt` | ✅ 89 lines |
 | plan/v1 | `src/prompts/plan/v1.txt` | ✅ 65 lines |
-| exercises/v1 | `src/prompts/exercises/v1.txt` | ❌ Empty |
-| grade/v1 | `src/prompts/grade/v1.txt` | ❌ Empty |
+| exercises/v1 | `src/prompts/exercises/v1.txt` | ✅ Full prompt with all exercise types |
+| grade/v1 | `src/prompts/grade/v1.txt` | ✅ Full prompt with rubric-based grading |
 | queries/v1 | `src/prompts/queries/v1.txt` | ❌ Empty |
 
 ### Node Service - Orchestrator (`apps/api-node/`)
@@ -110,13 +120,13 @@ Use the appropriate skill when working on each service:
 | Service | File | Status |
 |---------|------|--------|
 | YouTube integration | `src/services/youtube.service.ts` | ✅ 397 lines, ranking algorithm |
-| Curriculum client | `src/services/curriculum-client.ts` | ✅ 253 lines, HTTP client |
+| Curriculum client | `src/services/curriculum-client.ts` | ✅ Extended with exercises/grade methods |
 | Plan cache | `src/services/plan-cache.service.ts` | ✅ 250 lines, staleness logic |
 | Logger | `src/utils/logger.ts` | ✅ 20 lines, pino |
 | Plan service | `src/services/plan.service.ts` | ✅ 255 lines, full orchestration |
 | Auth service | `src/services/auth.service.ts` | ✅ ~280 lines, Google OAuth + PKCE |
-| Exercise service | `src/services/exercise.service.ts` | ❌ Empty |
-| Mastery service | `src/services/mastery.service.ts` | ❌ Empty |
+| Exercise service | `src/services/exercise.service.ts` | ✅ Full implementation with caching |
+| Mastery service | `src/services/mastery.service.ts` | ✅ Full implementation with weighted scoring |
 
 **Routes (Partial)**:
 | Route | File | Status |
@@ -129,8 +139,24 @@ Use the appropriate skill when working on each service:
 | POST /auth/callback | `src/routes/auth.routes.ts` | ✅ Code exchange |
 | POST /auth/refresh | `src/routes/auth.routes.ts` | ✅ Token refresh |
 | POST /auth/logout | `src/routes/auth.routes.ts` | ✅ Token revocation |
-| Exercise routes | `src/routes/exercise.routes.ts` | ❌ Empty |
-| Mastery routes | `src/routes/mastery.routes.ts` | ❌ Empty |
+| POST /api/plan/:id/nodes/:nodeId/exercises | `src/routes/exercise.routes.ts` | ✅ Generate exercises |
+| GET /api/plan/:id/nodes/:nodeId/exercises | `src/routes/exercise.routes.ts` | ✅ Get exercises |
+| POST /api/attempts | `src/routes/mastery.routes.ts` | ✅ Submit and grade answer |
+| GET /api/plan/:id/nodes/:nodeId/mastery | `src/routes/mastery.routes.ts` | ✅ Get node mastery |
+| GET /api/plan/:id/mastery | `src/routes/mastery.routes.ts` | ✅ Get plan mastery overview |
+
+**Database Queries (Updated)**:
+| Component | File | Status |
+|-----------|------|--------|
+| Postgres client | `src/db/client.ts` | ✅ 142 lines, pool + transactions |
+| Redis client | `src/db/redis.ts` | ✅ ~220 lines, fail-open caching + auth (blacklist, PKCE) |
+| Plan queries | `src/db/queries/plans.ts` | ✅ 194 lines, full CRUD |
+| Resource queries | `src/db/queries/resources.ts` | ✅ Complete |
+| User queries | `src/db/queries/users.ts` | ✅ ~85 lines, upsert/get by id/email |
+| Token queries | `src/db/queries/tokens.ts` | ✅ ~95 lines, SHA-256 hashed storage |
+| User-plans queries | `src/db/queries/user-plans.ts` | ✅ ~100 lines, junction table |
+| Exercise queries | `src/db/queries/exercises.ts` | ✅ Full CRUD with transaction support |
+| Mastery queries | `src/db/queries/mastery.ts` | ✅ Attempts + mastery tracking |
 
 **Database & Validation (100% Complete)**:
 | Component | File | Status |
@@ -527,11 +553,11 @@ JWT_REFRESH_EXPIRY=7d
 
 ---
 
-## Phase 4: Exercises & Grading
+## Phase 4: Exercises & Grading ✅ COMPLETE
 
 **Goal**: Generate exercises for nodes and grade user answers with mastery tracking.
 
-**Status**: ❌ **NOT STARTED**
+**Status**: ✅ **PHASE COMPLETE** - All tasks implemented.
 
 **Skills**: Use `/curriculum-skill` for Python tasks (4.1-4.4), `/orchestrator-skill` for Node tasks (4.5-4.10)
 
@@ -539,23 +565,33 @@ JWT_REFRESH_EXPIRY=7d
 
 | # | Task | File | Notes |
 |---|------|------|-------|
-| 4.1 | Exercise prompt template | `apps/curriculum-python/src/prompts/exercises/v1.txt` | |
-| 4.2 | POST /llm/exercises | `apps/curriculum-python/src/api/exercises.py` | Discriminated union |
-| 4.3 | Grade prompt template | `apps/curriculum-python/src/prompts/grade/v1.txt` | Low temperature (0.2) |
-| 4.4 | POST /llm/grade | `apps/curriculum-python/src/api/grade.py` | |
-| 4.5 | Exercise service | `apps/api-node/src/services/exercise.service.ts` | |
-| 4.6 | Mastery service | `apps/api-node/src/services/mastery.service.ts` | Calculate score |
-| 4.7 | Exercise routes | `apps/api-node/src/routes/exercise.routes.ts` | GET/POST exercises |
-| 4.8 | Mastery routes | `apps/api-node/src/routes/mastery.routes.ts` | POST /api/attempts |
-| 4.9 | Exercise database queries | `apps/api-node/src/db/queries/exercises.ts` | |
-| 4.10 | Mastery database queries | `apps/api-node/src/db/queries/mastery.ts` | |
+| 4.1 | Exercise prompt template | `apps/curriculum-python/src/prompts/exercises/v1.txt` | ✅ All 5 exercise types |
+| 4.2 | POST /llm/exercises | `apps/curriculum-python/src/api/exercises.py` | ✅ With web search inspiration |
+| 4.3 | Grade prompt template | `apps/curriculum-python/src/prompts/grade/v1.txt` | ✅ Low temperature (0.3) |
+| 4.4 | POST /llm/grade | `apps/curriculum-python/src/api/grade.py` | ✅ Local + LLM grading |
+| 4.5 | Exercise service | `apps/api-node/src/services/exercise.service.ts` | ✅ With caching support |
+| 4.6 | Mastery service | `apps/api-node/src/services/mastery.service.ts` | ✅ Weighted scoring |
+| 4.7 | Exercise routes | `apps/api-node/src/routes/exercise.routes.ts` | ✅ GET/POST exercises |
+| 4.8 | Mastery routes | `apps/api-node/src/routes/mastery.routes.ts` | ✅ POST /api/attempts |
+| 4.9 | Exercise database queries | `apps/api-node/src/db/queries/exercises.ts` | ✅ Full CRUD |
+| 4.10 | Mastery database queries | `apps/api-node/src/db/queries/mastery.ts` | ✅ Attempts + mastery |
+| 4.11 | Web search utility | `apps/curriculum-python/src/utils/web_search.py` | ✅ Google CSE |
 
 ### Exit Criteria
-- [ ] Can generate exercises via `POST /api/plan/:id/nodes/:nodeId/exercises`
-- [ ] All requested exercise types are present in response
-- [ ] Can submit answer via `POST /api/attempts`
-- [ ] Grade includes score, is_correct, feedback, misconceptions
-- [ ] Mastery score updates after each attempt
+- [x] Can generate exercises via `POST /api/plan/:id/nodes/:nodeId/exercises`
+- [x] All 5 exercise types supported (mcq, short_answer, fill_blank, coding, flashcard)
+- [x] Can submit answer via `POST /api/attempts`
+- [x] Grade includes score, is_correct, feedback, misconceptions
+- [x] Mastery score updates after each attempt
+- [x] MCQ and flashcard graded locally (no LLM call)
+- [x] Cached exercises returned on repeat requests
+- [x] `?force=true` regenerates exercises
+
+### MCP Migration Note (Phase 7)
+After completing Phase 7 MCP integration, revisit:
+- `apps/curriculum-python/src/utils/web_search.py` - Replace Google CSE with MCP web search tool
+- `apps/curriculum-python/src/api/exercises.py` - Use MCP tool calls for inspiration
+- Look for `TODO (Phase 7 MCP Migration)` comments in the codebase
 
 ### Mastery Calculation
 ```typescript
@@ -797,40 +833,41 @@ Given a user's free-text topic request, return:
 
 ### Python Service - What Needs Implementation
 - [x] `src/prompts/plan/v1.txt` - Plan generation prompt ✅
-- [ ] `src/prompts/exercises/v1.txt` - Exercise generation prompt
-- [ ] `src/prompts/grade/v1.txt` - Grading prompt
+- [x] `src/prompts/exercises/v1.txt` - Exercise generation prompt ✅
+- [x] `src/prompts/grade/v1.txt` - Grading prompt ✅
 - [ ] `src/prompts/queries/v1.txt` - Query suggestions prompt
 - [ ] `src/prompts/normalize/v1.txt` - Topic normalization prompt
 - [x] `src/api/plan.py` - Plan generation endpoint ✅
-- [ ] `src/api/exercises.py` - Exercise generation endpoint
-- [ ] `src/api/grade.py` - Grading endpoint
+- [x] `src/api/exercises.py` - Exercise generation endpoint ✅
+- [x] `src/api/grade.py` - Grading endpoint ✅
 - [ ] `src/api/queries.py` - Query suggestions endpoint
 - [ ] `src/api/normalize.py` - Topic normalization endpoint
 - [x] `src/utils/retry.py` - Validation retry logic ✅
 - [x] `src/utils/logger.py` - Logging ✅
+- [x] `src/utils/web_search.py` - Google CSE integration ✅
 
 ### Node Service - What Needs Implementation
 - [x] `src/db/client.ts` - Postgres connection pool ✅
 - [x] `src/db/redis.ts` - Redis connection + auth (blacklist, PKCE) ✅
 - [x] `src/db/queries/plans.ts` - Plan CRUD queries ✅
 - [x] `src/db/queries/resources.ts` - Resource queries ✅
-- [ ] `src/db/queries/exercises.ts` - Exercise queries
-- [ ] `src/db/queries/mastery.ts` - Mastery queries
+- [x] `src/db/queries/exercises.ts` - Exercise queries ✅
+- [x] `src/db/queries/mastery.ts` - Mastery queries ✅
 - [x] `src/db/queries/users.ts` - User queries (with roles) ✅
 - [x] `src/db/queries/tokens.ts` - Token queries (hashed storage) ✅
 - [x] `src/db/queries/user-plans.ts` - User↔Plan junction table queries ✅
 - [x] `src/validation/schemas/validator.ts` - AJV setup ✅
 - [x] `src/validation/semantic/dag.validator.ts` - DAG validation ✅
 - [x] `src/validation/semantic/prereq.validator.ts` - Prerequisite validation ✅
-- [x] `src/validation/schemas.ts` - Zod schemas (includes auth schemas) ✅
+- [x] `src/validation/schemas.ts` - Zod schemas (includes auth + exercise schemas) ✅
 - [x] `src/services/plan.service.ts` - Plan orchestration ✅
-- [ ] `src/services/exercise.service.ts` - Exercise handling
-- [ ] `src/services/mastery.service.ts` - Mastery calculation
+- [x] `src/services/exercise.service.ts` - Exercise handling ✅
+- [x] `src/services/mastery.service.ts` - Mastery calculation ✅
 - [x] `src/services/auth.service.ts` - OAuth logic ✅
 - [x] `src/routes/plan.routes.ts` - Full CRUD + resources (protected) ✅
 - [x] `src/routes/auth.routes.ts` - OAuth endpoints ✅
-- [ ] `src/routes/exercise.routes.ts` - Exercise endpoints
-- [ ] `src/routes/mastery.routes.ts` - Mastery endpoints
+- [x] `src/routes/exercise.routes.ts` - Exercise endpoints ✅
+- [x] `src/routes/mastery.routes.ts` - Mastery endpoints ✅
 - [x] `src/middleware/auth.middleware.ts` - JWT verification ✅
 - [ ] `src/middleware/rate-limit.middleware.ts` - Rate limiting
 - [x] `src/utils/jwt.ts` - JWT utilities ✅
@@ -839,27 +876,31 @@ Given a user's free-text topic request, return:
 **Python:**
 - ✅ All models in `src/models/`
 - ✅ `src/providers/base.py`, `gemini.py`, `claude.py`
-- ✅ `src/utils/transcripts.py`, `prompts.py`, `hashing.py`, `retry.py`
-- ✅ `src/api/transcript.py`, `validate_video.py`, `staleness.py`, `plan.py`
-- ✅ `src/prompts/validate_video/v1.txt`, `staleness/v1.txt`, `plan/v1.txt`
+- ✅ `src/utils/transcripts.py`, `prompts.py`, `hashing.py`, `retry.py`, `web_search.py`
+- ✅ `src/api/transcript.py`, `validate_video.py`, `staleness.py`, `plan.py`, `exercises.py`, `grade.py`
+- ✅ `src/prompts/validate_video/v1.txt`, `staleness/v1.txt`, `plan/v1.txt`, `exercises/v1.txt`, `grade/v1.txt`
 
 **Node:**
 - ✅ `src/services/youtube.service.ts`
-- ✅ `src/services/curriculum-client.ts`
+- ✅ `src/services/curriculum-client.ts` (includes exercises/grade methods)
 - ✅ `src/services/plan-cache.service.ts`
 - ✅ `src/services/plan.service.ts`
 - ✅ `src/services/auth.service.ts` (Google OAuth + PKCE)
+- ✅ `src/services/exercise.service.ts` (caching + LLM generation)
+- ✅ `src/services/mastery.service.ts` (weighted scoring)
 - ✅ `src/utils/logger.ts`
 - ✅ `src/utils/jwt.ts` (sign/verify access+refresh tokens)
 - ✅ `src/db/client.ts`, `redis.ts` (includes auth blacklist + PKCE state)
-- ✅ `src/db/queries/plans.ts`, `resources.ts`
+- ✅ `src/db/queries/plans.ts`, `resources.ts`, `exercises.ts`, `mastery.ts`
 - ✅ `src/db/queries/users.ts`, `tokens.ts`, `user-plans.ts`
-- ✅ `src/validation/schemas.ts` (includes auth schemas), `schemas/validator.ts`
+- ✅ `src/validation/schemas.ts` (includes auth + exercise schemas), `schemas/validator.ts`
 - ✅ `src/validation/semantic/dag.validator.ts`, `prereq.validator.ts`
 - ✅ `src/routes/plan.routes.ts` (full CRUD + resources, protected)
 - ✅ `src/routes/auth.routes.ts` (OAuth endpoints)
+- ✅ `src/routes/exercise.routes.ts` (generate + get exercises)
+- ✅ `src/routes/mastery.routes.ts` (attempts + mastery tracking)
 - ✅ `src/middleware/auth.middleware.ts` (JWT verification)
 
 ---
 
-*Last updated: January 2026 (Phase 3 Authentication complete)*
+*Last updated: January 2026 (Phase 4 Exercises & Grading complete)*

@@ -4,6 +4,8 @@ import logging
 
 from fastapi import FastAPI
 
+from .api.exercises import router as exercises_router
+from .api.grade import router as grade_router
 from .api.plan import router as plan_router
 from .api.queries import router as queries_router
 
@@ -22,6 +24,8 @@ app = FastAPI(
 # Register routers
 app.include_router(plan_router)
 app.include_router(queries_router)
+app.include_router(exercises_router)
+app.include_router(grade_router)
 
 
 @app.get("/health")

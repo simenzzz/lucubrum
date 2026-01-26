@@ -138,6 +138,84 @@ class RedisClient {
   isReady(): boolean {
     return this.isConnected && this.client.status === 'ready';
   }
+
+  // ==================== Auth-related methods ====================
+
+  /**
+   * Blacklist an access token by its JTI.
+   * TTL is set to the remaining lifetime of the token.
+   * Key format: lh:auth:blacklist:{jti}
+   */
+  async blacklistToken(jti: string, expiresAt: Date): Promise<void> {
+    const ttlSeconds = Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
+    if (ttlSeconds <= 0) {
+      // Token already expired, no need to blacklist
+      return;
+    }
+
+    try {
+      await this.client.setex(`auth:blacklist:${jti}`, ttlSeconds, '1');
+      logger.debug({ jti, ttlSeconds }, 'Token blacklisted');
+    } catch (error) {
+      logger.warn({ error, jti }, 'Failed to blacklist token, failing open');
+    }
+  }
+
+  /**
+   * Check if a token is blacklisted.
+   * Fails open - returns false on errors (allows the request).
+   */
+  async isTokenBlacklisted(jti: string): Promise<boolean> {
+    try {
+      const result = await this.client.get(`auth:blacklist:${jti}`);
+      return result !== null;
+    } catch (error) {
+      logger.warn({ error, jti }, 'Failed to check token blacklist, failing open');
+      return false;
+    }
+  }
+
+  /**
+   * Store PKCE code verifier with state as key.
+   * Key format: lh:auth:pkce:{state}
+   * Default TTL: 600 seconds (10 minutes)
+   */
+  async storePKCEState(state: string, verifier: string, ttlSeconds: number = 600): Promise<void> {
+    try {
+      await this.client.setex(`auth:pkce:${state}`, ttlSeconds, verifier);
+      logger.debug({ state: state.substring(0, 8) + '...' }, 'PKCE state stored');
+    } catch (error) {
+      logger.error({ error, state: state.substring(0, 8) + '...' }, 'Failed to store PKCE state');
+      throw new Error('Failed to store PKCE state');
+    }
+  }
+
+  /**
+   * Consume PKCE state - get the verifier and delete the state atomically.
+   * Returns null if state not found or expired.
+   */
+  async consumePKCEState(state: string): Promise<string | null> {
+    try {
+      const key = `auth:pkce:${state}`;
+      // Get and delete atomically using multi
+      const multi = this.client.multi();
+      multi.get(key);
+      multi.del(key);
+      const results = await multi.exec();
+
+      if (!results || !results[0] || results[0][1] === null) {
+        logger.debug({ state: state.substring(0, 8) + '...' }, 'PKCE state not found or expired');
+        return null;
+      }
+
+      const verifier = results[0][1] as string;
+      logger.debug({ state: state.substring(0, 8) + '...' }, 'PKCE state consumed');
+      return verifier;
+    } catch (error) {
+      logger.error({ error, state: state.substring(0, 8) + '...' }, 'Failed to consume PKCE state');
+      return null;
+    }
+  }
 }
 
 // Export singleton instance

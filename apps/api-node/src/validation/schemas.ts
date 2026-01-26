@@ -95,3 +95,32 @@ export const PLAN_SIZE_RANGES: Record<PlanSize, { min: number; max: number }> = 
 export function getNodeCountRange(planSize: PlanSize): { min: number; max: number } {
   return PLAN_SIZE_RANGES[planSize];
 }
+
+// ==================== Auth Schemas ====================
+
+/**
+ * Request schema for OAuth callback.
+ * POST /auth/callback
+ */
+export const OAuthCallbackSchema = z.object({
+  code: z.string().min(1, 'Authorization code is required'),
+  state: z.string().min(1, 'State parameter is required'),
+});
+export type OAuthCallbackRequest = z.infer<typeof OAuthCallbackSchema>;
+
+/**
+ * Request schema for refreshing access token.
+ * POST /auth/refresh
+ */
+export const RefreshTokenSchema = z.object({
+  refresh_token: z.string().min(1, 'Refresh token is required'),
+});
+export type RefreshTokenRequest = z.infer<typeof RefreshTokenSchema>;
+
+/**
+ * Request schema for logout.
+ * POST /auth/logout
+ */
+export const LogoutSchema = z.object({
+  refresh_token: z.string().min(1, 'Refresh token is required'),
+});

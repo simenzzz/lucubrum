@@ -6,12 +6,41 @@
 
 ## Executive Summary
 
-This roadmap has been reorganized to reflect what has already been implemented. The original plan was not followed sequentially—some features (YouTube integration, staleness detection) were built before the core plan generation. **The immediate priority is Phase 1: Plan Generation**, which is required before any other features can function end-to-end.
+**Current Status (January 2026):**
+- ✅ **Phase 1: Plan Generation** - COMPLETE
+- ✅ **Phase 2: YouTube Resources** - COMPLETE
+- ✅ **Phase 3: Authentication** - COMPLETE
+- ❌ **Phase 4: Exercises & Grading** - Not started
+- ❌ **Phases 5-7** - Not started
+
+**Overall Progress: ~55% complete** (core plan generation, resource attachment, and authentication working end-to-end)
+
+**Next Priority**: Phase 4 (Exercises & Grading)
 
 ### Key Principles
 1. **Schema-first**: Pydantic models are the source of truth; everything flows from them
 2. **Incremental delivery**: Each phase produces testable, demonstrable functionality
 3. **Don't duplicate work**: Many services already exist—wire them up, don't rewrite
+
+### Skills Reference
+
+Use the appropriate skill when working on each service:
+
+| Skill | When to Use | Service |
+|-------|-------------|---------|
+| `/curriculum-skill` | LLM integration, Pydantic models, prompts, FastAPI endpoints | `apps/curriculum-python/` |
+| `/orchestrator-skill` | Public API, database, validation, services, routes | `apps/api-node/` |
+
+**Phase-to-Skill Mapping**:
+| Phase | Primary Skill(s) |
+|-------|------------------|
+| Phase 1 | Both (Python: prompts, api; Node: db, validation, service, routes) |
+| Phase 2 | Primarily `/orchestrator-skill` (Node: redis, resources) |
+| Phase 3 | `/orchestrator-skill` only (Node: auth) |
+| Phase 4 | Both (Python: exercises, grade; Node: services, routes) |
+| Phase 5 | Both (Node: mastery; Python: eval harness) |
+| Phase 6 | Both (deployment, logging) |
+| Phase 7 | Both (Python: normalize, MCP; Node: cache, admin) |
 
 ---
 
@@ -23,7 +52,7 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 | Component | Location | Status |
 |-----------|----------|--------|
 | Docker Compose | `infra/docker-compose.yml` | ✅ Postgres 15 + Redis 7 configured |
-| Database schema | `infra/postgres/init.sql` | ✅ All tables created (plans, nodes, resources, exercises, attempts, user_mastery, users, refresh_tokens, llm_calls) |
+| Database schema | `infra/postgres/init.sql` | ✅ Core tables created (plans, nodes, resources, exercises, attempts, user_mastery, users, refresh_tokens, llm_calls). Phase 3 adds: `roles` column to users, `user_plans` junction table |
 | JSON Schemas | `packages/contracts/schemas/` | ✅ 7 schemas exported |
 
 ### Python Service - Curriculum (`apps/curriculum-python/`)
@@ -45,14 +74,14 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 | Gemini | `src/providers/gemini.py` | ✅ google-generativeai |
 | Claude | `src/providers/claude.py` | ✅ anthropic SDK |
 
-**Utilities (Partial)**:
+**Utilities (100% Complete)**:
 | Utility | File | Status |
 |---------|------|--------|
 | Transcript fetcher | `src/utils/transcripts.py` | ✅ 192 lines, youtube-transcript-api |
 | Prompt loader | `src/utils/prompts.py` | ✅ 44 lines, LRU cached |
 | Hashing | `src/utils/hashing.py` | ✅ 28 lines, SHA-256 |
-| Logger | `src/utils/logger.py` | ❌ Empty skeleton |
-| Retry logic | `src/utils/retry.py` | ❌ Empty skeleton |
+| Logger | `src/utils/logger.py` | ✅ Uses Python logging module |
+| Retry logic | `src/utils/retry.py` | ✅ 216 lines, retry with validation |
 
 **API Endpoints (Partial)**:
 | Endpoint | File | Status |
@@ -60,7 +89,7 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 | POST /llm/transcript | `src/api/transcript.py` | ✅ 63 lines |
 | POST /llm/validate-video | `src/api/validate_video.py` | ✅ 150 lines |
 | POST /llm/check-staleness | `src/api/staleness.py` | ✅ 197 lines |
-| POST /llm/plan | `src/api/plan.py` | ❌ Empty skeleton |
+| POST /llm/plan | `src/api/plan.py` | ✅ 179 lines, full implementation |
 | POST /llm/exercises | `src/api/exercises.py` | ❌ Empty skeleton |
 | POST /llm/grade | `src/api/grade.py` | ❌ Empty skeleton |
 | POST /llm/queries | `src/api/queries.py` | ❌ Empty skeleton |
@@ -70,7 +99,7 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 |--------|------|--------|
 | validate_video/v1 | `src/prompts/validate_video/v1.txt` | ✅ 80 lines |
 | staleness/v1 | `src/prompts/staleness/v1.txt` | ✅ 89 lines |
-| plan/v1 | `src/prompts/plan/v1.txt` | ❌ Empty |
+| plan/v1 | `src/prompts/plan/v1.txt` | ✅ 65 lines |
 | exercises/v1 | `src/prompts/exercises/v1.txt` | ❌ Empty |
 | grade/v1 | `src/prompts/grade/v1.txt` | ❌ Empty |
 | queries/v1 | `src/prompts/queries/v1.txt` | ❌ Empty |
@@ -84,28 +113,46 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 | Curriculum client | `src/services/curriculum-client.ts` | ✅ 253 lines, HTTP client |
 | Plan cache | `src/services/plan-cache.service.ts` | ✅ 250 lines, staleness logic |
 | Logger | `src/utils/logger.ts` | ✅ 20 lines, pino |
-| Plan service | `src/services/plan.service.ts` | ❌ Empty |
+| Plan service | `src/services/plan.service.ts` | ✅ 255 lines, full orchestration |
+| Auth service | `src/services/auth.service.ts` | ✅ ~280 lines, Google OAuth + PKCE |
 | Exercise service | `src/services/exercise.service.ts` | ❌ Empty |
 | Mastery service | `src/services/mastery.service.ts` | ❌ Empty |
-| Auth service | `src/services/auth.service.ts` | ❌ Empty |
 
 **Routes (Partial)**:
 | Route | File | Status |
 |-------|------|--------|
-| POST /api/plan/:planId/resources | `src/routes/plan.routes.ts` | ✅ 195 lines (but no POST /api/plan) |
-| Auth routes | `src/routes/auth.routes.ts` | ❌ Empty |
+| POST /api/plan | `src/routes/plan.routes.ts` | ✅ Protected, full CRUD + resources |
+| GET /api/plan/:planId | `src/routes/plan.routes.ts` | ✅ Protected, included above |
+| POST /api/plan/:planId/resources | `src/routes/plan.routes.ts` | ✅ Protected, included above |
+| GET /api/plan/:planId/resources | `src/routes/plan.routes.ts` | ✅ Protected, included above |
+| GET /auth/google | `src/routes/auth.routes.ts` | ✅ OAuth initiation |
+| POST /auth/callback | `src/routes/auth.routes.ts` | ✅ Code exchange |
+| POST /auth/refresh | `src/routes/auth.routes.ts` | ✅ Token refresh |
+| POST /auth/logout | `src/routes/auth.routes.ts` | ✅ Token revocation |
 | Exercise routes | `src/routes/exercise.routes.ts` | ❌ Empty |
 | Mastery routes | `src/routes/mastery.routes.ts` | ❌ Empty |
 
-**Database & Validation (Not Started)**:
+**Database & Validation (100% Complete)**:
 | Component | File | Status |
 |-----------|------|--------|
-| Postgres client | `src/db/client.ts` | ❌ Empty |
-| Redis client | `src/db/redis.ts` | ❌ Empty |
-| AJV validators | `src/validation/schemas/` | ❌ Empty directory |
-| DAG validator | `src/validation/semantic/dag.validator.ts` | ❌ Empty |
-| Prereq validator | `src/validation/semantic/prereq.validator.ts` | ❌ Empty |
-| Input schemas (Zod) | `src/validation/input/` | ❌ Empty directory |
+| Postgres client | `src/db/client.ts` | ✅ 142 lines, pool + transactions |
+| Redis client | `src/db/redis.ts` | ✅ ~220 lines, fail-open caching + auth (blacklist, PKCE) |
+| Plan queries | `src/db/queries/plans.ts` | ✅ 194 lines, full CRUD |
+| Resource queries | `src/db/queries/resources.ts` | ✅ Complete |
+| User queries | `src/db/queries/users.ts` | ✅ ~85 lines, upsert/get by id/email |
+| Token queries | `src/db/queries/tokens.ts` | ✅ ~95 lines, SHA-256 hashed storage |
+| User-plans queries | `src/db/queries/user-plans.ts` | ✅ ~100 lines, junction table |
+| AJV validators | `src/validation/schemas/validator.ts` | ✅ 181 lines, all schemas |
+| DAG validator | `src/validation/semantic/dag.validator.ts` | ✅ 149 lines, cycle detection |
+| Prereq validator | `src/validation/semantic/prereq.validator.ts` | ✅ 107 lines |
+| Input schemas (Zod) | `src/validation/schemas.ts` | ✅ ~120 lines, includes auth schemas |
+
+**Auth & Middleware**:
+| Component | File | Status |
+|-----------|------|--------|
+| JWT utilities | `src/utils/jwt.ts` | ✅ ~180 lines, sign/verify access+refresh |
+| Auth middleware | `src/middleware/auth.middleware.ts` | ✅ ~170 lines, requireAuth/requireRole/optionalAuth |
+| Rate limiting | `src/middleware/rate-limit.middleware.ts` | ❌ Empty |
 
 ---
 
@@ -113,7 +160,7 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    PHASE 1: PLAN GENERATION (CRITICAL)                       │
+│                    PHASE 1: PLAN GENERATION ✅ COMPLETE                      │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  Python: prompts/plan/v1.txt + api/plan.py + utils/retry.py         │    │
 │  │  Node: db/client.ts + validation/* + plan.service.ts + routes       │    │
@@ -122,19 +169,19 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 └──────────────────────────────────────┼───────────────────────────────────────┘
                                        ▼
 ┌───────────────────────────────────────┬─────────────────────────────────────┐
-│   PHASE 2: WIRE YOUTUBE RESOURCES     │     PHASE 3: AUTHENTICATION          │
+│   PHASE 2: YOUTUBE RESOURCES ✅       │     PHASE 3: AUTHENTICATION ✅       │
 │  ┌─────────────────────────────────┐  │  ┌─────────────────────────────────┐ │
-│  │ • Connect db/redis.ts           │  │  │ • Google OAuth 2.0 + PKCE       │ │
-│  │ • Resource persistence queries  │  │  │ • JWT access/refresh tokens     │ │
-│  │ • Wire existing youtube.service │  │  │ • Auth middleware               │ │
-│  │ • Query suggestions endpoint    │  │  │ • Protect plan routes           │ │
+│  │ ✅ Connect db/redis.ts          │  │  │ ✅ Google OAuth 2.0 + PKCE       │ │
+│  │ ✅ Resource persistence queries │  │  │ ✅ JWT access/refresh tokens     │ │
+│  │ ✅ Wire existing youtube.service│  │  │ ✅ Auth middleware               │ │
+│  │ • Query suggestions endpoint    │  │  │ ✅ Protect plan routes           │ │
 │  └─────────────────────────────────┘  │  └─────────────────────────────────┘ │
 │                  │                    │                  │                    │
 └──────────────────┼────────────────────┴──────────────────┼────────────────────┘
                    └──────────────────┬────────────────────┘
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       PHASE 4: EXERCISES & GRADING                           │
+│                       PHASE 4: EXERCISES & GRADING ❌                        │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  Python: prompts + api/exercises.py + api/grade.py                  │    │
 │  │  Node: exercise.service.ts + mastery.service.ts + routes            │    │
@@ -173,11 +220,13 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 
 ---
 
-## Phase 1: Plan Generation (CRITICAL PATH)
+## Phase 1: Plan Generation ✅ COMPLETE
 
 **Goal**: Generate learning plans via LLM with full validation. THIS IS THE CORE FEATURE.
 
-**Why Critical**: The YouTube resource attachment (`POST /api/plan/:planId/resources`) already exists but cannot function without plans to attach resources to.
+**Status**: ✅ **PHASE COMPLETE** - All tasks implemented and working end-to-end.
+
+**Skills**: Use `/curriculum-skill` for Python tasks (1.1-1.3), `/orchestrator-skill` for Node tasks (1.4-1.11)
 
 ### Tasks
 
@@ -196,10 +245,10 @@ This roadmap has been reorganized to reflect what has already been implemented. 
 | 1.11 | POST /api/plan route | `apps/api-node/src/routes/plan.routes.ts` | Add to existing file |
 
 ### Exit Criteria
-- [ ] `curl -X POST localhost:3000/api/plan -d '{"topic": "Python basics", "user_level": "beginner"}'` returns a valid plan
-- [ ] Plan is persisted to Postgres (check `SELECT * FROM plans`)
-- [ ] DAG validation rejects cyclic prerequisites
-- [ ] Response includes full metadata (provider, model, prompt_version, hashes)
+- [x] `curl -X POST localhost:3000/api/plan -d '{"topic": "Python basics", "user_level": "beginner"}'` returns a valid plan
+- [x] Plan is persisted to Postgres (check `SELECT * FROM plans`)
+- [x] DAG validation rejects cyclic prerequisites
+- [x] Response includes full metadata (provider, model, prompt_version, hashes)
 
 ### Verification
 ```bash
@@ -365,16 +414,20 @@ async def validate_with_retry(
 
 ---
 
-## Phase 2: Wire YouTube Resources
+## Phase 2: Wire YouTube Resources ✅ COMPLETE
 
 **Goal**: Connect existing YouTube service to database persistence and Redis caching.
 
-**What Already Exists**:
+**Status**: ✅ **PHASE COMPLETE** - All tasks implemented.
+
+**Skills**: Use `/orchestrator-skill` for Node tasks (2.1-2.4), `/curriculum-skill` for Python tasks (2.5-2.6)
+
+**What's Implemented**:
 - `youtube.service.ts` (397 lines) - search, ranking, validation
 - `curriculum-client.ts` (253 lines) - calls Python for transcript validation
-- `plan.routes.ts` has `POST /api/plan/:planId/resources`
-
-**What's Missing**: Database persistence, Redis caching
+- `plan.routes.ts` has full resource CRUD (POST + GET)
+- `db/redis.ts` (149 lines) - Redis caching with fail-open
+- `db/queries/resources.ts` - Resource persistence
 
 ### Tasks
 
@@ -388,9 +441,9 @@ async def validate_with_retry(
 | 2.6 | Query suggestions prompt | `apps/curriculum-python/src/prompts/queries/v1.txt` | |
 
 ### Exit Criteria
-- [ ] Resources are persisted to `resources` table after attachment
-- [ ] Second request for same search uses Redis cache
-- [ ] YouTube quota usage is logged
+- [x] Resources are persisted to `resources` table after attachment
+- [x] Redis caching implemented with fail-open behavior
+- [x] YouTube quota usage is logged
 
 ### Existing Ranking Algorithm (Reference)
 The ranking algorithm is already implemented in `youtube.service.ts`:
@@ -405,30 +458,46 @@ The ranking algorithm is already implemented in `youtube.service.ts`:
 
 ---
 
-## Phase 3: Authentication
+## Phase 3: Authentication ✅ COMPLETE
 
 **Goal**: Users can sign in with Google and access protected endpoints.
+
+**Status**: ✅ **PHASE COMPLETE** - Google OAuth 2.0 with PKCE flow implemented.
+
+**Skills**: Use `/orchestrator-skill` for all tasks (Node-only phase)
+
+### Architecture Notes
+
+**Plan Access Model**: Plans are shared content (cached by topic+level). There are NO ownership checks—any authenticated user can access any plan. The `user_plans` junction table tracks which users are engaging with which plans, enabling "my plans" features without restricting access.
+
+**Token Strategy**:
+- Access JWT: 15-min expiry, contains `user_id`, `email`, `roles[]`
+- Refresh JWT: 7-day expiry, stored hashed in Postgres, revocable
+- PKCE flow for SPA security (code_verifier stored server-side in Redis)
 
 ### Tasks
 
 | # | Task | File | Notes |
 |---|------|------|-------|
 | 3.1 | Google OAuth credentials | Google Cloud Console | Get client ID/secret |
-| 3.2 | JWT utilities | `apps/api-node/src/utils/jwt.ts` | Sign/verify tokens |
-| 3.3 | Auth service | `apps/api-node/src/services/auth.service.ts` | OAuth flow |
-| 3.4 | Auth routes | `apps/api-node/src/routes/auth.routes.ts` | /auth/* endpoints |
-| 3.5 | Auth middleware | `apps/api-node/src/middleware/auth.middleware.ts` | JWT verification |
-| 3.6 | User database queries | `apps/api-node/src/db/queries/users.ts` | Upsert user |
-| 3.7 | Token database queries | `apps/api-node/src/db/queries/tokens.ts` | Refresh tokens |
-| 3.8 | Redis token blacklist | `apps/api-node/src/db/redis.ts` | Add to existing |
-| 3.9 | Protect plan routes | `apps/api-node/src/routes/plan.routes.ts` | Add auth middleware |
+| 3.2 | JWT utilities | `apps/api-node/src/utils/jwt.ts` | ✅ Sign/verify tokens |
+| 3.3 | Auth service | `apps/api-node/src/services/auth.service.ts` | ✅ OAuth flow with PKCE |
+| 3.4 | Auth routes | `apps/api-node/src/routes/auth.routes.ts` | ✅ /auth/* endpoints |
+| 3.5 | Auth middleware | `apps/api-node/src/middleware/auth.middleware.ts` | ✅ JWT verification |
+| 3.6 | User database queries | `apps/api-node/src/db/queries/users.ts` | ✅ Upsert user with roles |
+| 3.7 | Token database queries | `apps/api-node/src/db/queries/tokens.ts` | ✅ Refresh tokens (hashed) |
+| 3.8 | Redis token blacklist | `apps/api-node/src/db/redis.ts` | ✅ Added blacklist + PKCE state |
+| 3.9 | Protect plan routes | `apps/api-node/src/routes/plan.routes.ts` | ✅ Added auth middleware |
+| 3.10 | User-plans junction queries | `apps/api-node/src/db/queries/user-plans.ts` | ✅ Track user↔plan engagement |
+| 3.11 | Database schema changes | `infra/postgres/init.sql` | ✅ Already has `roles` column + `user_plans` table |
 
 ### Exit Criteria
-- [ ] `GET /auth/google` redirects to Google OAuth
-- [ ] `POST /auth/callback` exchanges code for tokens
-- [ ] `POST /auth/refresh` issues new access token
-- [ ] `POST /auth/logout` revokes refresh token
-- [ ] Protected routes return 401 without valid JWT
+- [x] `GET /auth/google` returns Google OAuth URL
+- [x] `POST /auth/callback` exchanges code for tokens
+- [x] `POST /auth/refresh` issues new access token
+- [x] `POST /auth/logout` revokes refresh token
+- [x] Protected routes return 401 without valid JWT
+- [x] User engagement tracked in `user_plans` table on plan access
 
 ### Verification
 ```bash
@@ -436,10 +505,24 @@ The ranking algorithm is already implemented in `youtube.service.ts`:
 curl http://localhost:3000/api/plan
 # Should return 401
 
-# Test with token
+# Get OAuth URL
+curl http://localhost:3000/auth/google
+# Returns { authorization_url, state }
+
+# After OAuth flow, test with token
 curl http://localhost:3000/api/plan \
   -H "Authorization: Bearer <access_token>"
-# Should return plans or empty array
+# Should return plans or 201 on POST
+```
+
+### Environment Variables Required
+```env
+GOOGLE_CLIENT_ID=<from Google Cloud Console>
+GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+JWT_SECRET=<32+ char secret>
+JWT_ACCESS_EXPIRY=15m
+JWT_REFRESH_EXPIRY=7d
 ```
 
 ---
@@ -447,6 +530,10 @@ curl http://localhost:3000/api/plan \
 ## Phase 4: Exercises & Grading
 
 **Goal**: Generate exercises for nodes and grade user answers with mastery tracking.
+
+**Status**: ❌ **NOT STARTED**
+
+**Skills**: Use `/curriculum-skill` for Python tasks (4.1-4.4), `/orchestrator-skill` for Node tasks (4.5-4.10)
 
 ### Tasks
 
@@ -508,6 +595,10 @@ function masteryToDifficulty(mastery: number): number {
 ## Phase 5: Recommendations & Evaluation
 
 **Goal**: Smart next-step recommendations and quality measurement.
+
+**Status**: ❌ **NOT STARTED**
+
+**Skills**: Use `/orchestrator-skill` for Node tasks (5.1-5.2), `/curriculum-skill` for evaluation harness (5.3-5.6)
 
 ### Tasks
 
@@ -581,6 +672,10 @@ function getNextNode(
 
 **Goal**: Production-ready system with proper operational tooling.
 
+**Status**: ❌ **NOT STARTED**
+
+**Skills**: Use `/orchestrator-skill` for Node tasks (6.1-6.5, 6.7), `/curriculum-skill` for Python tasks (6.6, 6.8)
+
 ### Tasks
 
 | # | Task | File | Notes |
@@ -606,6 +701,10 @@ function getNextNode(
 ## Phase 7: Complete Caching & Staleness
 
 **Goal**: Finish the partially-built caching and staleness detection system.
+
+**Status**: ❌ **NOT STARTED**
+
+**Skills**: Use `/curriculum-skill` for Python tasks (7.1-7.3), `/orchestrator-skill` for Node tasks (7.4-7.7)
 
 **What Already Exists**:
 - `POST /llm/check-staleness` endpoint (complete)
@@ -697,59 +796,70 @@ Given a user's free-text topic request, return:
 ## Appendix: File Checklist
 
 ### Python Service - What Needs Implementation
-- [ ] `src/prompts/plan/v1.txt` - Plan generation prompt
+- [x] `src/prompts/plan/v1.txt` - Plan generation prompt ✅
 - [ ] `src/prompts/exercises/v1.txt` - Exercise generation prompt
 - [ ] `src/prompts/grade/v1.txt` - Grading prompt
 - [ ] `src/prompts/queries/v1.txt` - Query suggestions prompt
 - [ ] `src/prompts/normalize/v1.txt` - Topic normalization prompt
-- [ ] `src/api/plan.py` - Plan generation endpoint
+- [x] `src/api/plan.py` - Plan generation endpoint ✅
 - [ ] `src/api/exercises.py` - Exercise generation endpoint
 - [ ] `src/api/grade.py` - Grading endpoint
 - [ ] `src/api/queries.py` - Query suggestions endpoint
 - [ ] `src/api/normalize.py` - Topic normalization endpoint
-- [ ] `src/utils/retry.py` - Validation retry logic
-- [ ] `src/utils/logger.py` - Structured logging (structlog)
+- [x] `src/utils/retry.py` - Validation retry logic ✅
+- [x] `src/utils/logger.py` - Logging ✅
 
 ### Node Service - What Needs Implementation
-- [ ] `src/db/client.ts` - Postgres connection pool
-- [ ] `src/db/redis.ts` - Redis connection
-- [ ] `src/db/queries/plans.ts` - Plan CRUD queries
-- [ ] `src/db/queries/resources.ts` - Resource queries
+- [x] `src/db/client.ts` - Postgres connection pool ✅
+- [x] `src/db/redis.ts` - Redis connection + auth (blacklist, PKCE) ✅
+- [x] `src/db/queries/plans.ts` - Plan CRUD queries ✅
+- [x] `src/db/queries/resources.ts` - Resource queries ✅
 - [ ] `src/db/queries/exercises.ts` - Exercise queries
 - [ ] `src/db/queries/mastery.ts` - Mastery queries
-- [ ] `src/db/queries/users.ts` - User queries
-- [ ] `src/db/queries/tokens.ts` - Token queries
-- [ ] `src/validation/schemas/validator.ts` - AJV setup
-- [ ] `src/validation/semantic/dag.validator.ts` - DAG validation
-- [ ] `src/validation/semantic/prereq.validator.ts` - Prerequisite validation
-- [ ] `src/validation/input/plan.ts` - Zod schemas
-- [ ] `src/services/plan.service.ts` - Plan orchestration
+- [x] `src/db/queries/users.ts` - User queries (with roles) ✅
+- [x] `src/db/queries/tokens.ts` - Token queries (hashed storage) ✅
+- [x] `src/db/queries/user-plans.ts` - User↔Plan junction table queries ✅
+- [x] `src/validation/schemas/validator.ts` - AJV setup ✅
+- [x] `src/validation/semantic/dag.validator.ts` - DAG validation ✅
+- [x] `src/validation/semantic/prereq.validator.ts` - Prerequisite validation ✅
+- [x] `src/validation/schemas.ts` - Zod schemas (includes auth schemas) ✅
+- [x] `src/services/plan.service.ts` - Plan orchestration ✅
 - [ ] `src/services/exercise.service.ts` - Exercise handling
 - [ ] `src/services/mastery.service.ts` - Mastery calculation
-- [ ] `src/services/auth.service.ts` - OAuth logic
-- [ ] `src/routes/plan.routes.ts` - Add POST /api/plan (file exists, needs route)
-- [ ] `src/routes/auth.routes.ts` - OAuth endpoints
+- [x] `src/services/auth.service.ts` - OAuth logic ✅
+- [x] `src/routes/plan.routes.ts` - Full CRUD + resources (protected) ✅
+- [x] `src/routes/auth.routes.ts` - OAuth endpoints ✅
 - [ ] `src/routes/exercise.routes.ts` - Exercise endpoints
 - [ ] `src/routes/mastery.routes.ts` - Mastery endpoints
-- [ ] `src/middleware/auth.middleware.ts` - JWT verification
+- [x] `src/middleware/auth.middleware.ts` - JWT verification ✅
 - [ ] `src/middleware/rate-limit.middleware.ts` - Rate limiting
-- [ ] `src/utils/jwt.ts` - JWT utilities
+- [x] `src/utils/jwt.ts` - JWT utilities ✅
 
 ### Already Complete (Do Not Reimplement)
 **Python:**
 - ✅ All models in `src/models/`
 - ✅ `src/providers/base.py`, `gemini.py`, `claude.py`
-- ✅ `src/utils/transcripts.py`, `prompts.py`, `hashing.py`
-- ✅ `src/api/transcript.py`, `validate_video.py`, `staleness.py`
-- ✅ `src/prompts/validate_video/v1.txt`, `staleness/v1.txt`
+- ✅ `src/utils/transcripts.py`, `prompts.py`, `hashing.py`, `retry.py`
+- ✅ `src/api/transcript.py`, `validate_video.py`, `staleness.py`, `plan.py`
+- ✅ `src/prompts/validate_video/v1.txt`, `staleness/v1.txt`, `plan/v1.txt`
 
 **Node:**
 - ✅ `src/services/youtube.service.ts`
 - ✅ `src/services/curriculum-client.ts`
 - ✅ `src/services/plan-cache.service.ts`
+- ✅ `src/services/plan.service.ts`
+- ✅ `src/services/auth.service.ts` (Google OAuth + PKCE)
 - ✅ `src/utils/logger.ts`
-- ✅ `src/routes/plan.routes.ts` (resource attachment only)
+- ✅ `src/utils/jwt.ts` (sign/verify access+refresh tokens)
+- ✅ `src/db/client.ts`, `redis.ts` (includes auth blacklist + PKCE state)
+- ✅ `src/db/queries/plans.ts`, `resources.ts`
+- ✅ `src/db/queries/users.ts`, `tokens.ts`, `user-plans.ts`
+- ✅ `src/validation/schemas.ts` (includes auth schemas), `schemas/validator.ts`
+- ✅ `src/validation/semantic/dag.validator.ts`, `prereq.validator.ts`
+- ✅ `src/routes/plan.routes.ts` (full CRUD + resources, protected)
+- ✅ `src/routes/auth.routes.ts` (OAuth endpoints)
+- ✅ `src/middleware/auth.middleware.ts` (JWT verification)
 
 ---
 
-*Last updated: January 2026 (Post codebase review)*
+*Last updated: January 2026 (Phase 3 Authentication complete)*

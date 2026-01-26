@@ -1,5 +1,6 @@
 import express from 'express';
 import planRoutes from './routes/plan.routes';
+import authRoutes from './routes/auth.routes';
 import logger from './utils/logger';
 import { db } from './db/client';
 import { redis } from './db/redis';
@@ -27,6 +28,7 @@ app.get('/health', async (_req, res) => {
 });
 
 // Routes
+app.use('/auth', authRoutes);
 app.use('/api/plan', planRoutes);
 
 // Error handling middleware

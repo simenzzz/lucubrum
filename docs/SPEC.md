@@ -91,9 +91,10 @@ User                    Node API                Google OAuth
 ```
 
 #### Token Strategy
-- **Access JWT**: 15-minute expiry, contains `user_id`, `email`, `roles`
-- **Refresh JWT**: 7-day expiry, stored in Redis with revocation capability
-- **PKCE**: Required for public clients (SPA/mobile)
+- **Access JWT**: 15-minute expiry, contains `user_id`, `email`, `roles[]`, `jti` (for blacklisting)
+- **Refresh JWT**: 7-day expiry, stored hashed in Postgres with revocation capability
+- **Token Blacklist**: Redis-based, TTL matches remaining token lifetime, fail-open
+- **PKCE**: Required for public clients (SPA/mobile), code_verifier stored server-side in Redis
 
 #### Auth Endpoints
 - `GET /auth/google` - Initiate OAuth flow
@@ -676,13 +677,37 @@ CREATE INDEX idx_mastery_user ON user_mastery(user_id);
 CREATE TABLE refresh_tokens (
   token_id UUID PRIMARY KEY,
   user_id VARCHAR(255) NOT NULL,
-  token_hash VARCHAR(64) NOT NULL,
+  token_hash VARCHAR(64) NOT NULL,  -- SHA-256 hash, never plaintext
   expires_at TIMESTAMP NOT NULL,
   revoked_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_hash ON refresh_tokens(token_hash);
+
+-- Users (OAuth profiles)
+CREATE TABLE users (
+  user_id VARCHAR(255) PRIMARY KEY,  -- Google sub claim
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  picture_url VARCHAR(500),
+  roles JSONB NOT NULL DEFAULT '["user"]',  -- ["user"] or ["user", "admin"]
+  created_at TIMESTAMP DEFAULT NOW(),
+  last_login_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_users_email ON users(email);
+
+-- User-Plan Junction (many-to-many: tracks which users engage with which plans)
+-- Plans are shared content; this enables "my plans" without ownership restrictions
+CREATE TABLE user_plans (
+  user_id VARCHAR(255) NOT NULL,
+  plan_id UUID NOT NULL REFERENCES plans(plan_id) ON DELETE CASCADE,
+  started_at TIMESTAMP DEFAULT NOW(),
+  last_accessed_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (user_id, plan_id)
+);
+CREATE INDEX idx_user_plans_user ON user_plans(user_id);
+CREATE INDEX idx_user_plans_plan ON user_plans(plan_id);
 
 -- LLM Call Logs
 CREATE TABLE llm_calls (

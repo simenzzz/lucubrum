@@ -128,7 +128,20 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255),
   picture_url VARCHAR(500),
+  roles JSONB NOT NULL DEFAULT '["user"]',
   created_at TIMESTAMP DEFAULT NOW(),
   last_login_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX idx_users_email ON users(email);
+
+-- User-Plan Junction (many-to-many: tracks which users engage with which plans)
+-- Plans are shared content; this enables "my plans" without ownership restrictions
+CREATE TABLE user_plans (
+  user_id VARCHAR(255) NOT NULL,
+  plan_id UUID NOT NULL REFERENCES plans(plan_id) ON DELETE CASCADE,
+  started_at TIMESTAMP DEFAULT NOW(),
+  last_accessed_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (user_id, plan_id)
+);
+CREATE INDEX idx_user_plans_user ON user_plans(user_id);
+CREATE INDEX idx_user_plans_plan ON user_plans(plan_id);

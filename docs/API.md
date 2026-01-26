@@ -773,9 +773,18 @@ JWT claims:
 {
   "sub": "user_id",
   "email": "user@example.com",
+  "roles": ["user"],
+  "jti": "unique-token-id",
+  "type": "access",
+  "iat": 1736171100,
   "exp": 1736172000
 }
 ```
+
+Notes:
+- `roles`: Array of role strings. Default: `["user"]`. Admins have `["user", "admin"]`.
+- `jti`: Unique token identifier used for blacklisting on logout.
+- `type`: Token type (`"access"` or `"refresh"`).
 
 ### Internal API (Service Auth)
 ```http

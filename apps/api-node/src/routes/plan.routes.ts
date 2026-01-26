@@ -17,8 +17,13 @@ import {
   getResourcesForPlan,
   ResourceInput,
 } from '../db/queries/resources';
+import { requireAuth } from '../middleware/auth.middleware';
+import { upsertUserPlan } from '../db/queries/user-plans';
 
 const router = Router();
+
+// Apply requireAuth middleware to all routes
+router.use(requireAuth);
 
 // Type definitions for request/response
 interface CreatePlanResponse {
@@ -87,18 +92,21 @@ router.post(
 
       logger.info({ topic, user_level, plan_size, requestId }, 'Creating plan');
 
-      // Create plan via service
+      // Create plan via service using authenticated user
       const result = await planService.createPlan(
         {
           topic,
           user_level,
           plan_size,
-          user_id: null, // Anonymous until Phase 3 auth
+          user_id: req.user!.user_id,
         },
         requestId
       );
 
-      logger.info({ planId: result.plan_id, requestId }, 'Plan created');
+      // Track user-plan relationship
+      await upsertUserPlan(req.user!.user_id, result.plan_id);
+
+      logger.info({ planId: result.plan_id, userId: req.user!.user_id, requestId }, 'Plan created');
 
       return res.status(201).json({
         plan_id: result.plan_id,
@@ -161,6 +169,9 @@ router.get(
           request_id: requestId,
         });
       }
+
+      // Track user-plan relationship on access
+      await upsertUserPlan(req.user!.user_id, planId);
 
       return res.json({ plan });
     } catch (error) {

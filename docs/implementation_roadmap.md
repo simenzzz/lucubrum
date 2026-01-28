@@ -11,11 +11,13 @@
 - ✅ **Phase 2: YouTube Resources** - COMPLETE
 - ✅ **Phase 3: Authentication** - COMPLETE
 - ✅ **Phase 4: Exercises & Grading** - COMPLETE
-- ❌ **Phases 5-7** - Not started
+- ✅ **Phase 5: Recommendations & Evaluation** - COMPLETE
+- ✅ **Phase 6: Polish & Deployment** - COMPLETE
+- ❌ **Phase 7** - Not started
 
-**Overall Progress: ~70% complete** (core plan generation, resource attachment, authentication, and exercises/grading working end-to-end)
+**Overall Progress: ~95% complete** (core features, auth, exercises, grading, recommendations, and deployment working)
 
-**Next Priority**: Phase 5 (Recommendations & Evaluation)
+**Next Priority**: Phase 7 (Complete Caching & Staleness)
 
 ### Key Principles
 1. **Schema-first**: Pydantic models are the source of truth; everything flows from them
@@ -51,9 +53,20 @@ Use the appropriate skill when working on each service:
 ### Infrastructure (100% Complete)
 | Component | Location | Status |
 |-----------|----------|--------|
-| Docker Compose | `infra/docker-compose.yml` | ✅ Postgres 15 + Redis 7 configured |
+| Docker Compose (dev) | `infra/docker-compose.yml` | ✅ Postgres 15 + Redis 7 configured |
+| Docker Compose (prod) | `infra/docker-compose.prod.yml` | ✅ Full production setup |
+| Dockerfile (Node) | `apps/api-node/Dockerfile` | ✅ Multi-stage build |
+| Dockerfile (Python) | `apps/curriculum-python/Dockerfile` | ✅ Poetry-based build |
 | Database schema | `infra/postgres/init.sql` | ✅ Core tables created (plans, nodes, resources, exercises, attempts, user_mastery, users, refresh_tokens, llm_calls). Phase 3 adds: `roles` column to users, `user_plans` junction table |
 | JSON Schemas | `packages/contracts/schemas/` | ✅ 7 schemas exported |
+
+### Evaluation Infrastructure (`eval/`)
+| Component | Location | Status |
+|-----------|----------|--------|
+| Golden topics | `eval/golden_topics.json` | ✅ 10 topics across CS, Math, Physics, Business, Biology |
+| Evaluation harness | `eval/run.py` | ✅ ~250 lines, schema + DAG validity metrics |
+| Results directory | `eval/results/` | ✅ For evaluation output |
+| Makefile target | `Makefile` | ✅ `make eval [TOPICS=N]` |
 
 ### Python Service - Curriculum (`apps/curriculum-python/`)
 
@@ -100,9 +113,14 @@ Use the appropriate skill when working on each service:
 | Transcript fetcher | `src/utils/transcripts.py` | ✅ 192 lines, youtube-transcript-api |
 | Prompt loader | `src/utils/prompts.py` | ✅ 44 lines, LRU cached |
 | Hashing | `src/utils/hashing.py` | ✅ 28 lines, SHA-256 |
-| Logger | `src/utils/logger.py` | ✅ Uses Python logging module |
+| Logger | `src/utils/logger.py` | ✅ ~85 lines, structlog JSON/console |
 | Retry logic | `src/utils/retry.py` | ✅ 216 lines, retry with validation |
 | Web search | `src/utils/web_search.py` | ✅ Google CSE integration with graceful degradation |
+
+**Middleware**:
+| Middleware | File | Status |
+|------------|------|--------|
+| Service token auth | `src/middleware/service_auth.py` | ✅ ~75 lines, protects /llm/* endpoints |
 
 **Prompts (Partial)**:
 | Prompt | File | Status |
@@ -126,7 +144,7 @@ Use the appropriate skill when working on each service:
 | Plan service | `src/services/plan.service.ts` | ✅ 255 lines, full orchestration |
 | Auth service | `src/services/auth.service.ts` | ✅ ~280 lines, Google OAuth + PKCE |
 | Exercise service | `src/services/exercise.service.ts` | ✅ Full implementation with caching |
-| Mastery service | `src/services/mastery.service.ts` | ✅ Full implementation with weighted scoring |
+| Mastery service | `src/services/mastery.service.ts` | ✅ Full implementation with weighted scoring + next-node recommendation |
 
 **Routes (Partial)**:
 | Route | File | Status |
@@ -144,6 +162,12 @@ Use the appropriate skill when working on each service:
 | POST /api/attempts | `src/routes/mastery.routes.ts` | ✅ Submit and grade answer |
 | GET /api/plan/:id/nodes/:nodeId/mastery | `src/routes/mastery.routes.ts` | ✅ Get node mastery |
 | GET /api/plan/:id/mastery | `src/routes/mastery.routes.ts` | ✅ Get plan mastery overview |
+| GET /api/plan/:id/next | `src/routes/mastery.routes.ts` | ✅ Get next node recommendation |
+| DELETE /admin/cache/youtube | `src/routes/admin.routes.ts` | ✅ Invalidate YouTube cache |
+| DELETE /admin/cache/plans | `src/routes/admin.routes.ts` | ✅ Invalidate plan cache |
+| GET /admin/llm-calls | `src/routes/admin.routes.ts` | ✅ Query LLM call logs |
+| GET /admin/metrics | `src/routes/admin.routes.ts` | ✅ System metrics |
+| GET /admin/cache/stats | `src/routes/admin.routes.ts` | ✅ Redis cache statistics |
 
 **Database Queries (Updated)**:
 | Component | File | Status |
@@ -178,7 +202,7 @@ Use the appropriate skill when working on each service:
 |-----------|------|--------|
 | JWT utilities | `src/utils/jwt.ts` | ✅ ~180 lines, sign/verify access+refresh |
 | Auth middleware | `src/middleware/auth.middleware.ts` | ✅ ~170 lines, requireAuth/requireRole/optionalAuth |
-| Rate limiting | `src/middleware/rate-limit.middleware.ts` | ❌ Empty |
+| Rate limiting | `src/middleware/rate-limit.middleware.ts` | ✅ ~320 lines, Redis-backed sliding window |
 
 ---
 
@@ -628,11 +652,11 @@ function masteryToDifficulty(mastery: number): number {
 
 ---
 
-## Phase 5: Recommendations & Evaluation
+## Phase 5: Recommendations & Evaluation ✅ COMPLETE
 
 **Goal**: Smart next-step recommendations and quality measurement.
 
-**Status**: ❌ **NOT STARTED**
+**Status**: ✅ **PHASE COMPLETE** - All tasks implemented.
 
 **Skills**: Use `/orchestrator-skill` for Node tasks (5.1-5.2), `/curriculum-skill` for evaluation harness (5.3-5.6)
 
@@ -640,19 +664,30 @@ function masteryToDifficulty(mastery: number): number {
 
 | # | Task | File | Notes |
 |---|------|------|-------|
-| 5.1 | Next-node algorithm | `apps/api-node/src/services/mastery.service.ts` | Add to existing |
-| 5.2 | GET /api/plan/:id/next | `apps/api-node/src/routes/mastery.routes.ts` | |
-| 5.3 | Golden topics dataset | `eval/golden_topics.json` | 10-30 topics |
-| 5.4 | Evaluation harness | `eval/run.py` | Metrics collection |
-| 5.5 | Schema validity metrics | `eval/run.py` | First try vs retry |
-| 5.6 | DAG validity metrics | `eval/run.py` | All plans valid |
+| 5.1 | Next-node algorithm | `apps/api-node/src/services/mastery.service.ts` | ✅ Added getNextNode() method |
+| 5.2 | GET /api/plan/:id/next | `apps/api-node/src/routes/mastery.routes.ts` | ✅ Recommendation endpoint |
+| 5.3 | Golden topics dataset | `eval/golden_topics.json` | ✅ 10 topics across 5 fields |
+| 5.4 | Evaluation harness | `eval/run.py` | ✅ Full implementation |
+| 5.5 | Schema validity metrics | `eval/run.py` | ✅ First try + retry tracking |
+| 5.6 | DAG validity metrics | `eval/run.py` | ✅ Cycle detection |
 
 ### Exit Criteria
-- [ ] `GET /api/plan/:id/next` returns best next node
-- [ ] Nodes with unmet prerequisites are not recommended
-- [ ] Evaluation harness runs against golden topics
-- [ ] Metrics: >95% schema validity (first try)
-- [ ] Metrics: 100% DAG validity
+- [x] `GET /api/plan/:id/next` returns best next node
+- [x] Nodes with unmet prerequisites are not recommended
+- [x] Evaluation harness runs against golden topics
+- [x] Metrics: >95% schema validity (first try)
+- [x] Metrics: 100% DAG validity
+
+### Verification
+```bash
+# Get next node recommendation
+curl http://localhost:3000/api/plan/{plan_id}/next \
+  -H "Authorization: Bearer {token}"
+
+# Run evaluation harness
+make eval              # All topics
+make eval TOPICS=3     # First 3 topics
+```
 
 ### Next-Node Algorithm
 ```typescript
@@ -704,11 +739,11 @@ function getNextNode(
 
 ---
 
-## Phase 6: Polish & Deployment
+## Phase 6: Polish & Deployment ✅ COMPLETE
 
 **Goal**: Production-ready system with proper operational tooling.
 
-**Status**: ❌ **NOT STARTED**
+**Status**: ✅ **PHASE COMPLETE** - All tasks implemented.
 
 **Skills**: Use `/orchestrator-skill` for Node tasks (6.1-6.5, 6.7), `/curriculum-skill` for Python tasks (6.6, 6.8)
 
@@ -716,21 +751,46 @@ function getNextNode(
 
 | # | Task | File | Notes |
 |---|------|------|-------|
-| 6.1 | Rate limiting middleware | `apps/api-node/src/middleware/rate-limit.middleware.ts` | Redis-backed |
-| 6.2 | Admin endpoints | `apps/api-node/src/routes/admin.routes.ts` | Cache invalidation |
-| 6.3 | Error handling improvements | Both services | Consistent format |
-| 6.4 | Health check enhancements | Both services | DB/Redis connectivity |
-| 6.5 | Dockerfile for Node | `apps/api-node/Dockerfile` | Multi-stage |
-| 6.6 | Dockerfile for Python | `apps/curriculum-python/Dockerfile` | |
-| 6.7 | Production docker-compose | `infra/docker-compose.prod.yml` | |
-| 6.8 | Python structured logging | `apps/curriculum-python/src/utils/logger.py` | structlog |
+| 6.0 | Set up Poetry | `apps/curriculum-python/poetry.lock` | ✅ Lock file generated |
+| 6.1 | Rate limiting middleware | `apps/api-node/src/middleware/rate-limit.middleware.ts` | ✅ Redis-backed sliding window |
+| 6.2 | Admin endpoints | `apps/api-node/src/routes/admin.routes.ts` | ✅ Cache invalidation + metrics |
+| 6.3 | Error handling improvements | Both services | ✅ Consistent format with timestamps |
+| 6.4 | Health check enhancements | Both services | ✅ DB/Redis/Python service checks |
+| 6.5 | Dockerfile for Node | `apps/api-node/Dockerfile` | ✅ Multi-stage |
+| 6.6 | Dockerfile for Python | `apps/curriculum-python/Dockerfile` | ✅ Poetry-based |
+| 6.7 | Production docker-compose | `infra/docker-compose.prod.yml` | ✅ With networking |
+| 6.8 | Python structured logging | `apps/curriculum-python/src/utils/logger.py` | ✅ structlog JSON/console |
+| 6.9 | Service token auth | `apps/curriculum-python/src/middleware/service_auth.py` | ✅ Protects /llm/* endpoints |
+| 6.10 | Admin queries | `apps/api-node/src/db/queries/admin.ts` | ✅ LLM logs + metrics |
 
 ### Exit Criteria
-- [ ] Rate limiting prevents abuse (429 responses)
-- [ ] Admin can invalidate YouTube cache
-- [ ] All errors return consistent JSON format
-- [ ] Health endpoints check all dependencies
-- [ ] Docker images build and run
+- [x] Rate limiting prevents abuse (429 responses)
+- [x] Admin can invalidate YouTube/plan cache
+- [x] All errors return consistent JSON format with timestamps
+- [x] Health endpoints check all dependencies
+- [x] Docker images build and run
+- [x] Service token auth protects Python /llm/* endpoints
+- [x] Admin can view LLM call logs and system metrics
+
+### Verification
+```bash
+# Test rate limiting (plan creation: 10/hour)
+for i in {1..15}; do
+  curl -X POST http://localhost:3000/api/plan \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"topic": "test", "user_level": "beginner"}'
+done
+# Should see 429 after 10 requests
+
+# Test service token auth
+curl http://localhost:8000/llm/plan -X POST -d '{}'
+# Expected: 401 (when SERVICE_TOKEN is set)
+
+# Build and run Docker
+docker-compose -f infra/docker-compose.prod.yml build
+docker-compose -f infra/docker-compose.prod.yml up -d
+```
 
 ---
 
@@ -856,6 +916,7 @@ Given a user's free-text topic request, return:
 - [x] `src/db/queries/users.ts` - User queries (with roles) ✅
 - [x] `src/db/queries/tokens.ts` - Token queries (hashed storage) ✅
 - [x] `src/db/queries/user-plans.ts` - User↔Plan junction table queries ✅
+- [x] `src/db/queries/admin.ts` - Admin metrics + LLM log queries ✅
 - [x] `src/validation/schemas/validator.ts` - AJV setup ✅
 - [x] `src/validation/semantic/dag.validator.ts` - DAG validation ✅
 - [x] `src/validation/semantic/prereq.validator.ts` - Prerequisite validation ✅
@@ -868,17 +929,21 @@ Given a user's free-text topic request, return:
 - [x] `src/routes/auth.routes.ts` - OAuth endpoints ✅
 - [x] `src/routes/exercise.routes.ts` - Exercise endpoints ✅
 - [x] `src/routes/mastery.routes.ts` - Mastery endpoints ✅
+- [x] `src/routes/admin.routes.ts` - Admin endpoints ✅
 - [x] `src/middleware/auth.middleware.ts` - JWT verification ✅
-- [ ] `src/middleware/rate-limit.middleware.ts` - Rate limiting
+- [x] `src/middleware/rate-limit.middleware.ts` - Rate limiting ✅
 - [x] `src/utils/jwt.ts` - JWT utilities ✅
 
 ### Already Complete (Do Not Reimplement)
 **Python:**
 - ✅ All models in `src/models/`
 - ✅ `src/providers/base.py`, `gemini.py`, `claude.py`
-- ✅ `src/utils/transcripts.py`, `prompts.py`, `hashing.py`, `retry.py`, `web_search.py`
+- ✅ `src/utils/transcripts.py`, `prompts.py`, `hashing.py`, `retry.py`, `web_search.py`, `logger.py`
 - ✅ `src/api/transcript.py`, `validate_video.py`, `staleness.py`, `plan.py`, `exercises.py`, `grade.py`
 - ✅ `src/prompts/validate_video/v1.txt`, `staleness/v1.txt`, `plan/v1.txt`, `exercises/v1.txt`, `grade/v1.txt`
+- ✅ `src/middleware/service_auth.py` (service token auth)
+- ✅ `Dockerfile` (Poetry-based multi-stage)
+- ✅ `poetry.lock` (locked dependencies)
 
 **Node:**
 - ✅ `src/services/youtube.service.ts`
@@ -891,7 +956,7 @@ Given a user's free-text topic request, return:
 - ✅ `src/utils/logger.ts`
 - ✅ `src/utils/jwt.ts` (sign/verify access+refresh tokens)
 - ✅ `src/db/client.ts`, `redis.ts` (includes auth blacklist + PKCE state)
-- ✅ `src/db/queries/plans.ts`, `resources.ts`, `exercises.ts`, `mastery.ts`
+- ✅ `src/db/queries/plans.ts`, `resources.ts`, `exercises.ts`, `mastery.ts`, `admin.ts`
 - ✅ `src/db/queries/users.ts`, `tokens.ts`, `user-plans.ts`
 - ✅ `src/validation/schemas.ts` (includes auth + exercise schemas), `schemas/validator.ts`
 - ✅ `src/validation/semantic/dag.validator.ts`, `prereq.validator.ts`
@@ -899,8 +964,14 @@ Given a user's free-text topic request, return:
 - ✅ `src/routes/auth.routes.ts` (OAuth endpoints)
 - ✅ `src/routes/exercise.routes.ts` (generate + get exercises)
 - ✅ `src/routes/mastery.routes.ts` (attempts + mastery tracking)
+- ✅ `src/routes/admin.routes.ts` (cache/metrics management)
 - ✅ `src/middleware/auth.middleware.ts` (JWT verification)
+- ✅ `src/middleware/rate-limit.middleware.ts` (Redis-backed sliding window)
+- ✅ `Dockerfile` (multi-stage build)
+
+**Infrastructure:**
+- ✅ `infra/docker-compose.prod.yml` (production docker-compose)
 
 ---
 
-*Last updated: January 2026 (Phase 4 Exercises & Grading complete)*
+*Last updated: January 2026 (Phase 6 Polish & Deployment complete)*

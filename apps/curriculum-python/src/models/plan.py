@@ -68,6 +68,38 @@ class ScheduleItem(BaseModel):
     node_id: str = Field(..., description="Reference to a node in the plan")
 
 
+def _detect_cycle(node_ids: set[str], prereqs: dict[str, list[str]]) -> bool:
+    """
+    Detect if the prerequisite graph contains a cycle using DFS with coloring.
+
+    Args:
+        node_ids: Set of all node IDs in the plan.
+        prereqs: Mapping of node_id -> list of prerequisite node_ids.
+
+    Returns:
+        True if a cycle is detected, False otherwise.
+    """
+    WHITE, GRAY, BLACK = 0, 1, 2
+    color: dict[str, int] = {node_id: WHITE for node_id in node_ids}
+
+    def has_cycle(node_id: str) -> bool:
+        color[node_id] = GRAY
+        for prereq in prereqs.get(node_id, []):
+            if color[prereq] == GRAY:
+                return True  # Back edge = cycle
+            if color[prereq] == WHITE and has_cycle(prereq):
+                return True
+        color[node_id] = BLACK
+        return False
+
+    for node_id in node_ids:
+        if color[node_id] == WHITE:
+            if has_cycle(node_id):
+                return True
+
+    return False
+
+
 class Plan(BaseModel):
     """A complete learning plan with nodes and schedule."""
 
@@ -122,11 +154,17 @@ class Plan(BaseModel):
             raise ValueError(f"Schedule order must be sequential from 1, got: {orders}")
 
         # Check all prerequisites reference existing nodes
+        prereqs: dict[str, list[str]] = {}
         for node in self.nodes:
+            prereqs[node.node_id] = node.prerequisites
             for prereq in node.prerequisites:
                 if prereq not in node_ids:
                     raise ValueError(
                         f"Node '{node.node_id}' has unknown prerequisite '{prereq}'"
                     )
+
+        # Check for cycles in prerequisite graph
+        if _detect_cycle(node_ids, prereqs):
+            raise ValueError("Prerequisite graph contains a cycle (not a valid DAG)")
 
         return self

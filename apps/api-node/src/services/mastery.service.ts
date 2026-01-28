@@ -13,9 +13,9 @@ import {
   getMasteryForPlan,
   getMaxCompletedDifficulty,
   AttemptRow,
-  MasteryRow
 } from '../db/queries/mastery';
 import { getExerciseById, ExerciseRow } from '../db/queries/exercises';
+import { getPlanWithNodes } from '../db/queries/plans';
 
 // Custom error class
 export class MasteryServiceError extends Error {
@@ -58,6 +58,18 @@ export interface GetMasteryResult {
   level: MasteryLevel;
   total_attempts: number;
   last_updated: Date | null;
+}
+
+// Result from next-node recommendation
+export interface NextNodeRecommendation {
+  recommended_node_id: string | null;
+  rationale: string;
+  current_progress: {
+    nodes_completed: number;
+    total_nodes: number;
+    completion_percentage: number;
+  };
+  all_prerequisites_met: boolean;
 }
 
 class MasteryService {
@@ -218,8 +230,19 @@ class MasteryService {
         'Grading failed'
       );
 
-      if (error instanceof Error && 'statusCode' in error) {
-        const serviceError = error as { statusCode: number; errorCode: string; message: string };
+      // Check if the error has the specific fields we need from the curriculum service
+      if (
+        error instanceof Error &&
+        'statusCode' in error &&
+        'errorCode' in error
+      ) {
+        // Double-cast safely now that we confirmed the fields exist at runtime
+        const serviceError = error as unknown as {
+          statusCode: number;
+          errorCode: string;
+          message: string;
+        };
+
         throw new MasteryServiceError(
           serviceError.message,
           serviceError.statusCode,
@@ -263,6 +286,179 @@ class MasteryService {
       score,
       level,
       total_attempts: allAttempts.length,
+    };
+  }
+
+  /**
+   * Get the recommended next node for a user based on mastery and prerequisites.
+   *
+   * This is a RECOMMENDATION system, not access control:
+   * - Users can start any node via GET /api/plan/:planId
+   * - This method suggests the optimal next step for UI highlighting
+   */
+  async getNextNode(
+    userId: string,
+    planId: string
+  ): Promise<NextNodeRecommendation> {
+    // 1. Fetch plan with nodes
+    const planWithNodes = await getPlanWithNodes(planId);
+    if (!planWithNodes) {
+      throw new MasteryServiceError('Plan not found', 404, 'PLAN_NOT_FOUND', {
+        plan_id: planId,
+      });
+    }
+
+    const { nodes } = planWithNodes;
+    const totalNodes = nodes.length;
+
+    if (totalNodes === 0) {
+      return {
+        recommended_node_id: null,
+        rationale: 'This plan has no nodes.',
+        current_progress: {
+          nodes_completed: 0,
+          total_nodes: 0,
+          completion_percentage: 0,
+        },
+        all_prerequisites_met: true,
+      };
+    }
+
+    // 2. Fetch mastery for all nodes
+    const masteryByNode = await this.getPlanMastery(userId, planId);
+
+    // 3. Count completed nodes (mastery >= 0.8)
+    const MASTERY_THRESHOLD = 0.8;
+    const PREREQ_THRESHOLD = 0.6;
+
+    const completedNodes = nodes.filter(
+      (n) => (masteryByNode[n.node_id]?.score ?? 0) >= MASTERY_THRESHOLD
+    ).length;
+
+    const completionPercentage = Math.round((completedNodes / totalNodes) * 100);
+
+    // 4. Check if all nodes are mastered
+    if (completedNodes === totalNodes) {
+      return {
+        recommended_node_id: null,
+        rationale: 'Congratulations! You have mastered all nodes in this plan.',
+        current_progress: {
+          nodes_completed: completedNodes,
+          total_nodes: totalNodes,
+          completion_percentage: 100,
+        },
+        all_prerequisites_met: true,
+      };
+    }
+
+    // 5. Filter to unlocked nodes (all prerequisites met with mastery >= 0.6)
+    const unlockedNodes = nodes.filter((node) => {
+      for (const prereq of node.prerequisites) {
+        const prereqMastery = masteryByNode[prereq]?.score ?? 0;
+        if (prereqMastery < PREREQ_THRESHOLD) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    // 6. If no nodes are unlocked, find the blocking prerequisite
+    if (unlockedNodes.length === 0) {
+      // Find first incomplete node and its unmet prerequisite
+      const incompleteNode = nodes.find(
+        (n) => (masteryByNode[n.node_id]?.score ?? 0) < MASTERY_THRESHOLD
+      );
+      const unmetPrereq = incompleteNode?.prerequisites.find(
+        (p) => (masteryByNode[p]?.score ?? 0) < PREREQ_THRESHOLD
+      );
+
+      // Find the title of the unmet prerequisite
+      const prereqNode = unmetPrereq
+        ? nodes.find((n) => n.node_id === unmetPrereq)
+        : null;
+
+      return {
+        recommended_node_id: unmetPrereq ?? null,
+        rationale: prereqNode
+          ? `You need to improve mastery on "${prereqNode.title}" before advancing.`
+          : 'No nodes are currently available.',
+        current_progress: {
+          nodes_completed: completedNodes,
+          total_nodes: totalNodes,
+          completion_percentage: completionPercentage,
+        },
+        all_prerequisites_met: false,
+      };
+    }
+
+    // 7. Score unlocked nodes
+    const scoredNodes = unlockedNodes.map((node) => {
+      const mastery = masteryByNode[node.node_id]?.score ?? 0;
+      let score = 0;
+
+      // Prefer partial progress (0.1 - 0.7 mastery)
+      if (mastery >= 0.1 && mastery < 0.7) {
+        score += 10;
+      }
+      // Not started gets lower priority
+      else if (mastery < 0.1) {
+        score += 5;
+      }
+      // Already mastered (>= 0.8) gets negative score
+      else if (mastery >= MASTERY_THRESHOLD) {
+        score -= 10;
+      }
+
+      // Schedule order as tiebreaker (earlier = higher priority)
+      score -= node.order_index * 0.01;
+
+      return {
+        node,
+        mastery,
+        score,
+      };
+    });
+
+    // 8. Sort by score descending
+    scoredNodes.sort((a, b) => b.score - a.score);
+
+    // 9. Select the best non-mastered node
+    const bestNode = scoredNodes.find((n) => n.mastery < MASTERY_THRESHOLD);
+
+    if (!bestNode) {
+      return {
+        recommended_node_id: null,
+        rationale: 'All available nodes have been mastered.',
+        current_progress: {
+          nodes_completed: completedNodes,
+          total_nodes: totalNodes,
+          completion_percentage: completionPercentage,
+        },
+        all_prerequisites_met: true,
+      };
+    }
+
+    // 10. Generate rationale
+    let rationale: string;
+    const masteryPercent = Math.round(bestNode.mastery * 100);
+
+    if (bestNode.mastery >= 0.1 && bestNode.mastery < 0.7) {
+      rationale = `Continue with "${bestNode.node.title}" - you're making progress (${masteryPercent}% mastery).`;
+    } else if (bestNode.mastery < 0.1) {
+      rationale = `Start "${bestNode.node.title}" - it's next in your learning path.`;
+    } else {
+      rationale = `Review "${bestNode.node.title}" to solidify your understanding.`;
+    }
+
+    return {
+      recommended_node_id: bestNode.node.node_id,
+      rationale,
+      current_progress: {
+        nodes_completed: completedNodes,
+        total_nodes: totalNodes,
+        completion_percentage: completionPercentage,
+      },
+      all_prerequisites_met: true,
     };
   }
 

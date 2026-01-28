@@ -84,7 +84,7 @@ Generate a learning plan for a topic.
     ],
     "metadata": {
       "provider": "gemini",
-      "model": "gemini-1.5-pro",
+      "model": "gemini-2.5-flash",
       "prompt_version": "plan/v2",
       "created_at": "2025-01-06T10:30:00Z"
     }
@@ -184,7 +184,7 @@ Generate exercises for a specific node.
     ],
     "metadata": {
       "provider": "gemini",
-      "model": "gemini-1.5-pro",
+      "model": "gemini-2.5-flash",
       "prompt_version": "exercises/v1",
       "created_at": "2025-01-06T11:00:00Z"
     }
@@ -324,6 +324,58 @@ Get user's mastery for a specific node.
 
 ---
 
+### GET /api/plan/:planId/next
+Get recommended next node for the user to study.
+
+**Note**: This is a **recommendation system**, not access control. Users can start any node via the regular plan endpoints. This endpoint suggests the optimal next step for UI highlighting.
+
+**Response** (200 OK):
+```json
+{
+  "recommended_node_id": "bst_deletion",
+  "rationale": "Continue with \"BST Deletion\" - you're making progress (45% mastery).",
+  "current_progress": {
+    "nodes_completed": 3,
+    "total_nodes": 12,
+    "completion_percentage": 25
+  },
+  "all_prerequisites_met": true
+}
+```
+
+**Response when all nodes mastered** (200 OK):
+```json
+{
+  "recommended_node_id": null,
+  "rationale": "Congratulations! You have mastered all nodes in this plan.",
+  "current_progress": {
+    "nodes_completed": 12,
+    "total_nodes": 12,
+    "completion_percentage": 100
+  },
+  "all_prerequisites_met": true
+}
+```
+
+**Response when prerequisites not met** (200 OK):
+```json
+{
+  "recommended_node_id": "bst_insertion",
+  "rationale": "You need to improve mastery on \"BST Insertion\" before advancing.",
+  "current_progress": {
+    "nodes_completed": 1,
+    "total_nodes": 12,
+    "completion_percentage": 8
+  },
+  "all_prerequisites_met": false
+}
+```
+
+**Errors**:
+- 404: Plan not found
+
+---
+
 ### GET /api/users/:userId/plans
 List all plans for a user.
 
@@ -390,7 +442,7 @@ Generate a learning plan via LLM.
     "schedule": [...],
     "metadata": {
       "provider": "gemini",
-      "model": "gemini-1.5-pro",
+      "model": "gemini-2.5-flash",
       "prompt_version": "plan/v2",
       "created_at": "2025-01-06T10:30:00Z"
     }
@@ -473,7 +525,7 @@ Grade a user's answer.
   },
   "metadata": {
     "provider": "gemini",
-    "model": "gemini-1.5-pro",
+    "model": "gemini-2.5-flash",
     "prompt_version": "grading/v1",
     "created_at": "2025-01-06T11:30:00Z"
   }
@@ -512,7 +564,7 @@ Suggest YouTube search queries for a node.
   ],
   "metadata": {
     "provider": "gemini",
-    "model": "gemini-1.5-pro",
+    "model": "gemini-2.5-flash",
     "created_at": "2025-01-06T11:00:00Z"
   }
 }
@@ -599,7 +651,7 @@ Validate that a video's transcript matches a learning node.
     "rejection_reason": null,
     "metadata": {
       "provider": "gemini",
-      "model": "gemini-1.5-pro",
+      "model": "gemini-2.5-flash",
       "prompt_version": "validate_video/v1",
       "created_at": "2025-01-06T10:30:00Z",
       "request_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
@@ -654,7 +706,7 @@ Check if cached plan content is stale compared to current sources.
     "contradictions_found": [],
     "metadata": {
       "provider": "gemini",
-      "model": "gemini-1.5-pro",
+      "model": "gemini-2.5-flash",
       "prompt_version": "staleness/v1",
       "created_at": "2025-01-06T10:30:00Z",
       "request_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",

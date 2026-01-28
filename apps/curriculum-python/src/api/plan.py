@@ -83,7 +83,13 @@ async def generate_plan(request: GeneratePlanRequest) -> GeneratePlanResponse:
         # Define generation function
         async def generate_fn(prompt: str) -> str:
             temperature = float(os.getenv("LLM_TEMPERATURE_PLAN", 0.7))
-            return await provider.generate(prompt, temperature=temperature, max_tokens=8192)
+            
+            raw_response = await provider.generate(prompt, temperature=temperature, max_tokens=8192)
+            
+            import re
+            clean_response = re.sub(r"```(json)?", "", raw_response, flags=re.IGNORECASE).strip()
+            
+            return clean_response
 
         # Prepare prompt kwargs
         prompt_kwargs = {

@@ -47,6 +47,7 @@ Generate a valid JSON object with this structure:
 7. schedule: must include ALL nodes exactly once, with sequential order starting from 1
 8. No cycles in prerequisites (DAG structure)
 9. Prerequisites must reference existing node_ids in the plan
+10. STRICTLY FORBIDDEN: Do not use LaTeX or backslashes in text fields. Use plain text descriptions only (e.g., say "integral" instead of "\int").
 
 ## Quality Guidelines
 - Structure content progressively from foundational to advanced

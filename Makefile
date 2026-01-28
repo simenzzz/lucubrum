@@ -1,39 +1,27 @@
-.PHONY: help setup dev dev-infra dev-node dev-python test test-node test-python lint build clean
+.PHONY: help setup dev dev-local dev-docker dev-infra dev-node dev-python test test-docker lint build clean stop
 
 # Default target
 help:
 	@echo "Learning Helper - Development Commands"
 	@echo ""
-	@echo "Setup:"
-	@echo "  make setup          - Install all dependencies"
+	@echo "Local Development (Fast & Hybrid):"
+	@echo "  make dev             - Start apps locally + DBs in Docker (Best for coding)"
+	@echo "  make dev-infra       - Start only Postgres + Redis"
+	@echo "  make dev-node        - Start Node service locally"
+	@echo "  make dev-python      - Start Python service locally"
 	@echo ""
-	@echo "Development:"
-	@echo "  make dev            - Start all services (infra + apps)"
-	@echo "  make dev-infra      - Start infrastructure only (Postgres + Redis)"
-	@echo "  make dev-node       - Start Node service"
-	@echo "  make dev-python     - Start Python service"
+	@echo "Full Docker Mode (Consistent & Production-like):"
+	@echo "  make dev-docker      - Start EVERYTHING in Docker (Simulate prod)"
+	@echo "  make stop            - Stop all containers"
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test           - Run all tests"
-	@echo "  make test-node      - Run Node service tests"
-	@echo "  make test-python    - Run Python service tests"
-	@echo ""
-	@echo "Quality:"
-	@echo "  make lint           - Run linters on all services"
-	@echo "  make typecheck      - Run type checking"
-	@echo ""
-	@echo "Build:"
-	@echo "  make build          - Build all services"
-	@echo "  make clean          - Clean build artifacts"
-	@echo ""
-	@echo "Database:"
-	@echo "  make db-reset       - Reset database (destructive)"
-	@echo "  make db-migrate     - Run database migrations"
-	@echo ""
-	@echo "Schemas:"
-	@echo "  make generate-schemas - Generate JSON schemas from Pydantic"
+	@echo "  make test            - Run tests locally"
+	@echo "  make test-docker     - Run tests INSIDE Docker containers"
 
-# Setup
+# ==========================================
+# 1. SETUP & LOCAL DEV (Your original flow)
+# ==========================================
+
 setup:
 	@echo "Installing Node dependencies..."
 	cd apps/api-node && npm install
@@ -41,7 +29,6 @@ setup:
 	cd apps/curriculum-python && python -m venv venv && . venv/bin/activate && pip install -r requirements.txt
 	@echo "Setup complete!"
 
-# Development
 dev-infra:
 	@echo "Starting infrastructure (Postgres + Redis)..."
 	cd infra && docker-compose up -d postgres redis
@@ -52,24 +39,54 @@ dev-node:
 
 dev-python:
 	@echo "Starting Python service..."
-	cd apps/curriculum-python && . venv/bin/activate && uvicorn src.main:app --reload --port 8000
+	cd apps/curriculum-python && .venv/bin/uvicorn src.main:app --reload --port 8000
 
-dev: dev-infra
-	@echo "Starting all services..."
+# Refactored: 'make dev' now explicitly calls the local version
+dev: dev-local
+
+dev-local: dev-infra
+	@echo "Starting all services locally..."
 	$(MAKE) -j2 dev-node dev-python
 
-# Testing
+# ==========================================
+# 2. DOCKER MODE (NEW SECTION)
+# ==========================================
+
+# NEW: Starts the 'full' profile defined in your docker-compose.yml
+dev-docker:
+	@echo "Starting full stack in Docker..."
+	cd infra && docker-compose --profile full up --build
+
+# NEW: Quick way to shut everything down
+stop:
+	@echo "Stopping all containers..."
+	cd infra && docker-compose down
+
+# NEW: Enter the Node container shell (useful for debugging inside the image)
+ssh-node:
+	cd infra && docker-compose exec api-node /bin/sh
+
+# ==========================================
+# 3. UTILITIES (Tests, Lint, Build)
+# ==========================================
+
 test-node:
-	@echo "Running Node tests..."
+	@echo "Running Node tests locally..."
 	cd apps/api-node && npm test
 
 test-python:
-	@echo "Running Python tests..."
+	@echo "Running Python tests locally..."
 	cd apps/curriculum-python && . venv/bin/activate && pytest
 
 test: test-node test-python
 
-# Linting
+# NEW: Runs tests inside the container. 
+# Great for CI/CD checks or verifying the Docker environment.
+test-docker:
+	@echo "Running tests inside Docker containers..."
+	cd infra && docker-compose run --rm api-node npm test
+	cd infra && docker-compose run --rm curriculum-python pytest
+
 lint:
 	@echo "Linting Node service..."
 	cd apps/api-node && npm run lint
@@ -82,7 +99,6 @@ typecheck:
 	@echo "Type checking Python service..."
 	cd apps/curriculum-python && . venv/bin/activate && mypy src/
 
-# Build
 build:
 	@echo "Building Node service..."
 	cd apps/api-node && npm run build
@@ -95,7 +111,6 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
-# Database
 db-reset:
 	@echo "Resetting database..."
 	cd infra && docker-compose down -v
@@ -104,8 +119,6 @@ db-reset:
 	sleep 5
 	@echo "Database reset complete!"
 
-# Schemas
 generate-schemas:
 	@echo "Generating JSON schemas from Pydantic models..."
 	cd apps/curriculum-python && . venv/bin/activate && python -m scripts.generate_schemas
-	@echo "Schemas generated in packages/contracts/schemas/"

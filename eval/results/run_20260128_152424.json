@@ -1,0 +1,190 @@
+{
+  "run_timestamp": "2026-01-28T15:24:24.775176+00:00",
+  "service_url": "http://localhost:8000",
+  "metrics": {
+    "total_topics": 10,
+    "schema_valid_first_try": 8,
+    "schema_valid_after_retry": 10,
+    "schema_invalid": 0,
+    "dag_valid": 10,
+    "dag_invalid": 0,
+    "node_count_valid": 10,
+    "node_count_invalid": 0,
+    "errors": [],
+    "schema_validity_first_try_rate": 0.8,
+    "schema_validity_after_retry_rate": 1.0,
+    "dag_validity_rate": 1.0
+  },
+  "results": [
+    {
+      "topic_id": "gt_cs_001",
+      "topic": "Binary Search Trees",
+      "request_id": "b9fb487f-4aac-4492-b873-d4e45f0b420b",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 17,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 29180
+    },
+    {
+      "topic_id": "gt_cs_002",
+      "topic": "REST API Design Best Practices",
+      "request_id": "ad8ae883-20f9-4c1a-8b44-2a16db3e4683",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 15,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 17127
+    },
+    {
+      "topic_id": "gt_cs_003",
+      "topic": "Docker Containerization",
+      "request_id": "1c534de7-0e31-495b-990d-1467edae0374",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 16,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 23587
+    },
+    {
+      "topic_id": "gt_math_001",
+      "topic": "Calculus: Derivatives and Integrals",
+      "request_id": "fe22d3b2-493a-4d88-beb0-2011614e8fa7",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 28,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 20,
+        "max": 30
+      },
+      "error": null,
+      "duration_ms": 27868
+    },
+    {
+      "topic_id": "gt_math_002",
+      "topic": "Linear Algebra Fundamentals",
+      "request_id": "18660ff4-5ab8-4fc1-97f7-cb15b8471e66",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 13,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 24859
+    },
+    {
+      "topic_id": "gt_phys_001",
+      "topic": "Classical Mechanics: Newton's Laws",
+      "request_id": "36c9368c-f7ba-4f53-ad27-0f55259bcc5f",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 17,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 22822
+    },
+    {
+      "topic_id": "gt_phys_002",
+      "topic": "Electromagnetism Basics",
+      "request_id": "7161f649-ee74-4e35-a89d-249ba07961fc",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 26,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 20,
+        "max": 30
+      },
+      "error": null,
+      "duration_ms": 35069
+    },
+    {
+      "topic_id": "gt_bus_001",
+      "topic": "Financial Statement Analysis",
+      "request_id": "ac0dedf5-df21-4c1a-ab28-84a44258a307",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 13,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 23483
+    },
+    {
+      "topic_id": "gt_bus_002",
+      "topic": "Project Management Fundamentals",
+      "request_id": "c8fc3947-5874-4880-b41b-ea348620e431",
+      "schema_valid_first_try": false,
+      "schema_valid_after_retry": true,
+      "retry_count": 1,
+      "dag_valid": true,
+      "node_count": 17,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 47455
+    },
+    {
+      "topic_id": "gt_bio_001",
+      "topic": "Cell Biology and Genetics",
+      "request_id": "0df3abc5-3f1c-47be-b5f5-1fb7062e1313",
+      "schema_valid_first_try": false,
+      "schema_valid_after_retry": true,
+      "retry_count": 2,
+      "dag_valid": true,
+      "node_count": 30,
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 20,
+        "max": 30
+      },
+      "error": null,
+      "duration_ms": 105950
+    }
+  ]
+}

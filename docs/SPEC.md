@@ -301,7 +301,7 @@ Node sets invalidated_at + reason on cached_plans
 Every plan/exercise/grade must be reproducible via logs:
 - `request_id` (UUID)
 - `prompt_version` (e.g., "plan/v2")
-- `model_id` (e.g., "gemini-1.5-pro", "claude-sonnet-4")
+- `model_id` (e.g., "gemini-2.5-flash", "claude-sonnet-4.5")
 - `provider` (gemini | claude)
 - `raw_output_hash` (SHA256 of LLM response)
 - `validation_errors` (if any, with retry count)
@@ -532,7 +532,7 @@ LOG_LEVEL=info
 
 # LLM Provider
 LLM_PROVIDER=gemini  # gemini | claude
-LLM_MODEL=gemini-1.5-pro  # or claude-sonnet-4
+LLM_MODEL=gemini-3-flash  # or claude-sonnet-4
 LLM_TEMPERATURE_PLAN=0.7
 LLM_TEMPERATURE_EXERCISE=0.8
 LLM_TEMPERATURE_GRADE=0.3

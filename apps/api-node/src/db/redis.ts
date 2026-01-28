@@ -139,6 +139,14 @@ class RedisClient {
     return this.isConnected && this.client.status === 'ready';
   }
 
+  /**
+   * Get the underlying ioredis client for advanced operations.
+   * Use with caution - prefer the wrapped methods when possible.
+   */
+  getClient(): Redis {
+    return this.client;
+  }
+
   // ==================== Auth-related methods ====================
 
   /**
@@ -224,3 +232,6 @@ export default redis;
 
 // Export class for testing
 export { RedisClient };
+
+// Export the raw ioredis client getter for advanced operations (rate limiting)
+export const getRedisClient = () => (redis as any).client;

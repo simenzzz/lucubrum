@@ -2,7 +2,8 @@
 
 import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from .base import LLMProvider
 
@@ -15,16 +16,14 @@ class GeminiProvider(LLMProvider):
 
         Args:
             model: Optional model name override. Defaults to LLM_MODEL env var
-                   or 'gemini-1.5-pro'.
+                   or 'gemini-2.0-flash'.
         """
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
-        genai.configure(api_key=api_key)
-
-        self._model_name = model or os.getenv("LLM_MODEL", "gemini-1.5-pro")
-        self._model = genai.GenerativeModel(self._model_name)
+        self._client = genai.Client(api_key=api_key)
+        self._model_name = model or os.getenv("LLM_MODEL", "gemini-2.0-flash")
 
     async def generate(
         self,
@@ -42,14 +41,15 @@ class GeminiProvider(LLMProvider):
         Returns:
             Raw string response from the model.
         """
-        generation_config = genai.GenerationConfig(
+        config = types.GenerateContentConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
         )
 
-        response = await self._model.generate_content_async(
-            prompt,
-            generation_config=generation_config,
+        response = await self._client.aio.models.generate_content(
+            model=self._model_name,
+            contents=prompt,
+            config=config,
         )
 
         return response.text

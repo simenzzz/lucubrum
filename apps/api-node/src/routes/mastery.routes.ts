@@ -6,10 +6,9 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
 import { isValidUUID } from '../utils/validation';
-import { masteryService, MasteryServiceError, GetMasteryResult } from '../services/mastery.service';
+import { masteryService, MasteryServiceError, GetMasteryResult, NextNodeRecommendation } from '../services/mastery.service';
 import { SubmitAttemptRequestSchema } from '../validation/schemas';
 import { requireAuth } from '../middleware/auth.middleware';
-import { Grade } from '../services/curriculum-client';
 
 const router = Router();
 
@@ -44,6 +43,8 @@ interface GetNodeMasteryResponse {
 interface GetPlanMasteryResponse {
   mastery_by_node: Record<string, GetMasteryResult>;
 }
+
+// NextNodeRecommendation is used directly as response type
 
 interface ErrorResponse {
   error: string;
@@ -217,6 +218,71 @@ router.get(
       return res.json({ mastery_by_node: masteryByNode });
     } catch (error) {
       logger.error({ error, planId, requestId }, 'Error retrieving plan mastery');
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        request_id: requestId,
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/plan/:planId/next
+ *
+ * Get the recommended next node to study.
+ *
+ * This is a RECOMMENDATION, not access control:
+ * - Users can start any node via GET /api/plan/:planId (existing endpoint)
+ * - This endpoint suggests the optimal next step for UI highlighting
+ */
+router.get(
+  '/plan/:planId/next',
+  async (
+    req: Request<{ planId: string }>,
+    res: Response<NextNodeRecommendation | ErrorResponse>
+  ) => {
+    const { planId } = req.params;
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+    const userId = req.user!.user_id;
+
+    try {
+      // Validate UUID format
+      if (!isValidUUID(planId)) {
+        return res.status(400).json({
+          error: 'INVALID_PLAN_ID',
+          message: 'Plan ID must be a valid UUID',
+          request_id: requestId,
+        });
+      }
+
+      const recommendation = await masteryService.getNextNode(userId, planId);
+
+      logger.info(
+        {
+          userId,
+          planId,
+          recommendedNodeId: recommendation.recommended_node_id,
+          completionPercentage: recommendation.current_progress.completion_percentage,
+          requestId,
+        },
+        'Next node recommendation generated'
+      );
+
+      return res.json(recommendation);
+    } catch (error) {
+      // Handle service errors
+      if (error instanceof MasteryServiceError) {
+        logger.error({ error, planId, requestId }, 'Failed to get next node');
+        return res.status(error.statusCode).json({
+          error: error.code,
+          message: error.message,
+          details: error.details,
+          request_id: requestId,
+        });
+      }
+
+      logger.error({ error, planId, requestId }, 'Error getting next node');
       return res.status(500).json({
         error: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred',

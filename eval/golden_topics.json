@@ -1,0 +1,108 @@
+{
+  "version": "1.0",
+  "description": "Golden topics for evaluation harness - minimal viable set for testing plan generation quality",
+  "created_at": "2026-01-26",
+  "todo": "Expand to 10 topics per major field (CS, Math, Physics, Chemistry, Biology, Business, Economics)",
+  "topics": [
+    {
+      "id": "gt_cs_001",
+      "topic": "Binary Search Trees",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "cs/theory",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["insertion", "deletion", "traversal", "balancing", "complexity analysis"],
+      "notes": "Classic data structure topic"
+    },
+    {
+      "id": "gt_cs_002",
+      "topic": "REST API Design Best Practices",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "cs/web",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["HTTP methods", "status codes", "resource naming", "versioning", "authentication"],
+      "notes": "Practical web development topic"
+    },
+    {
+      "id": "gt_cs_003",
+      "topic": "Docker Containerization",
+      "user_level": "beginner",
+      "plan_size": "moderate",
+      "domain_category": "cs/devops",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["images", "containers", "Dockerfile", "docker-compose", "volumes"],
+      "notes": "Essential DevOps skill"
+    },
+    {
+      "id": "gt_math_001",
+      "topic": "Calculus: Derivatives and Integrals",
+      "user_level": "beginner",
+      "plan_size": "large",
+      "domain_category": "math/calculus",
+      "expected_node_count": { "min": 20, "max": 30 },
+      "expected_concepts": ["limits", "differentiation", "integration", "chain rule", "applications"],
+      "notes": "Foundational math topic - stable, never stale"
+    },
+    {
+      "id": "gt_math_002",
+      "topic": "Linear Algebra Fundamentals",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "math/algebra",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["vectors", "matrices", "eigenvalues", "linear transformations", "determinants"],
+      "notes": "Essential for ML and physics"
+    },
+    {
+      "id": "gt_phys_001",
+      "topic": "Classical Mechanics: Newton's Laws",
+      "user_level": "beginner",
+      "plan_size": "moderate",
+      "domain_category": "physics/mechanics",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["forces", "motion", "momentum", "energy", "Newton's laws"],
+      "notes": "Foundational physics topic"
+    },
+    {
+      "id": "gt_phys_002",
+      "topic": "Electromagnetism Basics",
+      "user_level": "intermediate",
+      "plan_size": "large",
+      "domain_category": "physics/electromagnetism",
+      "expected_node_count": { "min": 20, "max": 30 },
+      "expected_concepts": ["electric fields", "magnetic fields", "Maxwell's equations", "circuits"],
+      "notes": "Core physics topic with broad applications"
+    },
+    {
+      "id": "gt_bus_001",
+      "topic": "Financial Statement Analysis",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "business/finance",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["balance sheet", "income statement", "cash flow", "ratios", "valuation"],
+      "notes": "Essential business skill"
+    },
+    {
+      "id": "gt_bus_002",
+      "topic": "Project Management Fundamentals",
+      "user_level": "beginner",
+      "plan_size": "moderate",
+      "domain_category": "business/management",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["planning", "scheduling", "risk management", "stakeholder management", "agile"],
+      "notes": "Universal professional skill"
+    },
+    {
+      "id": "gt_bio_001",
+      "topic": "Cell Biology and Genetics",
+      "user_level": "beginner",
+      "plan_size": "large",
+      "domain_category": "biology/molecular",
+      "expected_node_count": { "min": 20, "max": 30 },
+      "expected_concepts": ["cell structure", "DNA", "RNA", "protein synthesis", "inheritance"],
+      "notes": "Foundational biology topic"
+    }
+  ]
+}

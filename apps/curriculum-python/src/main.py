@@ -2,7 +2,9 @@
 
 import os
 from datetime import datetime, timezone
+from contextlib import asynccontextmanager
 
+import asyncpg
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -12,7 +14,13 @@ from .api.exercises import router as exercises_router
 from .api.grade import router as grade_router
 from .api.plan import router as plan_router
 from .api.queries import router as queries_router
+from .api.staleness import router as staleness_router
+from .api.validate_video import router as validate_video_router
+from .api.transcript import router as transcript_router
+from .api.normalize import router as normalize_router
+from .api.facts import router as facts_router
 from .middleware import ServiceTokenMiddleware
+from .services import StalenessPolicyService
 from .utils.logger import configure_logging, get_logger
 
 load_dotenv()
@@ -21,10 +29,47 @@ load_dotenv()
 configure_logging(os.getenv("ENVIRONMENT", "development"))
 logger = get_logger(__name__)
 
+# Database URL from environment
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup/shutdown events."""
+    # Startup
+    db_pool = None
+    if DATABASE_URL:
+        try:
+            db_pool = await asyncpg.create_pool(
+                DATABASE_URL,
+                min_size=2,
+                max_size=10,
+                command_timeout=30,
+            )
+            app.state.db_pool = db_pool
+
+            # Initialize StalenessPolicyService
+            policy_service = StalenessPolicyService(db_pool)
+            await policy_service._load_from_db()
+            app.state.staleness_policies = policy_service
+
+            logger.info("Database pool and services initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize database pool: {e}")
+
+    yield
+
+    # Shutdown
+    if db_pool:
+        await db_pool.close()
+        logger.info("Database pool closed")
+
+
 app = FastAPI(
     title="Learning Helper Curriculum Service",
     version="0.1.0",
     description="LLM-powered curriculum generation service",
+    lifespan=lifespan,
 )
 
 # Add service token authentication middleware
@@ -62,6 +107,11 @@ app.include_router(plan_router)
 app.include_router(queries_router)
 app.include_router(exercises_router)
 app.include_router(grade_router)
+app.include_router(staleness_router)
+app.include_router(validate_video_router)
+app.include_router(transcript_router)
+app.include_router(normalize_router)
+app.include_router(facts_router)
 
 
 @app.get("/health")
@@ -69,6 +119,7 @@ async def health():
     """Health check endpoint with dependency status."""
     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     llm_status = "healthy"
+    db_status = "healthy"
 
     # Check if at least one LLM provider is configured
     provider = os.getenv("LLM_PROVIDER", "gemini")
@@ -77,7 +128,22 @@ async def health():
     elif provider == "claude" and not os.getenv("ANTHROPIC_API_KEY"):
         llm_status = "unhealthy"
 
-    overall_status = "healthy" if llm_status == "healthy" else "degraded"
+    # Check database connection
+    if hasattr(app.state, "db_pool") and app.state.db_pool:
+        try:
+            async with app.state.db_pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+        except Exception as e:
+            logger.warning(f"Database health check failed: {e}")
+            db_status = "unhealthy"
+    else:
+        db_status = "not_configured"
+
+    overall_status = "healthy"
+    if llm_status == "unhealthy" or db_status == "unhealthy":
+        overall_status = "unhealthy"
+    elif db_status == "not_configured":
+        overall_status = "degraded"
 
     return {
         "status": overall_status,
@@ -85,6 +151,7 @@ async def health():
         "timestamp": timestamp,
         "dependencies": {
             "llm_provider": llm_status,
+            "database": db_status,
         },
     }
 

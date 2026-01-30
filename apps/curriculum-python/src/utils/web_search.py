@@ -25,6 +25,53 @@ class SearchResult(TypedDict):
     url: str
 
 
+async def search_web(
+    query: str,
+    num_results: int = 5,
+) -> list[dict]:
+    """Generic web search for any query.
+
+    Args:
+        query: The search query.
+        num_results: Maximum number of results (1-10).
+
+    Returns:
+        List of dicts with title, snippet, and url keys.
+        Returns empty list on any error (graceful degradation).
+    """
+    # Check if web search is enabled
+    if os.getenv("WEB_SEARCH_ENABLED", "true").lower() != "true":
+        return []
+
+    # Get API credentials
+    api_key = os.getenv("BRAVE_SEARCH_API_KEY")
+    if not api_key:
+        return []
+
+    headers = {"X-Subscription-Token": api_key}
+    params = {"q": query, "count": min(max(num_results, 1), 10)}
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(BRAVE_SEARCH_URL, params=params, headers=headers)
+
+            if response.status_code != 200:
+                return []
+
+            data = response.json()
+            results = []
+            for item in data.get("web", {}).get("results", []):
+                results.append({
+                    "title": item.get("title", ""),
+                    "snippet": item.get("description", ""),
+                    "url": item.get("url", ""),
+                })
+            return results
+
+    except Exception:
+        return []
+
+
 async def search_exercises(
     topic: str,
     exercise_type: str,

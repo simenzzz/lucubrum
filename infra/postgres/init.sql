@@ -145,3 +145,41 @@ CREATE TABLE user_plans (
 );
 CREATE INDEX idx_user_plans_user ON user_plans(user_id);
 CREATE INDEX idx_user_plans_plan ON user_plans(plan_id);
+
+-- Staleness Policies (configurable cache invalidation rules by domain)
+CREATE TABLE staleness_policies (
+  id SERIAL PRIMARY KEY,
+  domain_category VARCHAR(100) UNIQUE NOT NULL,
+  policy_value VARCHAR(20) NOT NULL,  -- Values: 'never', '7d', '30d', '90d', 'annual'
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_staleness_domain ON staleness_policies(domain_category);
+
+-- Seed initial staleness policies
+INSERT INTO staleness_policies (domain_category, policy_value, description) VALUES
+  ('math', 'never', 'Core mathematics does not change'),
+  ('cs', 'annual', 'Computer science theory is stable'),
+  ('networking', '90d', 'Networking protocols evolve slowly'),
+  ('cloud', '30d', 'Cloud infrastructure changes frequently'),
+  ('web', '14d', 'Web frameworks evolve rapidly'),
+  ('ai', '7d', 'AI/ML is extremely volatile'),
+  ('general', '30d', 'Default for unspecified domains')
+ON CONFLICT (domain_category) DO NOTHING;
+
+-- Quality Metrics (tracks plan quality signals for cache invalidation)
+CREATE TABLE quality_metrics (
+  plan_id UUID NOT NULL,
+  normalized_topic VARCHAR(255) NOT NULL,
+  sample_size INT NOT NULL,
+  completion_rate FLOAT,
+  exercise_pass_rate FLOAT,
+  avg_time_ratio FLOAT,
+  negative_feedback_rate FLOAT,
+  measured_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (plan_id, measured_at)
+);
+CREATE INDEX idx_quality_measured ON quality_metrics(measured_at);
+CREATE INDEX idx_quality_plan ON quality_metrics(plan_id);

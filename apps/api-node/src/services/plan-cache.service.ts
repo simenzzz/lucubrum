@@ -23,6 +23,7 @@ export interface CachedPlan {
   plan_data: Record<string, unknown>;
   domain_category: string;
   staleness_policy: string;
+  factSnapshot: string[];  // Facts at time of caching for staleness comparison
   created_at: Date;
   last_staleness_check: Date | null;
 }
@@ -95,14 +96,21 @@ class PlanCacheService {
   /**
    * Gather current facts from MCP sources for a topic.
    *
-   * This is a placeholder that should be integrated with actual MCP servers
-   * (Context7, web search, etc.) in production.
+   * Calls the Python service to get facts from Context7 + Brave Search.
    */
   async gatherMCPFacts(topic: string): Promise<string[]> {
-    // TODO: Integrate with actual MCP servers
-    // For now, return empty array which will cause staleness check to skip LLM
-    logger.debug({ topic }, 'MCP fact gathering not yet implemented');
-    return [];
+    try {
+      const response = await curriculumClient.getFacts({
+        normalized_topic: topic,
+        keywords: [],
+        request_id: uuidv4(),
+      });
+      logger.debug({ topic, factCount: response.facts.length }, 'MCP facts gathered');
+      return response.facts;
+    } catch (error) {
+      logger.warn({ topic, error }, 'MCP fact gathering failed, returning empty facts');
+      return [];
+    }
   }
 
   /**
@@ -169,12 +177,16 @@ class PlanCacheService {
         transcript_excerpt: r.transcript_excerpt,
       }));
 
+      // Include old facts from factSnapshot for comparison
+      const oldFacts = plan.factSnapshot || [];
+
       const result = await curriculumClient.checkStaleness({
         cache_key: plan.cache_key,
         topic: plan.topic,
         plan_summary: this.generatePlanSummary(plan),
         resources: resourceInfos,
-        mcp_facts: mcpFacts,
+        old_facts: oldFacts,  // Facts at time of caching
+        mcp_facts: mcpFacts,  // Current facts from MCP
         request_id: requestId,
       });
 

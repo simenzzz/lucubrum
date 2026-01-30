@@ -8,6 +8,7 @@ import logger from './utils/logger';
 import { db } from './db/client';
 import { redis } from './db/redis';
 import { curriculumClient } from './services/curriculum-client';
+import { startQualitySignalsJob } from './jobs/quality-signals';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -117,4 +118,7 @@ process.on('SIGINT', async () => {
 
 app.listen(PORT, () => {
   logger.info({ port: PORT }, 'Node API listening');
+
+  // Start background jobs after server is listening
+  startQualitySignalsJob();
 });

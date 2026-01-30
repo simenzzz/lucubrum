@@ -8,9 +8,10 @@ import logger from '../utils/logger';
 import { isValidUUID } from '../utils/validation';
 import { youtubeService, SelectedResource, Node } from '../services/youtube.service';
 import { planService, PlanServiceError } from '../services/plan.service';
+import { curriculumClient, CurriculumServiceError, Plan } from '../services/curriculum-client';
 import { CreatePlanRequestSchema } from '../validation/schemas';
-import { Plan as CurriculumPlan } from '../services/curriculum-client';
 import { getPlanWithNodes } from '../db/queries/plans';
+import redis from '../db/redis';
 import {
   insertResourcesForNode,
   hasResourcesForNode,
@@ -28,7 +29,7 @@ router.use(requireAuth);
 // Type definitions for request/response
 interface CreatePlanResponse {
   plan_id: string;
-  plan: CurriculumPlan;
+  plan: Plan;
 }
 
 interface GetPlanParams {
@@ -36,7 +37,7 @@ interface GetPlanParams {
 }
 
 interface GetPlanResponse {
-  plan: CurriculumPlan;
+  plan: Plan;
 }
 
 interface AttachResourcesParams {
@@ -59,11 +60,22 @@ interface ErrorResponse {
   request_id: string;
 }
 
+// Type for cached plan with fact snapshot
+interface CachedPlanWithMetadata {
+  plan_id: string;
+  plan: Plan;
+  topic_normalized: string;
+  domain_category: string;
+  staleness_policy: string;
+  factSnapshot: string[];
+  created_at: string;
+}
+
 /**
  * POST /api/plan
  *
  * Create a new learning plan.
- * Generates a plan using LLM, validates it, and persists to database.
+ * Uses normalization + caching with staleness detection.
  */
 router.post(
   '/',
@@ -92,7 +104,53 @@ router.post(
 
       logger.info({ topic, user_level, plan_size, requestId }, 'Creating plan');
 
-      // Create plan via service using authenticated user
+      // Step 1: Normalize topic
+      const normalized = await curriculumClient.normalizeTopic({
+        topic,
+        request_id: requestId,
+      });
+
+      logger.info(
+        { topic, normalized: normalized.topic_normalized, domain: normalized.domain_category, requestId },
+        'Topic normalized'
+      );
+
+      // Step 2: Check cache using normalized topic
+      const cacheKey = `plan:${normalized.topic_normalized}:${user_level}`;
+      const cachedPlan = await redis.getJSON<CachedPlanWithMetadata>(cacheKey);
+
+      if (cachedPlan) {
+        logger.info({ cacheKey, planId: cachedPlan.plan_id, requestId }, 'Plan cache hit - returning cached plan');
+
+        // Track user-plan relationship for cached plan
+        await upsertUserPlan(req.user!.user_id, cachedPlan.plan_id);
+
+        return res.status(201).json({
+          plan_id: cachedPlan.plan_id, // Return the original plan_id from cache
+          plan: cachedPlan.plan,
+        });
+      }
+
+      logger.info({ cacheKey, requestId }, 'Plan cache miss - generating new plan');
+
+      // Step 3: Generate plan via Python LLM service
+      let plan: Plan;
+      try {
+        plan = await curriculumClient.generatePlan({
+          topic: topic, // Pass original topic to LLM
+          user_level: user_level,
+          plan_size: plan_size,
+          request_id: requestId,
+        });
+      } catch (error) {
+        if (error instanceof CurriculumServiceError) {
+          logger.error({ error, requestId }, 'Python service error');
+          throw createError(error.message, error.errorCode, error.statusCode, error.details);
+        }
+        throw error;
+      }
+
+      // Step 4: Persist to database first to get plan_id (createPlan handles validation)
       const result = await planService.createPlan(
         {
           topic,
@@ -106,11 +164,40 @@ router.post(
       // Track user-plan relationship
       await upsertUserPlan(req.user!.user_id, result.plan_id);
 
-      logger.info({ planId: result.plan_id, userId: req.user!.user_id, requestId }, 'Plan created');
+      logger.info({ planId: result.plan_id, userId: req.user!.user_id, requestId }, 'Plan persisted to database');
+
+      // Step 5: Get MCP facts for staleness tracking
+      let factSnapshot: string[] = [];
+      try {
+        const factsResponse = await curriculumClient.getFacts({
+          normalized_topic: normalized.topic_normalized,
+          request_id: requestId,
+        });
+        factSnapshot = factsResponse.facts;
+        logger.info({ factCount: factSnapshot.length, requestId }, 'MCP facts gathered');
+      } catch (error) {
+        // Log warning but don't fail - continue without facts
+        logger.warn({ error, requestId }, 'Failed to get MCP facts, continuing without fact snapshot');
+      }
+
+      // Step 6: Cache the plan with metadata (including plan_id for consistent tracking)
+      const cacheData: CachedPlanWithMetadata = {
+        plan_id: result.plan_id, // Store the plan_id for consistent tracking
+        plan,
+        topic_normalized: normalized.topic_normalized,
+        domain_category: normalized.domain_category,
+        staleness_policy: normalized.staleness_policy,
+        factSnapshot,
+        created_at: new Date().toISOString(),
+      };
+
+      // Cache for 24 hours (will be checked for staleness before serving)
+      await redis.setJSON(cacheKey, cacheData, 86400);
+      logger.info({ cacheKey, planId: result.plan_id, factCount: factSnapshot.length, requestId }, 'Plan cached with plan_id');
 
       return res.status(201).json({
         plan_id: result.plan_id,
-        plan: result.plan,
+        plan: plan, // Return the plan we generated (not from DB)
       });
     } catch (error) {
       // Handle service errors
@@ -135,6 +222,20 @@ router.post(
     }
   }
 );
+
+// Helper function for creating errors
+function createError(
+  message: string,
+  code: string,
+  statusCode: number,
+  details?: Record<string, unknown>
+): PlanServiceError {
+  const error = new Error(message) as PlanServiceError;
+  error.code = code;
+  error.statusCode = statusCode;
+  error.details = details;
+  return error;
+}
 
 /**
  * GET /api/plan/:planId

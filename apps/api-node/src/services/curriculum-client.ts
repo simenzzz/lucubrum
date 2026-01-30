@@ -175,8 +175,32 @@ export interface CheckStalenessRequest {
   topic: string;
   plan_summary: string;
   resources?: ResourceInfo[];
-  mcp_facts?: string[];
+  old_facts?: string[];  // Facts at time of caching
+  mcp_facts?: string[];  // Current facts from MCP
   request_id: string;
+}
+
+export interface NormalizeTopicRequest {
+  topic: string;
+  request_id: string;
+}
+
+export interface NormalizeTopicResponse {
+  topic_normalized: string;
+  domain_category: string;
+  staleness_policy: string;
+  metadata: ArtifactMetadata;
+}
+
+export interface GetFactsRequest {
+  normalized_topic: string;
+  keywords?: string[];
+  request_id: string;
+}
+
+export interface GetFactsResponse {
+  facts: string[];
+  sources: string[];
 }
 
 // Error types
@@ -403,6 +427,61 @@ class CurriculumClient {
           (data?.message as string) || error.message,
           error.response?.status || 500,
           (data?.error as string) || 'GRADING_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Normalize a topic to canonical form.
+   */
+  async normalizeTopic(request: NormalizeTopicRequest): Promise<NormalizeTopicResponse> {
+    try {
+      const response = await this.client.post<NormalizeTopicResponse>(
+        '/llm/normalize-topic',
+        request
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'NORMALIZATION_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get current facts about a topic from MCP sources.
+   */
+  async getFacts(request: GetFactsRequest): Promise<GetFactsResponse> {
+    try {
+      const response = await this.client.post<{ facts: string[]; sources: string[] }>(
+        '/llm/get-facts',
+        {
+          normalized_topic: request.normalized_topic,
+          keywords: request.keywords || [],
+          request_id: request.request_id,
+        }
+      );
+      return {
+        facts: response.data.facts,
+        sources: response.data.sources,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'FACT_FETCH_FAILED',
           data
         );
       }

@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.routes';
 import exerciseRoutes from './routes/exercise.routes';
 import masteryRoutes from './routes/mastery.routes';
 import adminRoutes from './routes/admin.routes';
+import userRoutes from './routes/user.routes';
 import logger from './utils/logger';
 import { db } from './db/client';
 import { redis } from './db/redis';
@@ -86,6 +87,7 @@ app.use('/auth', authRoutes);
 app.use('/api/plan', planRoutes);
 app.use('/api/plan', exerciseRoutes);
 app.use('/api', masteryRoutes);
+app.use('/api/users', userRoutes);
 app.use('/admin', adminRoutes);
 
 // Error handling middleware

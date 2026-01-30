@@ -1,0 +1,123 @@
+version: '3.9'
+
+services:
+  # Test Database
+  test-postgres:
+    image: postgres:15-alpine
+    container_name: learning-test-postgres
+    environment:
+      POSTGRES_DB: learning_helper_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts with dev
+    volumes:
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - test-postgres-data:/var/lib/postgresql/data  # Named volume for caching
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  # Test Redis
+  test-redis:
+    image: redis:7-alpine
+    container_name: learning-test-redis
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - test-redis-data:/data
+
+  # Node Tests Container
+  node-tests:
+    build:
+      context: ./apps/api-node
+      dockerfile: Dockerfile
+    container_name: learning-node-tests
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/learning_helper_test
+      REDIS_URL: redis://test-redis:6379
+      PYTHON_SERVICE_URL: http://python-service:8000
+      PYTHON_SERVICE_TOKEN: test-service-token
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 7d
+      GOOGLE_CLIENT_ID: test-client-id
+      GOOGLE_CLIENT_SECRET: test-client-secret
+      JWT_SECRET: test-secret-key-for-testing-only-32chars
+      LOG_LEVEL: error
+    command: npm test
+    volumes:
+      - ./apps/api-node:/app
+      - node-test-modules:/app/node_modules  # Named volume for caching
+    working_dir: /app
+
+  # Python Tests Container
+  python-tests:
+    build:
+      context: ./apps/curriculum-python
+      dockerfile: Dockerfile
+    container_name: learning-python-tests
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: test
+      DOCKER_TEST_ENV: "true"
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/learning_helper_test
+      LLM_PROVIDER: gemini
+      LLM_MODEL: gemini-2.5-flash-test
+      GEMINI_API_KEY: test-api-key
+      ANTHROPIC_API_KEY: test-api-key
+      SERVICE_TOKEN: test-service-token
+      PYTHON_LOG_LEVEL: ERROR
+    command: pytest --cov=src --cov-report=term-missing --cov-report=html -v
+    volumes:
+      - ./apps/curriculum-python:/app
+      - python-test-venv:/app/.venv  # Named volume for caching
+    working_dir: /app
+
+  # Python Service (for integration/E2E tests)
+  python-service:
+    build:
+      context: ./apps/curriculum-python
+      dockerfile: Dockerfile
+    container_name: learning-python-service-test
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/learning_helper_test
+      PORT: 8000
+      SERVICE_TOKEN: test-service-token
+      PYTHON_LOG_LEVEL: ERROR
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8001:8000"  # Different port for testing
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")'"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  test-postgres-data:
+  test-redis-data:
+  node-test-modules:
+  python-test-venv:
+
+networks:
+  default:
+    name: learning-test-network

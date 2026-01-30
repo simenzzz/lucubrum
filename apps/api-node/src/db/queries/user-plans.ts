@@ -7,12 +7,14 @@ import logger from '../../utils/logger';
 
 /**
  * User-Plan row from database.
+ * Index signature required by db.query type constraint.
  */
 export interface UserPlanRow {
   user_id: string;
   plan_id: string;
   started_at: Date;
   last_accessed_at: Date;
+  [key: string]: unknown;
 }
 
 /**
@@ -98,7 +100,7 @@ export async function removeUserPlan(userId: string, planId: string): Promise<bo
  * Get user-plan details with full row data.
  */
 export async function getUserPlans(userId: string): Promise<UserPlanRow[]> {
-  const result = await db.query(
+  const result = await db.query<UserPlanRow>(
     `SELECT user_id, plan_id, started_at, last_accessed_at
      FROM user_plans
      WHERE user_id = $1
@@ -106,5 +108,84 @@ export async function getUserPlans(userId: string): Promise<UserPlanRow[]> {
     [userId]
   );
 
-  return result.rows as unknown as UserPlanRow[];
+  return result.rows;
+}
+
+/**
+ * User plan with joined plan details.
+ */
+export interface UserPlanWithDetails {
+  plan_id: string;
+  topic: string;
+  user_level: string;
+  plan_size: string;
+  started_at: Date;
+  last_accessed_at: Date;
+}
+
+/**
+ * Paginated result for user plans.
+ */
+export interface PaginatedUserPlans {
+  plans: UserPlanWithDetails[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Database row type for user plans with details query.
+ * Matches the exact column names returned by the SQL query.
+ * Index signature required by db.query type constraint.
+ */
+interface UserPlanWithDetailsRow {
+  plan_id: string;
+  topic: string;
+  user_level: string;
+  plan_size: string;
+  started_at: Date;
+  last_accessed_at: Date;
+  [key: string]: unknown;
+}
+
+/**
+ * Get user plans with plan details (topic, level, size) and pagination.
+ * Returns plans ordered by most recently accessed first.
+ *
+ * Note: There's a potential race condition between COUNT and SELECT queries.
+ * For strict consistency, consider using window functions:
+ * SELECT *, COUNT(*) OVER() as total FROM ...
+ */
+export async function getUserPlansWithDetails(
+  userId: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<PaginatedUserPlans> {
+  // Get total count
+  const countResult = await db.query<{ count: string }>(
+    `SELECT COUNT(*) as count
+     FROM user_plans
+     WHERE user_id = $1`,
+    [userId]
+  );
+  const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
+
+  // Get paginated plans with details
+  const result = await db.query<UserPlanWithDetailsRow>(
+    `SELECT up.plan_id, p.topic, p.user_level, p.plan_size,
+            up.started_at, up.last_accessed_at
+     FROM user_plans up
+     JOIN plans p ON up.plan_id = p.plan_id
+     WHERE up.user_id = $1
+     ORDER BY up.last_accessed_at DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit, offset]
+  );
+
+  return {
+    plans: result.rows,
+    total,
+    limit,
+    offset,
+  };
 }

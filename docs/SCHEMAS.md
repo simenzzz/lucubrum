@@ -219,66 +219,114 @@ Recommended Node domain shape (not exported from Pydantic):
 
 ---
 
+## User-Plan Relationship Schema
+
+### Postgres: `user_plans` Table
+Junction table tracking which users engage with which plans. Plans are shared content - multiple users can engage with the same plan.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `user_id` | `VARCHAR(255)` | FK to users table |
+| `plan_id` | `UUID` | FK to plans table (CASCADE delete) |
+| `started_at` | `TIMESTAMP` | When user first engaged with plan (default: NOW()) |
+| `last_accessed_at` | `TIMESTAMP` | Most recent access (default: NOW()) |
+
+Primary key: `(user_id, plan_id)`
+
+Indexes:
+- `idx_user_plans_user` on `user_id`
+- `idx_user_plans_plan` on `plan_id`
+
+**Usage patterns**:
+- User's "My Plans" list: `SELECT ... FROM user_plans WHERE user_id = $1 ORDER BY last_accessed_at DESC`
+- Updated on plan access: `INSERT ... ON CONFLICT DO UPDATE SET last_accessed_at = NOW()`
+
+---
+
 ## Plan Caching Schemas
 
 ### Overview
-Plan caching uses a **hybrid Postgres + Redis** approach:
-- **Postgres**: Source of truth for cached plans, quality signals, and audit history
-- **Redis**: Hot-path acceleration for popular topics (read-through cache)
-
-### Postgres: `cached_plans` Table
-Stores validated learning plans keyed by normalized topic + user level.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `cache_key` | `VARCHAR(64) PRIMARY KEY` | SHA-256 of normalized topic + user_level |
-| `topic_raw` | `VARCHAR(500)` | Original user input (before normalization) |
-| `topic_normalized` | `VARCHAR(500)` | LLM-normalized canonical topic |
-| `user_level` | `VARCHAR(50)` | beginner / intermediate / advanced |
-| `plan_data` | `JSONB` | Full validated Plan artifact (all mastery levels) |
-| `domain_category` | `VARCHAR(100)` | e.g., "networking/protocols", "math/calculus" |
-| `staleness_policy` | `VARCHAR(50)` | "7d", "30d", "90d", "annual", "never" |
-| `created_at` | `TIMESTAMP` | When plan was first generated |
-| `last_staleness_check` | `TIMESTAMP` | Last MCP freshness verification |
-| `staleness_check_result` | `JSONB` | MCP response with sources checked |
-| `invalidated_at` | `TIMESTAMP` | Soft delete timestamp (NULL if valid) |
-| `invalidation_reason` | `VARCHAR(255)` | "low_completion_rate", "stale_content", etc. |
-
-Indexes:
-- `idx_cached_plans_domain` on `domain_category`
-- `idx_cached_plans_created` on `created_at`
-
-### Postgres: `plan_quality_snapshots` Table
-Tracks quality signals over time for trend analysis and regeneration decisions.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `cache_key` | `VARCHAR(64)` | FK to cached_plans |
-| `snapshot_date` | `DATE` | Aggregation date |
-| `sample_size` | `INT` | Number of users in sample |
-| `completion_rate` | `FLOAT` | % of users completing >60% of nodes |
-| `avg_time_to_mastery_minutes` | `FLOAT` | Actual vs. estimated time |
-| `exercise_pass_rate` | `FLOAT` | First-attempt pass rate |
-| `resource_engagement_rate` | `FLOAT` | % of users engaging with videos |
-| `negative_feedback_rate` | `FLOAT` | Explicit thumbs-down rate |
-
-Primary key: `(cache_key, snapshot_date)`
+Plan caching uses a **Redis-only** approach with Postgres for quality signal tracking:
+- **Redis**: Primary cache for generated plans (key: `lh:plan:{normalized_topic}:{user_level}`)
+- **Postgres `quality_metrics`**: Tracks quality signals for cache invalidation decisions
 
 ### Redis: Cache Key Conventions
 
-Hot plan cache (read-through from Postgres):
+Plan cache (normalized topic + level):
 ```
-plan_cache:{cache_key}
-TTL: 24 hours (configurable via PLAN_CACHE_HOT_TTL_SECONDS)
-Value: JSON string of plan_data
+lh:plan:{normalized_topic}:{user_level}
+TTL: 24 hours (86400 seconds)
+Value: JSON with plan_id, plan, topic_normalized, domain_category, staleness_policy, factSnapshot, created_at
 ```
 
-MCP staleness check cache (avoid repeated checks):
+Example cached plan structure:
+```json
+{
+  "plan_id": "550e8400-e29b-41d4-a716-446655440000",
+  "plan": { "topic": "...", "nodes": [...], "schedule": [...], "metadata": {...} },
+  "topic_normalized": "binary_search_trees",
+  "domain_category": "cs",
+  "staleness_policy": "annual",
+  "factSnapshot": ["BST operations are O(log n) for balanced trees", "..."],
+  "created_at": "2025-01-06T10:30:00Z"
+}
 ```
-staleness_check:{cache_key}:{date}
+
+YouTube cache keys:
+```
+lh:youtube:{query_hash}
 TTL: 24 hours
-Value: JSON { "stale": boolean, "reason": string?, "sources_checked": string[] }
+Value: JSON array of search results
 ```
+
+Token blacklist:
+```
+lh:blacklist:{jti}
+TTL: Remaining token lifetime
+Value: "1"
+```
+
+### Postgres: `quality_metrics` Table
+Tracks quality signals for plans to inform cache invalidation decisions.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `plan_id` | `UUID` | Reference to the plan |
+| `normalized_topic` | `VARCHAR(255)` | Normalized topic for grouping |
+| `sample_size` | `INT` | Number of users in sample |
+| `completion_rate` | `FLOAT` | % of users completing >60% of nodes |
+| `exercise_pass_rate` | `FLOAT` | First-attempt pass rate |
+| `avg_time_ratio` | `FLOAT` | Actual vs. estimated time ratio |
+| `negative_feedback_rate` | `FLOAT` | Explicit thumbs-down rate |
+| `measured_at` | `TIMESTAMP` | When metrics were recorded (default: NOW()) |
+
+Primary key: `(plan_id, measured_at)`
+
+Indexes:
+- `idx_quality_measured` on `measured_at`
+- `idx_quality_plan` on `plan_id`
+
+### Postgres: `staleness_policies` Table
+Configurable cache invalidation rules by domain category.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | `SERIAL PRIMARY KEY` | Policy ID |
+| `domain_category` | `VARCHAR(100) UNIQUE` | Domain (e.g., "math", "ai", "web") |
+| `policy_value` | `VARCHAR(20)` | "never", "7d", "30d", "90d", "annual" |
+| `description` | `TEXT` | Human-readable description |
+| `is_active` | `BOOLEAN` | Whether policy is active (default: true) |
+| `created_at` | `TIMESTAMP` | Creation time |
+| `updated_at` | `TIMESTAMP` | Last update time |
+
+Default policies:
+- `math`: "never" - Core mathematics does not change
+- `cs`: "annual" - Computer science theory is stable
+- `networking`: "90d" - Networking protocols evolve slowly
+- `cloud`: "30d" - Cloud infrastructure changes frequently
+- `web`: "14d" - Web frameworks evolve rapidly
+- `ai`: "7d" - AI/ML is extremely volatile
+- `general`: "30d" - Default for unspecified domains
 
 ### Quality Signal Thresholds (Defaults)
 
@@ -289,7 +337,7 @@ Regeneration is triggered when **any** of these conditions are met (and sample_s
 | `completion_rate` | < 0.50 | Half of users abandon the plan |
 | `exercise_pass_rate` | < 0.40 | Exercises too hard or unclear |
 | `negative_feedback_rate` | > 0.15 | Explicit user dissatisfaction |
-| `avg_time / estimated_time` | > 2.0 | Time estimates are significantly wrong |
+| `avg_time_ratio` | > 2.0 | Time estimates are significantly wrong |
 
 > [!NOTE]
 > These thresholds are initial defaults. Future work may replace them with a trained model.

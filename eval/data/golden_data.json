@@ -1,0 +1,546 @@
+{
+  "version": "2.0",
+  "description": "Golden dataset for evaluating all 6 LLM prompts. Includes plan expectations and test cases for exercises, grade, queries, staleness, and video validation.",
+  "created_at": "2026-01-28",
+  "topics": [
+    {
+      "id": "gt_cs_001",
+      "topic": "Binary Search Trees",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "cs/theory",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["insertion", "deletion", "traversal", "balancing", "complexity analysis"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "BST Insertion Algorithm",
+          "objectives": ["Understand the BST insertion process", "Implement recursive insertion"],
+          "tags": ["bst", "insertion", "recursion"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "coding", "short_answer"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "mcq",
+          "prompt": "What is the time complexity of BST insertion in a balanced tree?",
+          "rubric": "Student must identify O(log n) for balanced trees.",
+          "correct_answer": "O(log n)",
+          "user_answer": "O(log n)",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        },
+        {
+          "exercise_type": "short_answer",
+          "prompt": "Explain why BST insertion can be O(n) in the worst case.",
+          "rubric": "Must mention degenerate/skewed tree becoming like a linked list.",
+          "correct_answer": "When the tree becomes unbalanced (all nodes on one side), it degenerates into a linked list.",
+          "user_answer": "If you insert sorted elements, the tree becomes a line and you have to traverse everything.",
+          "expected_score_min": 0.7,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Binary Search Trees",
+        "objectives": ["Understand BST properties", "Compare with arrays and linked lists"],
+        "tags": ["data_structures", "trees", "binary_search"],
+        "expected_query_keywords": ["tutorial", "explained", "binary search tree"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Learn BST operations: insert O(log n) average, delete, and search. Covers balancing basics.",
+        "resources_text": "Video: BST Tutorial 2023 - Covers insertion, deletion, traversal",
+        "mcp_facts": "Binary search trees have O(log n) average case for insert/delete/search. O(n) worst case for skewed trees. This is well-established and unchanged.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "BST Insertion Algorithm",
+        "node_objectives": ["Implement insert operation", "Handle duplicate keys"],
+        "transcript_excerpt": "Today we'll learn about inserting nodes into a binary search tree. Remember, for any node, left children are smaller and right children are larger. Let's implement the insert function recursively. First we check if the tree is empty, then we compare the value and go left or right...",
+        "expected_relevant": true,
+        "expected_score_min": 0.7
+      }
+    },
+    {
+      "id": "gt_cs_002",
+      "topic": "REST API Design Best Practices",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "cs/web",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["HTTP methods", "status codes", "resource naming", "versioning", "authentication"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "HTTP Methods and Status Codes",
+          "objectives": ["Use correct HTTP methods for CRUD", "Return appropriate status codes"],
+          "tags": ["rest", "http", "api"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "mcq",
+          "prompt": "Which HTTP method should be used to update a resource partially?",
+          "rubric": "PATCH is for partial updates, PUT is for full replacement.",
+          "correct_answer": "PATCH",
+          "user_answer": "PUT",
+          "expected_score_min": 0.0,
+          "expected_is_correct": false
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "RESTful Resource Naming Conventions",
+        "objectives": ["Design intuitive API endpoints", "Use plural nouns for resources"],
+        "tags": ["rest", "api_design", "urls"],
+        "expected_query_keywords": ["REST", "API", "naming", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "REST API design using HTTP methods GET, POST, PUT, PATCH, DELETE. Common status codes 200, 201, 400, 404, 500.",
+        "resources_text": "REST API Tutorial - HTTP Methods Explained (2022)",
+        "mcp_facts": "REST principles remain unchanged. HTTP/2 and HTTP/3 don't change REST semantics. OpenAPI 3.1 is current spec version.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "HTTP Methods and Status Codes",
+        "node_objectives": ["Use correct HTTP methods for CRUD", "Return appropriate status codes"],
+        "transcript_excerpt": "Welcome to my cooking channel! Today we're making a delicious pasta carbonara. First, boil the water and add salt. Then cook the spaghetti until al dente...",
+        "expected_relevant": false,
+        "expected_score_min": 0.0
+      }
+    },
+    {
+      "id": "gt_cs_003",
+      "topic": "Docker Containerization",
+      "user_level": "beginner",
+      "plan_size": "moderate",
+      "domain_category": "cs/devops",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["images", "containers", "Dockerfile", "docker-compose", "volumes"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "Writing Your First Dockerfile",
+          "objectives": ["Understand Dockerfile syntax", "Build a container image"],
+          "tags": ["docker", "containers", "dockerfile"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "coding", "fill_blank"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "coding",
+          "prompt": "Write a Dockerfile that starts from python:3.11-slim, copies requirements.txt, installs dependencies, and runs app.py",
+          "rubric": "Must have FROM, COPY, RUN pip install, CMD. Order matters for layer caching.",
+          "correct_answer": "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\nCMD [\"python\", \"app.py\"]",
+          "user_answer": "FROM python:3.11-slim\nCOPY . /app\nRUN pip install -r /app/requirements.txt\nCMD python /app/app.py",
+          "expected_score_min": 0.6,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Docker",
+        "objectives": ["Understand containerization benefits", "Compare containers to VMs"],
+        "tags": ["docker", "containers", "devops"],
+        "expected_query_keywords": ["Docker", "tutorial", "beginner"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Docker basics: images, containers, Dockerfile. Build with docker build, run with docker run.",
+        "resources_text": "Docker Getting Started Guide - Version 20.x (2022)",
+        "mcp_facts": "Docker 25.x is current stable. Docker Desktop requires subscription for large enterprises. Podman is a popular alternative.",
+        "expected_stale": true
+      },
+
+      "video_validation_test": {
+        "node_title": "Writing Your First Dockerfile",
+        "node_objectives": ["Understand Dockerfile syntax", "Build a container image"],
+        "transcript_excerpt": "In this video, I'll show you how to write your first Dockerfile. A Dockerfile is a text file containing instructions to build a Docker image. We start with the FROM instruction which specifies the base image. Then we use COPY to add our application files...",
+        "expected_relevant": true,
+        "expected_score_min": 0.8
+      }
+    },
+    {
+      "id": "gt_math_001",
+      "topic": "Calculus: Derivatives and Integrals",
+      "user_level": "beginner",
+      "plan_size": "large",
+      "domain_category": "math/calculus",
+      "expected_node_count": { "min": 20, "max": 30 },
+      "expected_concepts": ["limits", "differentiation", "integration", "chain rule", "applications"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "The Power Rule for Derivatives",
+          "objectives": ["Apply the power rule", "Differentiate polynomial functions"],
+          "tags": ["calculus", "derivatives", "power_rule"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "short_answer",
+          "prompt": "Find the derivative of f(x) = 3x^4 + 2x^2 - 5",
+          "rubric": "Apply power rule: bring down exponent, reduce by 1. f'(x) = 12x^3 + 4x",
+          "correct_answer": "f'(x) = 12x³ + 4x",
+          "user_answer": "12x^3 + 4x",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Limits",
+        "objectives": ["Understand the concept of a limit", "Evaluate simple limits"],
+        "tags": ["calculus", "limits", "foundations"],
+        "expected_query_keywords": ["limits", "calculus", "tutorial", "introduction"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Calculus fundamentals: limits, derivatives, integrals. Power rule, chain rule, product rule.",
+        "resources_text": "Khan Academy Calculus Course - Covers all major topics",
+        "mcp_facts": "Calculus fundamentals are foundational mathematics established centuries ago. No updates needed.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "The Power Rule for Derivatives",
+        "node_objectives": ["Apply the power rule", "Differentiate polynomial functions"],
+        "transcript_excerpt": "The power rule is one of the most fundamental rules in calculus. If you have x to the n, the derivative is n times x to the n minus 1. So if f of x equals x cubed, then f prime of x equals 3 x squared. Let's practice with some examples...",
+        "expected_relevant": true,
+        "expected_score_min": 0.85
+      }
+    },
+    {
+      "id": "gt_math_002",
+      "topic": "Linear Algebra Fundamentals",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "math/algebra",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["vectors", "matrices", "eigenvalues", "linear transformations", "determinants"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "Matrix Multiplication",
+          "objectives": ["Multiply matrices", "Understand non-commutativity"],
+          "tags": ["linear_algebra", "matrices", "multiplication"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer", "fill_blank"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "mcq",
+          "prompt": "Is matrix multiplication commutative (AB = BA)?",
+          "rubric": "No, matrix multiplication is generally not commutative.",
+          "correct_answer": "No",
+          "user_answer": "No, except for special cases like identity matrices",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Vectors",
+        "objectives": ["Understand vector representations", "Perform vector operations"],
+        "tags": ["linear_algebra", "vectors", "basics"],
+        "expected_query_keywords": ["vectors", "linear algebra", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Linear algebra: vectors, matrices, determinants, eigenvalues. Matrix operations and transformations.",
+        "resources_text": "3Blue1Brown Essence of Linear Algebra (2016)",
+        "mcp_facts": "Linear algebra is foundational mathematics. No changes to core concepts.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "Matrix Multiplication",
+        "node_objectives": ["Multiply matrices", "Understand non-commutativity"],
+        "transcript_excerpt": "Matrix multiplication works by taking the dot product of rows and columns. To multiply A times B, the number of columns in A must equal the number of rows in B. Let's see how this works with a 2 by 3 matrix times a 3 by 2 matrix...",
+        "expected_relevant": true,
+        "expected_score_min": 0.8
+      }
+    },
+    {
+      "id": "gt_phys_001",
+      "topic": "Classical Mechanics: Newton's Laws",
+      "user_level": "beginner",
+      "plan_size": "moderate",
+      "domain_category": "physics/mechanics",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["forces", "motion", "momentum", "energy", "Newton's laws"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "Newton's Second Law: F = ma",
+          "objectives": ["Apply F=ma to solve problems", "Understand force-acceleration relationship"],
+          "tags": ["physics", "newton", "forces"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "short_answer",
+          "prompt": "A 5 kg object accelerates at 2 m/s². What is the net force?",
+          "rubric": "F = ma = 5 * 2 = 10 N",
+          "correct_answer": "10 N",
+          "user_answer": "10 Newtons",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Forces",
+        "objectives": ["Identify different types of forces", "Draw free body diagrams"],
+        "tags": ["physics", "forces", "mechanics"],
+        "expected_query_keywords": ["Newton", "laws", "physics", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Classical mechanics: Newton's three laws, forces, F=ma, momentum, energy.",
+        "resources_text": "Physics classroom resources on Newton's Laws",
+        "mcp_facts": "Newton's laws are foundational physics established in 1687. No updates needed.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "Newton's Second Law: F = ma",
+        "node_objectives": ["Apply F=ma to solve problems", "Understand force-acceleration relationship"],
+        "transcript_excerpt": "Newton's second law tells us that force equals mass times acceleration. This simple equation F equals m a is incredibly powerful. It connects the force applied to an object with how much it accelerates. Let me show you a few examples...",
+        "expected_relevant": true,
+        "expected_score_min": 0.85
+      }
+    },
+    {
+      "id": "gt_phys_002",
+      "topic": "Electromagnetism Basics",
+      "user_level": "intermediate",
+      "plan_size": "large",
+      "domain_category": "physics/electromagnetism",
+      "expected_node_count": { "min": 20, "max": 30 },
+      "expected_concepts": ["electric fields", "magnetic fields", "Maxwell's equations", "circuits"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "Coulomb's Law",
+          "objectives": ["Calculate electrostatic forces", "Apply inverse square law"],
+          "tags": ["electromagnetism", "electric_force", "coulomb"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "mcq",
+          "prompt": "If the distance between two charges doubles, the electrostatic force becomes:",
+          "rubric": "F ∝ 1/r². Doubling r means F becomes 1/4.",
+          "correct_answer": "1/4 of the original",
+          "user_answer": "One quarter of the original force",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Electric Fields",
+        "objectives": ["Understand field concept", "Calculate electric field strength"],
+        "tags": ["electromagnetism", "electric_field", "physics"],
+        "expected_query_keywords": ["electric field", "physics", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Electromagnetism: electric fields, magnetic fields, Coulomb's law, Faraday's law, Maxwell's equations.",
+        "resources_text": "MIT OCW 8.02 Electromagnetism lectures",
+        "mcp_facts": "Electromagnetism is foundational physics. Maxwell's equations are unchanged since 1865.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "Coulomb's Law",
+        "node_objectives": ["Calculate electrostatic forces", "Apply inverse square law"],
+        "transcript_excerpt": "Coulomb's law describes the force between two charged particles. The force is proportional to the product of the charges and inversely proportional to the square of the distance. F equals k q1 q2 divided by r squared...",
+        "expected_relevant": true,
+        "expected_score_min": 0.8
+      }
+    },
+    {
+      "id": "gt_bus_001",
+      "topic": "Financial Statement Analysis",
+      "user_level": "intermediate",
+      "plan_size": "moderate",
+      "domain_category": "business/finance",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["balance sheet", "income statement", "cash flow", "ratios", "valuation"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "Reading the Balance Sheet",
+          "objectives": ["Identify assets, liabilities, equity", "Understand the accounting equation"],
+          "tags": ["finance", "balance_sheet", "accounting"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "short_answer",
+          "prompt": "What is the accounting equation?",
+          "rubric": "Assets = Liabilities + Equity (or Shareholders' Equity)",
+          "correct_answer": "Assets = Liabilities + Shareholders' Equity",
+          "user_answer": "Assets equals Liabilities plus Equity",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Financial Statements",
+        "objectives": ["Identify three main financial statements", "Understand their purposes"],
+        "tags": ["finance", "accounting", "statements"],
+        "expected_query_keywords": ["financial statements", "analysis", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Financial statement analysis: balance sheet, income statement, cash flow statement. Key ratios for analysis.",
+        "resources_text": "Investopedia Financial Statements Guide (2023)",
+        "mcp_facts": "Core accounting principles (GAAP, IFRS) are stable. ESG reporting becoming more important.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "Reading the Balance Sheet",
+        "node_objectives": ["Identify assets, liabilities, equity", "Understand the accounting equation"],
+        "transcript_excerpt": "The balance sheet shows a snapshot of a company's financial position. On one side you have assets, what the company owns. On the other side you have liabilities, what it owes, and equity, what belongs to shareholders. These must balance...",
+        "expected_relevant": true,
+        "expected_score_min": 0.8
+      }
+    },
+    {
+      "id": "gt_bus_002",
+      "topic": "Project Management Fundamentals",
+      "user_level": "beginner",
+      "plan_size": "moderate",
+      "domain_category": "business/management",
+      "expected_node_count": { "min": 12, "max": 20 },
+      "expected_concepts": ["planning", "scheduling", "risk management", "stakeholder management", "agile"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "The Project Life Cycle",
+          "objectives": ["Identify project phases", "Understand phase gates"],
+          "tags": ["project_management", "phases", "planning"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer", "flashcard"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "mcq",
+          "prompt": "Which phase typically comes first in the project life cycle?",
+          "rubric": "Initiation (or Initiate) comes before Planning, Execution, and Closure.",
+          "correct_answer": "Initiation",
+          "user_answer": "Planning",
+          "expected_score_min": 0.0,
+          "expected_is_correct": false
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Introduction to Project Management",
+        "objectives": ["Define project vs operations", "Understand PM role"],
+        "tags": ["project_management", "basics", "introduction"],
+        "expected_query_keywords": ["project management", "fundamentals", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Project management: initiation, planning, execution, monitoring, closure. Waterfall vs Agile approaches.",
+        "resources_text": "PMI PMBOK Guide 6th Edition Summary (2017)",
+        "mcp_facts": "PMBOK 7th edition released in 2021 with principle-based approach. Agile and hybrid methods increasingly popular.",
+        "expected_stale": true
+      },
+
+      "video_validation_test": {
+        "node_title": "The Project Life Cycle",
+        "node_objectives": ["Identify project phases", "Understand phase gates"],
+        "transcript_excerpt": "Every project goes through distinct phases. We start with initiation where we define the project and get approval. Then planning where we create detailed plans. Execution is where the work gets done. And finally we close the project...",
+        "expected_relevant": true,
+        "expected_score_min": 0.75
+      }
+    },
+    {
+      "id": "gt_bio_001",
+      "topic": "Cell Biology and Genetics",
+      "user_level": "beginner",
+      "plan_size": "large",
+      "domain_category": "biology/molecular",
+      "expected_node_count": { "min": 20, "max": 30 },
+      "expected_concepts": ["cell structure", "DNA", "RNA", "protein synthesis", "inheritance"],
+
+      "exercise_test_nodes": [
+        {
+          "node_title": "DNA Structure and Replication",
+          "objectives": ["Describe DNA double helix", "Explain semiconservative replication"],
+          "tags": ["biology", "dna", "genetics"],
+          "expected_exercise_count": 5,
+          "expected_types": ["mcq", "short_answer", "flashcard"]
+        }
+      ],
+
+      "grade_test_cases": [
+        {
+          "exercise_type": "short_answer",
+          "prompt": "What are the four nucleotide bases in DNA?",
+          "rubric": "Adenine, Thymine, Guanine, Cytosine (A, T, G, C)",
+          "correct_answer": "Adenine, Thymine, Guanine, Cytosine",
+          "user_answer": "A, T, G, C",
+          "expected_score_min": 0.9,
+          "expected_is_correct": true
+        }
+      ],
+
+      "query_test_node": {
+        "node_title": "Cell Structure Overview",
+        "objectives": ["Identify major cell organelles", "Compare prokaryotic and eukaryotic cells"],
+        "tags": ["biology", "cells", "organelles"],
+        "expected_query_keywords": ["cell biology", "structure", "tutorial"]
+      },
+
+      "staleness_test": {
+        "plan_summary": "Cell biology: cell structure, organelles, DNA, replication, transcription, translation.",
+        "resources_text": "Campbell Biology Chapter 6-17 summaries",
+        "mcp_facts": "Core cell biology is foundational. CRISPR-Cas9 gene editing is a major recent advancement.",
+        "expected_stale": false
+      },
+
+      "video_validation_test": {
+        "node_title": "DNA Structure and Replication",
+        "node_objectives": ["Describe DNA double helix", "Explain semiconservative replication"],
+        "transcript_excerpt": "DNA is a double helix made of two strands wound around each other. Each strand is made of nucleotides containing a sugar, phosphate, and one of four bases: adenine, thymine, guanine, or cytosine. A always pairs with T, and G always pairs with C...",
+        "expected_relevant": true,
+        "expected_score_min": 0.85
+      }
+    }
+  ]
+}

@@ -1,0 +1,3803 @@
+{
+  "run_timestamp": "2026-01-28T16:20:15.112405+00:00",
+  "service_url": "http://localhost:8000",
+  "metrics": {
+    "total_topics": 10,
+    "schema_valid_first_try": 10,
+    "schema_valid_after_retry": 10,
+    "schema_invalid": 0,
+    "dag_valid": 10,
+    "dag_invalid": 0,
+    "node_count_valid": 10,
+    "node_count_invalid": 0,
+    "errors": [],
+    "schema_validity_first_try_rate": 1.0,
+    "schema_validity_after_retry_rate": 1.0,
+    "dag_validity_rate": 1.0
+  },
+  "results": [
+    {
+      "topic_id": "gt_cs_001",
+      "topic": "Binary Search Trees",
+      "request_id": "c29ef94b-9b6c-4f4b-99ae-c63606e2b037",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 15,
+      "nodes": [
+        {
+          "node_id": "trees_and_recursion_refresher",
+          "title": "Trees and Recursion Refresher",
+          "objectives": [
+            "Recall fundamental tree terminology (root, node, child, parent, leaf, height, depth).",
+            "Understand basic tree representations (e.g., linked list of nodes).",
+            "Review the concept of recursion and its application in tree algorithms."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 25,
+          "tags": [
+            "fundamentals",
+            "recursion",
+            "data structures"
+          ]
+        },
+        {
+          "node_id": "introduction_to_bsts",
+          "title": "Introduction to Binary Search Trees",
+          "objectives": [
+            "Define a Binary Search Tree (BST) and its core properties.",
+            "Differentiate BSTs from general binary trees.",
+            "Identify valid and invalid BST structures."
+          ],
+          "prerequisites": [
+            "trees_and_recursion_refresher"
+          ],
+          "estimated_minutes": 30,
+          "tags": [
+            "bst",
+            "introduction",
+            "properties"
+          ]
+        },
+        {
+          "node_id": "bst_search_operation",
+          "title": "BST Search Operation",
+          "objectives": [
+            "Explain the algorithm for searching a value in a BST.",
+            "Trace the search operation on example BSTs.",
+            "Implement the search operation iteratively and recursively."
+          ],
+          "prerequisites": [
+            "introduction_to_bsts"
+          ],
+          "estimated_minutes": 25,
+          "tags": [
+            "bst",
+            "search",
+            "algorithm"
+          ]
+        },
+        {
+          "node_id": "bst_insertion_operation",
+          "title": "BST Insertion Operation",
+          "objectives": [
+            "Describe the algorithm for inserting a new node into a BST.",
+            "Illustrate the insertion process with various examples.",
+            "Implement the insertion operation."
+          ],
+          "prerequisites": [
+            "introduction_to_bsts"
+          ],
+          "estimated_minutes": 30,
+          "tags": [
+            "bst",
+            "insertion",
+            "algorithm"
+          ]
+        },
+        {
+          "node_id": "bst_traversal_methods",
+          "title": "BST Traversal Methods",
+          "objectives": [
+            "Explain In-order, Pre-order, and Post-order traversal algorithms for BSTs.",
+            "Perform each traversal on given BST examples.",
+            "Understand the significance of In-order traversal for BSTs (sorted output)."
+          ],
+          "prerequisites": [
+            "introduction_to_bsts"
+          ],
+          "estimated_minutes": 40,
+          "tags": [
+            "bst",
+            "traversal",
+            "in-order",
+            "pre-order",
+            "post-order"
+          ]
+        },
+        {
+          "node_id": "finding_min_max_successor_predecessor",
+          "title": "Finding Min/Max, Successor, and Predecessor in BST",
+          "objectives": [
+            "Develop algorithms to find the minimum and maximum values in a BST.",
+            "Define and implement algorithms for finding the in-order successor of a node.",
+            "Define and implement algorithms for finding the in-order predecessor of a node."
+          ],
+          "prerequisites": [
+            "bst_search_operation",
+            "bst_traversal_methods"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "bst",
+            "min",
+            "max",
+            "successor",
+            "predecessor"
+          ]
+        },
+        {
+          "node_id": "bst_deletion_operation_part1",
+          "title": "BST Deletion Operation (Part 1: 0 or 1 Child)",
+          "objectives": [
+            "Understand the complexities of node deletion in a BST.",
+            "Implement deletion for nodes with no children (leaf nodes).",
+            "Implement deletion for nodes with one child."
+          ],
+          "prerequisites": [
+            "bst_search_operation",
+            "bst_insertion_operation"
+          ],
+          "estimated_minutes": 40,
+          "tags": [
+            "bst",
+            "deletion",
+            "algorithm"
+          ]
+        },
+        {
+          "node_id": "bst_deletion_operation_part2",
+          "title": "BST Deletion Operation (Part 2: 2 Children)",
+          "objectives": [
+            "Explain the strategy for deleting a node with two children (using in-order successor or predecessor).",
+            "Implement the deletion algorithm for nodes with two children.",
+            "Trace complete deletion scenarios on various BST structures."
+          ],
+          "prerequisites": [
+            "bst_deletion_operation_part1",
+            "finding_min_max_successor_predecessor"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "bst",
+            "deletion",
+            "algorithm",
+            "advanced"
+          ]
+        },
+        {
+          "node_id": "time_space_complexity_analysis",
+          "title": "Time and Space Complexity Analysis of BST Operations",
+          "objectives": [
+            "Analyze the best, average, and worst-case time complexities for search, insertion, and deletion.",
+            "Understand the factors influencing BST performance (e.g., tree height).",
+            "Determine the space complexity requirements for BSTs and their operations."
+          ],
+          "prerequisites": [
+            "bst_insertion_operation",
+            "bst_deletion_operation_part2",
+            "bst_traversal_methods"
+          ],
+          "estimated_minutes": 50,
+          "tags": [
+            "bst",
+            "complexity",
+            "big-o",
+            "analysis"
+          ]
+        },
+        {
+          "node_id": "validating_a_bst",
+          "title": "Validating a Binary Search Tree",
+          "objectives": [
+            "Identify common pitfalls that can lead to an invalid BST structure.",
+            "Develop an algorithm to check if a given binary tree satisfies the BST properties.",
+            "Implement a robust BST validation function."
+          ],
+          "prerequisites": [
+            "bst_traversal_methods"
+          ],
+          "estimated_minutes": 35,
+          "tags": [
+            "bst",
+            "validation",
+            "algorithm",
+            "debugging"
+          ]
+        },
+        {
+          "node_id": "building_bsts_from_data",
+          "title": "Building BSTs from Data Structures",
+          "objectives": [
+            "Construct a BST from a list or array of unsorted elements.",
+            "Understand how to build a balanced BST from a sorted array/list (introduction to balanced BST concept).",
+            "Implement functions to build BSTs from various input types."
+          ],
+          "prerequisites": [
+            "bst_insertion_operation"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "bst",
+            "construction",
+            "data conversion"
+          ]
+        },
+        {
+          "node_id": "disadvantages_and_skewed_trees",
+          "title": "Disadvantages and Skewed Trees",
+          "objectives": [
+            "Recognize scenarios where BSTs degrade into linked lists (skewed trees).",
+            "Understand the performance implications of skewed BSTs (worst-case complexity).",
+            "Discuss the limitations of basic BSTs for certain data patterns."
+          ],
+          "prerequisites": [
+            "time_space_complexity_analysis"
+          ],
+          "estimated_minutes": 30,
+          "tags": [
+            "bst",
+            "limitations",
+            "skewed trees",
+            "performance"
+          ]
+        },
+        {
+          "node_id": "introduction_to_self_balancing_bsts",
+          "title": "Introduction to Self-Balancing BSTs",
+          "objectives": [
+            "Explain the need for self-balancing BSTs.",
+            "Briefly introduce common self-balancing BSTs like AVL trees and Red-Black trees.",
+            "Understand the high-level concept of rotations and rebalancing."
+          ],
+          "prerequisites": [
+            "disadvantages_and_skewed_trees"
+          ],
+          "estimated_minutes": 40,
+          "tags": [
+            "bst",
+            "self-balancing",
+            "avl",
+            "red-black",
+            "advanced concepts"
+          ]
+        },
+        {
+          "node_id": "hands_on_bst_implementation",
+          "title": "Hands-on: Implementing a BST Class",
+          "objectives": [
+            "Write a complete BST class with Node structure and methods for insertion, search, deletion, and traversals.",
+            "Test the implementation with various test cases, including edge cases.",
+            "Refine code for clarity and efficiency."
+          ],
+          "prerequisites": [
+            "bst_deletion_operation_part2",
+            "validating_a_bst",
+            "building_bsts_from_data"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "bst",
+            "coding",
+            "practice",
+            "implementation"
+          ]
+        },
+        {
+          "node_id": "common_bst_problems",
+          "title": "Common BST Problems and Applications",
+          "objectives": [
+            "Solve common algorithmic problems using BST properties (e.g., Kth smallest element, range sum).",
+            "Identify real-world applications where BSTs are beneficial.",
+            "Analyze problem constraints to determine if a BST is an appropriate data structure choice."
+          ],
+          "prerequisites": [
+            "hands_on_bst_implementation"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "bst",
+            "problem solving",
+            "applications",
+            "interview prep"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 23161
+    },
+    {
+      "topic_id": "gt_cs_002",
+      "topic": "REST API Design Best Practices",
+      "request_id": "1a7c8bd4-090c-4f06-8151-e0506691a810",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 15,
+      "nodes": [
+        {
+          "node_id": "introduction_to_rest_apis",
+          "title": "Introduction to REST APIs and Why Design Matters",
+          "objectives": [
+            "Recall the fundamental concepts of REST and its architectural style.",
+            "Understand the importance of good API design for usability, maintainability, and scalability.",
+            "Differentiate between well-designed and poorly-designed APIs."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 45,
+          "tags": [
+            "introduction",
+            "rest",
+            "api_design"
+          ]
+        },
+        {
+          "node_id": "rest_architectural_principles",
+          "title": "Understanding REST Architectural Constraints",
+          "objectives": [
+            "Explain the six core architectural constraints of REST (Client-Server, Stateless, Cacheable, Uniform Interface, Layered System, Code-On-Demand).",
+            "Analyze how each constraint contributes to the benefits of RESTful systems.",
+            "Identify violations of REST principles in common API patterns."
+          ],
+          "prerequisites": [
+            "introduction_to_rest_apis"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "rest_principles",
+            "architecture"
+          ]
+        },
+        {
+          "node_id": "resource_modeling_and_uris",
+          "title": "Resource Modeling and URI Design Best Practices",
+          "objectives": [
+            "Identify and model resources effectively using nouns.",
+            "Design clear, predictable, and hierarchical URIs.",
+            "Apply best practices for URI naming, including pluralization and nesting."
+          ],
+          "prerequisites": [
+            "rest_architectural_principles"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "resources",
+            "uri_design",
+            "naming"
+          ]
+        },
+        {
+          "node_id": "http_methods_and_crud",
+          "title": "HTTP Methods: Mapping to CRUD and Idempotency",
+          "objectives": [
+            "Map standard HTTP methods (GET, POST, PUT, PATCH, DELETE) to CRUD operations.",
+            "Understand the concepts of safety and idempotency in the context of HTTP methods.",
+            "Choose the appropriate HTTP method for various API operations."
+          ],
+          "prerequisites": [
+            "resource_modeling_and_uris"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "http_methods",
+            "crud",
+            "idempotency"
+          ]
+        },
+        {
+          "node_id": "http_status_codes_deep_dive",
+          "title": "Comprehensive Guide to HTTP Status Codes",
+          "objectives": [
+            "Utilize 2xx, 3xx, 4xx, and 5xx status codes correctly for API responses.",
+            "Differentiate between common status codes like 200, 201, 204, 400, 401, 403, 404, 409, 500.",
+            "Ensure API responses convey clear semantic meaning through status codes."
+          ],
+          "prerequisites": [
+            "http_methods_and_crud"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "http_status",
+            "error_handling"
+          ]
+        },
+        {
+          "node_id": "request_response_formats",
+          "title": "Request and Response Formats: JSON and Content Negotiation",
+          "objectives": [
+            "Understand the prevalence and benefits of JSON for API data exchange.",
+            "Discuss alternatives like XML and their use cases.",
+            "Implement content negotiation using HTTP headers (Accept, Content-Type)."
+          ],
+          "prerequisites": [
+            "http_status_codes_deep_dive"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "json",
+            "xml",
+            "content_negotiation"
+          ]
+        },
+        {
+          "node_id": "api_versioning_strategies",
+          "title": "API Versioning: Strategies and Considerations",
+          "objectives": [
+            "Evaluate different API versioning strategies (URI, Header, Media Type).",
+            "Choose an appropriate versioning strategy based on project requirements and maintainability.",
+            "Understand the trade-offs and implications of each versioning approach."
+          ],
+          "prerequisites": [
+            "request_response_formats"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "versioning",
+            "api_evolution"
+          ]
+        },
+        {
+          "node_id": "pagination_filtering_sorting",
+          "title": "Designing for Data Retrieval: Pagination, Filtering, and Sorting",
+          "objectives": [
+            "Implement effective pagination strategies (offset-based, cursor-based).",
+            "Design flexible filtering mechanisms using query parameters.",
+            "Enable sorting capabilities for resource collections.",
+            "Address performance considerations for large datasets."
+          ],
+          "prerequisites": [
+            "request_response_formats"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "data_retrieval",
+            "pagination",
+            "filtering",
+            "sorting"
+          ]
+        },
+        {
+          "node_id": "error_handling_and_standardization",
+          "title": "Consistent Error Handling and Custom Error Objects",
+          "objectives": [
+            "Design a consistent and informative error response structure for your API.",
+            "Map specific error conditions to appropriate HTTP status codes.",
+            "Implement custom error objects to provide detailed error messages and codes.",
+            "Handle validation errors gracefully."
+          ],
+          "prerequisites": [
+            "http_status_codes_deep_dive",
+            "request_response_formats"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "error_handling",
+            "standardization"
+          ]
+        },
+        {
+          "node_id": "authentication_authorization",
+          "title": "Authentication and Authorization in REST APIs",
+          "objectives": [
+            "Understand common authentication methods for APIs (API Keys, JWT, OAuth2).",
+            "Implement authorization checks based on user roles and permissions.",
+            "Discuss best practices for securing API endpoints.",
+            "Distinguish between authentication and authorization."
+          ],
+          "prerequisites": [
+            "http_status_codes_deep_dive"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "security",
+            "authentication",
+            "authorization",
+            "jwt",
+            "oauth2"
+          ]
+        },
+        {
+          "node_id": "hateoas_and_hypermedia",
+          "title": "HATEOAS and Hypermedia for Discoverability",
+          "objectives": [
+            "Explain the principle of HATEOAS (Hypermedia as the Engine of Application State).",
+            "Implement hypermedia controls (links) in API responses.",
+            "Understand how HATEOAS improves API discoverability and evolvability.",
+            "Evaluate scenarios where HATEOAS is most beneficial."
+          ],
+          "prerequisites": [
+            "api_versioning_strategies",
+            "error_handling_and_standardization"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "hateoas",
+            "hypermedia",
+            "discoverability"
+          ]
+        },
+        {
+          "node_id": "api_security_considerations",
+          "title": "Advanced API Security Considerations",
+          "objectives": [
+            "Identify and mitigate common API security vulnerabilities (e.g., injection, mass assignment).",
+            "Implement input validation and output encoding best practices.",
+            "Understand the role of CORS, rate limiting, and throttling in API security.",
+            "Discuss data encryption and secure communication (HTTPS)."
+          ],
+          "prerequisites": [
+            "authentication_authorization",
+            "error_handling_and_standardization"
+          ],
+          "estimated_minutes": 105,
+          "tags": [
+            "security",
+            "rate_limiting",
+            "cors",
+            "vulnerabilities"
+          ]
+        },
+        {
+          "node_id": "api_documentation_openapi",
+          "title": "Documenting Your API with OpenAPI/Swagger",
+          "objectives": [
+            "Understand the importance of comprehensive API documentation.",
+            "Learn to use OpenAPI Specification (Swagger) to describe REST APIs.",
+            "Generate interactive API documentation and client SDKs.",
+            "Maintain documentation alongside API development."
+          ],
+          "prerequisites": [
+            "hateoas_and_hypermedia",
+            "api_security_considerations"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "documentation",
+            "openapi",
+            "swagger"
+          ]
+        },
+        {
+          "node_id": "designing_for_evolvability",
+          "title": "Designing for API Evolutability and Deprecation",
+          "objectives": [
+            "Plan for future changes and extensions to your API.",
+            "Implement strategies for backward compatibility and graceful deprecation.",
+            "Communicate API changes effectively to consumers.",
+            "Understand the long-term maintenance aspects of API design."
+          ],
+          "prerequisites": [
+            "api_versioning_strategies",
+            "hateoas_and_hypermedia"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "api_evolution",
+            "deprecation",
+            "maintenance"
+          ]
+        },
+        {
+          "node_id": "practical_design_exercise",
+          "title": "Practical REST API Design Case Study",
+          "objectives": [
+            "Apply all learned best practices to design a sample REST API for a given problem domain.",
+            "Justify design decisions based on REST principles and best practices.",
+            "Identify potential issues and propose solutions for a real-world API scenario.",
+            "Critique and refine an existing API design."
+          ],
+          "prerequisites": [
+            "api_documentation_openapi",
+            "designing_for_evolvability",
+            "pagination_filtering_sorting"
+          ],
+          "estimated_minutes": 180,
+          "tags": [
+            "practical",
+            "case_study",
+            "api_design"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 31819
+    },
+    {
+      "topic_id": "gt_cs_003",
+      "topic": "Docker Containerization",
+      "request_id": "c56685e4-c56e-4e74-a449-8df23c125b4c",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 18,
+      "nodes": [
+        {
+          "node_id": "introduction_to_docker_containers",
+          "title": "Introduction to Docker and Containers",
+          "objectives": [
+            "Define what Docker is and its core purpose.",
+            "Explain the concept of containerization.",
+            "Identify the benefits of using containers in software development and deployment."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 30,
+          "tags": [
+            "introduction",
+            "concepts",
+            "theory"
+          ]
+        },
+        {
+          "node_id": "docker_vs_virtual_machines",
+          "title": "Docker Containers vs. Virtual Machines: Understanding the Differences",
+          "objectives": [
+            "Compare and contrast Docker containers with traditional Virtual Machines (VMs).",
+            "Understand the architectural differences between containers and VMs.",
+            "Recognize scenarios where containers are preferred over VMs and vice-versa."
+          ],
+          "prerequisites": [
+            "introduction_to_docker_containers"
+          ],
+          "estimated_minutes": 25,
+          "tags": [
+            "comparison",
+            "architecture",
+            "concepts"
+          ]
+        },
+        {
+          "node_id": "installing_docker_desktop",
+          "title": "Installing Docker Desktop on Your System",
+          "objectives": [
+            "Successfully download and install Docker Desktop on Windows, macOS, or Linux.",
+            "Verify the Docker installation and check its version.",
+            "Understand the components installed with Docker Desktop (Docker Engine, CLI, Compose)."
+          ],
+          "prerequisites": [
+            "docker_vs_virtual_machines"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "installation",
+            "setup",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "running_your_first_container",
+          "title": "Running Your First Docker Container",
+          "objectives": [
+            "Execute the 'docker run' command to start a container.",
+            "Understand the basic syntax and common flags for 'docker run' (e.g., -it, --rm).",
+            "Run a simple 'hello-world' and an interactive container."
+          ],
+          "prerequisites": [
+            "installing_docker_desktop"
+          ],
+          "estimated_minutes": 40,
+          "tags": [
+            "basic_commands",
+            "hands-on",
+            "containers"
+          ]
+        },
+        {
+          "node_id": "managing_docker_containers",
+          "title": "Managing Docker Containers: Lifecycle Commands",
+          "objectives": [
+            "List running and stopped containers using 'docker ps'.",
+            "Start, stop, restart, and remove containers using 'docker start', 'stop', 'restart', 'rm'.",
+            "Inspect container details with 'docker inspect' and view logs with 'docker logs'."
+          ],
+          "prerequisites": [
+            "running_your_first_container"
+          ],
+          "estimated_minutes": 50,
+          "tags": [
+            "basic_commands",
+            "hands-on",
+            "container_lifecycle"
+          ]
+        },
+        {
+          "node_id": "understanding_docker_images",
+          "title": "Understanding Docker Images: The Blueprint for Containers",
+          "objectives": [
+            "Define what a Docker Image is and its relationship to containers.",
+            "Explain the concept of image layers and how they contribute to efficiency.",
+            "Differentiate between an image and a container."
+          ],
+          "prerequisites": [
+            "managing_docker_containers"
+          ],
+          "estimated_minutes": 30,
+          "tags": [
+            "images",
+            "concepts",
+            "theory"
+          ]
+        },
+        {
+          "node_id": "pulling_searching_docker_images",
+          "title": "Pulling and Searching Docker Images from Registries",
+          "objectives": [
+            "Search for public images on Docker Hub using 'docker search'.",
+            "Download images from Docker Hub using 'docker pull'.",
+            "List local images with 'docker images' and remove them with 'docker rmi'."
+          ],
+          "prerequisites": [
+            "understanding_docker_images"
+          ],
+          "estimated_minutes": 35,
+          "tags": [
+            "images",
+            "docker_hub",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "creating_custom_images_with_dockerfiles_part1",
+          "title": "Creating Custom Images with Dockerfiles (Part 1: Basics)",
+          "objectives": [
+            "Understand the purpose and basic syntax of a Dockerfile.",
+            "Learn essential Dockerfile instructions: FROM, RUN, CMD.",
+            "Create a simple Dockerfile to package a basic application."
+          ],
+          "prerequisites": [
+            "pulling_searching_docker_images"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "dockerfile",
+            "images",
+            "hands-on",
+            "build"
+          ]
+        },
+        {
+          "node_id": "creating_custom_images_with_dockerfiles_part2",
+          "title": "Creating Custom Images with Dockerfiles (Part 2: Advanced)",
+          "objectives": [
+            "Utilize additional Dockerfile instructions: COPY, ADD, EXPOSE, WORKDIR, ENTRYPOINT.",
+            "Understand the difference between CMD and ENTRYPOINT.",
+            "Apply best practices for writing efficient and secure Dockerfiles (e.g., multi-stage builds introduction)."
+          ],
+          "prerequisites": [
+            "creating_custom_images_with_dockerfiles_part1"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "dockerfile",
+            "images",
+            "hands-on",
+            "build",
+            "best_practices"
+          ]
+        },
+        {
+          "node_id": "building_tagging_images",
+          "title": "Building and Tagging Docker Images",
+          "objectives": [
+            "Build a Docker image from a Dockerfile using 'docker build'.",
+            "Understand and apply image tagging conventions for versioning and organization.",
+            "Rebuild and update an existing Docker image."
+          ],
+          "prerequisites": [
+            "creating_custom_images_with_dockerfiles_part2"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "images",
+            "build",
+            "tagging",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "pushing_images_to_docker_hub",
+          "title": "Pushing Images to Docker Hub",
+          "objectives": [
+            "Create an account on Docker Hub.",
+            "Authenticate with Docker Hub from the command line using 'docker login'.",
+            "Push a custom-built Docker image to a public repository on Docker Hub."
+          ],
+          "prerequisites": [
+            "building_tagging_images"
+          ],
+          "estimated_minutes": 40,
+          "tags": [
+            "docker_hub",
+            "registry",
+            "sharing",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "docker_volumes_data_persistence",
+          "title": "Docker Volumes: Achieving Data Persistence",
+          "objectives": [
+            "Explain why data persistence is crucial in containerized environments.",
+            "Differentiate between bind mounts and Docker volumes.",
+            "Implement bind mounts and named volumes to persist data for containers."
+          ],
+          "prerequisites": [
+            "pushing_images_to_docker_hub"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "data_persistence",
+            "volumes",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "docker_networking_basics",
+          "title": "Docker Networking: Connecting Containers",
+          "objectives": [
+            "Understand the default bridge network in Docker.",
+            "Publish container ports to the host machine.",
+            "Connect containers within the same network."
+          ],
+          "prerequisites": [
+            "docker_volumes_data_persistence"
+          ],
+          "estimated_minutes": 55,
+          "tags": [
+            "networking",
+            "ports",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "introduction_to_docker_compose",
+          "title": "Introduction to Docker Compose: Orchestrating Multi-Container Apps",
+          "objectives": [
+            "Explain the need for Docker Compose in multi-service applications.",
+            "Describe the core components of Docker Compose (services, networks, volumes).",
+            "Understand the benefits of using Compose for development environments."
+          ],
+          "prerequisites": [
+            "docker_networking_basics"
+          ],
+          "estimated_minutes": 30,
+          "tags": [
+            "docker_compose",
+            "orchestration",
+            "concepts"
+          ]
+        },
+        {
+          "node_id": "writing_your_first_docker_compose_file",
+          "title": "Writing Your First Docker Compose File",
+          "objectives": [
+            "Structure a basic 'docker-compose.yml' file.",
+            "Define multiple services, specify their images, ports, and volumes.",
+            "Create a simple multi-container application using Compose (e.g., web app with database)."
+          ],
+          "prerequisites": [
+            "introduction_to_docker_compose"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "docker_compose",
+            "yaml",
+            "hands-on"
+          ]
+        },
+        {
+          "node_id": "managing_docker_compose_applications",
+          "title": "Managing Docker Compose Applications",
+          "objectives": [
+            "Start and stop multi-container applications using 'docker compose up' and 'down'.",
+            "View the status and logs of Compose services.",
+            "Execute commands within services defined in a Compose file."
+          ],
+          "prerequisites": [
+            "writing_your_first_docker_compose_file"
+          ],
+          "estimated_minutes": 50,
+          "tags": [
+            "docker_compose",
+            "hands-on",
+            "management"
+          ]
+        },
+        {
+          "node_id": "docker_best_practices_troubleshooting",
+          "title": "Docker Best Practices and Basic Troubleshooting",
+          "objectives": [
+            "Identify common Docker best practices for images and containers.",
+            "Learn basic troubleshooting techniques for Docker containers (e.g., checking logs, inspecting).",
+            "Understand how to clean up unused Docker resources."
+          ],
+          "prerequisites": [
+            "managing_docker_compose_applications"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "best_practices",
+            "troubleshooting",
+            "maintenance"
+          ]
+        },
+        {
+          "node_id": "review_and_next_steps",
+          "title": "Review of Docker Fundamentals and Next Steps",
+          "objectives": [
+            "Consolidate understanding of core Docker concepts and commands.",
+            "Identify resources for continued learning in Docker and containerization.",
+            "Reflect on potential real-world applications of Docker skills."
+          ],
+          "prerequisites": [
+            "docker_best_practices_troubleshooting"
+          ],
+          "estimated_minutes": 20,
+          "tags": [
+            "review",
+            "summary",
+            "next_steps"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 18562
+    },
+    {
+      "topic_id": "gt_math_001",
+      "topic": "Calculus: Derivatives and Integrals",
+      "request_id": "eb33884e-329a-4ee6-807d-a718c7b8f9e7",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 28,
+      "nodes": [
+        {
+          "node_id": "functions_and_graphs_review",
+          "title": "Functions and Graphs Review",
+          "objectives": [
+            "Recall the definition of a function, domain, and range.",
+            "Practice graphing common functions (linear, quadratic, polynomial, rational, basic trigonometric).",
+            "Understand function notation and evaluation."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 90,
+          "tags": [
+            "precalculus",
+            "foundations",
+            "algebra"
+          ]
+        },
+        {
+          "node_id": "lines_and_slopes",
+          "title": "Lines, Slopes, and Rates of Change",
+          "objectives": [
+            "Calculate the slope of a line given two points or an equation.",
+            "Write equations of lines in various forms (slope-intercept, point-slope).",
+            "Understand the concept of average rate of change from precalculus."
+          ],
+          "prerequisites": [
+            "functions_and_graphs_review"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "precalculus",
+            "geometry",
+            "algebra"
+          ]
+        },
+        {
+          "node_id": "intuitive_limits",
+          "title": "Introduction to Limits: Intuitive Approach",
+          "objectives": [
+            "Understand the intuitive meaning of a limit.",
+            "Estimate limits graphically and numerically.",
+            "Identify when a limit does not exist."
+          ],
+          "prerequisites": [
+            "functions_and_graphs_review"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "limits",
+            "foundations"
+          ]
+        },
+        {
+          "node_id": "properties_of_limits",
+          "title": "Properties of Limits and Direct Substitution",
+          "objectives": [
+            "Apply basic limit properties (sum, difference, product, quotient, constant multiple).",
+            "Use direct substitution to evaluate limits of polynomial and rational functions.",
+            "Handle indeterminate forms by algebraic manipulation (factoring, rationalizing)."
+          ],
+          "prerequisites": [
+            "intuitive_limits"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "limits",
+            "algebra"
+          ]
+        },
+        {
+          "node_id": "limits_at_infinity_and_asymptotes",
+          "title": "Limits at Infinity and Asymptotes",
+          "objectives": [
+            "Evaluate limits as x approaches infinity or negative infinity.",
+            "Identify horizontal asymptotes of rational functions.",
+            "Understand vertical asymptotes in relation to infinite limits."
+          ],
+          "prerequisites": [
+            "properties_of_limits"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "limits",
+            "asymptotes"
+          ]
+        },
+        {
+          "node_id": "continuity",
+          "title": "Continuity of Functions",
+          "objectives": [
+            "Define continuity at a point and on an interval.",
+            "Identify types of discontinuities (removable, jump, infinite).",
+            "Apply the Intermediate Value Theorem (IVT)."
+          ],
+          "prerequisites": [
+            "properties_of_limits",
+            "limits_at_infinity_and_asymptotes"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "limits",
+            "continuity"
+          ]
+        },
+        {
+          "node_id": "secant_and_tangent_lines",
+          "title": "Secant Lines, Tangent Lines, and Instantaneous Rate of Change",
+          "objectives": [
+            "Distinguish between secant lines and tangent lines.",
+            "Understand the geometric interpretation of the slope of a tangent line.",
+            "Relate the slope of the tangent line to instantaneous rate of change."
+          ],
+          "prerequisites": [
+            "lines_and_slopes",
+            "intuitive_limits"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "derivatives",
+            "geometry"
+          ]
+        },
+        {
+          "node_id": "definition_of_derivative",
+          "title": "Definition of the Derivative (Limit Definition)",
+          "objectives": [
+            "State and apply the limit definition of the derivative.",
+            "Calculate derivatives of simple functions using the limit definition.",
+            "Understand the notation for derivatives (f'(x), dy/dx)."
+          ],
+          "prerequisites": [
+            "secant_and_tangent_lines",
+            "properties_of_limits"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "derivatives",
+            "foundations"
+          ]
+        },
+        {
+          "node_id": "basic_differentiation_rules",
+          "title": "Basic Differentiation Rules",
+          "objectives": [
+            "Apply the constant rule, power rule, constant multiple rule, sum rule, and difference rule.",
+            "Differentiate polynomial functions efficiently.",
+            "Find the equation of a tangent line to a curve at a given point."
+          ],
+          "prerequisites": [
+            "definition_of_derivative"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "derivatives",
+            "rules"
+          ]
+        },
+        {
+          "node_id": "product_and_quotient_rules",
+          "title": "Product and Quotient Rules",
+          "objectives": [
+            "Apply the product rule to differentiate functions that are products of two expressions.",
+            "Apply the quotient rule to differentiate functions that are quotients of two expressions.",
+            "Solve problems involving rates of change using these rules."
+          ],
+          "prerequisites": [
+            "basic_differentiation_rules"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "derivatives",
+            "rules"
+          ]
+        },
+        {
+          "node_id": "chain_rule",
+          "title": "The Chain Rule",
+          "objectives": [
+            "Understand the concept of composite functions.",
+            "Apply the chain rule to differentiate composite functions.",
+            "Solve complex differentiation problems by combining the chain rule with other rules."
+          ],
+          "prerequisites": [
+            "product_and_quotient_rules"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "derivatives",
+            "rules"
+          ]
+        },
+        {
+          "node_id": "derivatives_of_trig_functions",
+          "title": "Derivatives of Trigonometric Functions",
+          "objectives": [
+            "Memorize and apply the derivatives of sine, cosine, tangent, cotangent, secant, and cosecant functions.",
+            "Differentiate trigonometric functions combined with other rules (product, quotient, chain rule)."
+          ],
+          "prerequisites": [
+            "chain_rule",
+            "functions_and_graphs_review"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "derivatives",
+            "trigonometry"
+          ]
+        },
+        {
+          "node_id": "derivatives_of_exp_log_functions",
+          "title": "Derivatives of Exponential and Logarithmic Functions",
+          "objectives": [
+            "Apply the differentiation rules for e^x and ln(x).",
+            "Differentiate exponential and logarithmic functions using the chain rule.",
+            "Understand logarithmic differentiation for complex functions."
+          ],
+          "prerequisites": [
+            "chain_rule"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "derivatives",
+            "exponential",
+            "logarithm"
+          ]
+        },
+        {
+          "node_id": "implicit_differentiation",
+          "title": "Implicit Differentiation",
+          "objectives": [
+            "Understand when and why implicit differentiation is necessary.",
+            "Apply implicit differentiation to find dy/dx for equations not explicitly solved for y.",
+            "Find the slope of a tangent line to implicitly defined curves."
+          ],
+          "prerequisites": [
+            "chain_rule",
+            "derivatives_of_trig_functions",
+            "derivatives_of_exp_log_functions"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "derivatives",
+            "techniques"
+          ]
+        },
+        {
+          "node_id": "related_rates",
+          "title": "Related Rates Problems",
+          "objectives": [
+            "Identify and set up related rates problems.",
+            "Use implicit differentiation to solve problems involving rates of change of related quantities.",
+            "Solve common related rates scenarios (e.g., ladder problems, volume changes)."
+          ],
+          "prerequisites": [
+            "implicit_differentiation"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "derivatives",
+            "applications",
+            "problem_solving"
+          ]
+        },
+        {
+          "node_id": "higher_order_derivatives",
+          "title": "Higher Order Derivatives",
+          "objectives": [
+            "Calculate second, third, and higher order derivatives.",
+            "Understand the physical interpretation of the second derivative (acceleration).",
+            "Apply higher order derivatives in context."
+          ],
+          "prerequisites": [
+            "basic_differentiation_rules"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "derivatives"
+          ]
+        },
+        {
+          "node_id": "extrema_and_critical_points",
+          "title": "Extrema, Critical Points, and the First Derivative Test",
+          "objectives": [
+            "Define absolute and local extrema.",
+            "Identify critical points of a function.",
+            "Apply the First Derivative Test to find intervals of increasing/decreasing and local extrema."
+          ],
+          "prerequisites": [
+            "basic_differentiation_rules",
+            "continuity"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "derivatives",
+            "applications"
+          ]
+        },
+        {
+          "node_id": "concavity_and_second_derivative_test",
+          "title": "Concavity, Inflection Points, and the Second Derivative Test",
+          "objectives": [
+            "Determine intervals of concavity (concave up/down).",
+            "Identify inflection points.",
+            "Apply the Second Derivative Test to classify local extrema."
+          ],
+          "prerequisites": [
+            "higher_order_derivatives",
+            "extrema_and_critical_points"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "derivatives",
+            "applications"
+          ]
+        },
+        {
+          "node_id": "optimization_problems",
+          "title": "Optimization Problems",
+          "objectives": [
+            "Set up and solve real-world optimization problems.",
+            "Apply the First and Second Derivative Tests to find absolute maximums and minimums.",
+            "Solve problems involving maximizing area, volume, or minimizing cost."
+          ],
+          "prerequisites": [
+            "concavity_and_second_derivative_test",
+            "extrema_and_critical_points"
+          ],
+          "estimated_minutes": 180,
+          "tags": [
+            "derivatives",
+            "applications",
+            "problem_solving"
+          ]
+        },
+        {
+          "node_id": "curve_sketching",
+          "title": "Curve Sketching",
+          "objectives": [
+            "Integrate knowledge of limits, asymptotes, intercepts, and derivatives to sketch graphs of functions.",
+            "Analyze a function's behavior (increasing/decreasing, concavity) to accurately draw its graph."
+          ],
+          "prerequisites": [
+            "optimization_problems",
+            "limits_at_infinity_and_asymptotes",
+            "continuity"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "derivatives",
+            "applications",
+            "graphing"
+          ]
+        },
+        {
+          "node_id": "antiderivatives_and_indefinite_integrals",
+          "title": "Antiderivatives and Indefinite Integrals",
+          "objectives": [
+            "Understand the concept of an antiderivative as the reverse of differentiation.",
+            "Find the general antiderivative of basic functions.",
+            "Introduce the notation for indefinite integrals and the constant of integration."
+          ],
+          "prerequisites": [
+            "basic_differentiation_rules"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "integrals",
+            "foundations"
+          ]
+        },
+        {
+          "node_id": "basic_integration_rules",
+          "title": "Basic Integration Rules",
+          "objectives": [
+            "Apply the power rule for integration.",
+            "Integrate constant multiples, sums, and differences of functions.",
+            "Integrate basic trigonometric functions (sine, cosine, secant squared)."
+          ],
+          "prerequisites": [
+            "antiderivatives_and_indefinite_integrals",
+            "derivatives_of_trig_functions"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "integrals",
+            "rules"
+          ]
+        },
+        {
+          "node_id": "area_under_curve_riemann_sums",
+          "title": "Area Under a Curve: Riemann Sums",
+          "objectives": [
+            "Approximate the area under a curve using left, right, and midpoint Riemann sums.",
+            "Understand the concept of a limit of Riemann sums leading to the definite integral.",
+            "Interpret area as a sum of infinitesimally thin rectangles."
+          ],
+          "prerequisites": [
+            "functions_and_graphs_review",
+            "intuitive_limits"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "integrals",
+            "applications",
+            "approximation"
+          ]
+        },
+        {
+          "node_id": "definite_integral_definition",
+          "title": "The Definite Integral and Its Properties",
+          "objectives": [
+            "Define the definite integral as the limit of Riemann sums.",
+            "Understand the geometric interpretation of the definite integral as net signed area.",
+            "Apply properties of definite integrals (e.g., constant multiple, sum/difference, interval additivity)."
+          ],
+          "prerequisites": [
+            "area_under_curve_riemann_sums",
+            "properties_of_limits"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "integrals",
+            "foundations"
+          ]
+        },
+        {
+          "node_id": "fundamental_theorem_of_calculus_part1",
+          "title": "Fundamental Theorem of Calculus Part 1",
+          "objectives": [
+            "Understand the relationship between differentiation and integration.",
+            "Apply FTC Part 1 to find the derivative of an integral with a variable upper limit.",
+            "Recognize the significance of FTC in connecting the two main branches of calculus."
+          ],
+          "prerequisites": [
+            "definite_integral_definition",
+            "antiderivatives_and_indefinite_integrals"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "integrals",
+            "derivatives",
+            "ftc"
+          ]
+        },
+        {
+          "node_id": "fundamental_theorem_of_calculus_part2",
+          "title": "Fundamental Theorem of Calculus Part 2 (Evaluation Theorem)",
+          "objectives": [
+            "Apply FTC Part 2 to evaluate definite integrals using antiderivatives.",
+            "Calculate exact areas under curves.",
+            "Solve problems involving total change and net change."
+          ],
+          "prerequisites": [
+            "fundamental_theorem_of_calculus_part1",
+            "basic_integration_rules"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "integrals",
+            "evaluation",
+            "ftc"
+          ]
+        },
+        {
+          "node_id": "u_substitution_integration",
+          "title": "Integration by U-Substitution",
+          "objectives": [
+            "Recognize when u-substitution is an appropriate integration technique.",
+            "Apply u-substitution to evaluate indefinite and definite integrals.",
+            "Handle changes of limits for definite integrals with u-substitution."
+          ],
+          "prerequisites": [
+            "fundamental_theorem_of_calculus_part2",
+            "chain_rule"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "integrals",
+            "techniques"
+          ]
+        },
+        {
+          "node_id": "applications_of_integrals",
+          "title": "Applications of Integrals: Area Between Curves & Average Value",
+          "objectives": [
+            "Calculate the area between two curves.",
+            "Find the average value of a function over a given interval.",
+            "Solve basic application problems using definite integrals (e.g., displacement, total change)."
+          ],
+          "prerequisites": [
+            "fundamental_theorem_of_calculus_part2",
+            "u_substitution_integration"
+          ],
+          "estimated_minutes": 180,
+          "tags": [
+            "integrals",
+            "applications"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 20,
+        "max": 30
+      },
+      "error": null,
+      "duration_ms": 44958
+    },
+    {
+      "topic_id": "gt_math_002",
+      "topic": "Linear Algebra Fundamentals",
+      "request_id": "1822cd2e-d0a5-4f63-8215-a44a8c3f7d47",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 12,
+      "nodes": [
+        {
+          "node_id": "intro_vectors_matrices",
+          "title": "Introduction to Vectors and Matrices",
+          "objectives": [
+            "Define vectors and matrices and understand their basic properties.",
+            "Perform vector addition, scalar multiplication, and dot products.",
+            "Execute matrix addition, scalar multiplication, and matrix multiplication.",
+            "Identify special types of matrices (e.g., identity, zero, diagonal)."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 60,
+          "tags": [
+            "basics",
+            "vectors",
+            "matrices",
+            "operations"
+          ]
+        },
+        {
+          "node_id": "systems_linear_equations",
+          "title": "Solving Systems of Linear Equations",
+          "objectives": [
+            "Represent systems of linear equations in matrix form (Ax=b).",
+            "Solve systems using Gaussian elimination and Gauss-Jordan elimination.",
+            "Understand the concepts of row echelon form and reduced row echelon form.",
+            "Determine the consistency and number of solutions for a system."
+          ],
+          "prerequisites": [
+            "intro_vectors_matrices"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "systems",
+            "Gaussian elimination",
+            "row operations",
+            "solutions"
+          ]
+        },
+        {
+          "node_id": "matrix_inverses_determinants",
+          "title": "Matrix Inverses and Determinants",
+          "objectives": [
+            "Compute the inverse of a square matrix using row operations and the adjugate method.",
+            "Understand the properties and applications of matrix inverses.",
+            "Calculate determinants for 2x2 and 3x3 matrices using cofactor expansion.",
+            "Apply properties of determinants to simplify calculations and determine invertibility."
+          ],
+          "prerequisites": [
+            "systems_linear_equations"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "inverse",
+            "determinant",
+            "cofactor",
+            "invertibility"
+          ]
+        },
+        {
+          "node_id": "vector_spaces_subspaces",
+          "title": "Vector Spaces and Subspaces",
+          "objectives": [
+            "Define an abstract vector space and its axioms.",
+            "Identify common vector spaces (e.g., R^n, P_n, M_mn).",
+            "Define a subspace and verify if a given subset is a subspace.",
+            "Understand the concepts of linear combination, span, and linear independence/dependence."
+          ],
+          "prerequisites": [
+            "intro_vectors_matrices"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "vector spaces",
+            "subspaces",
+            "linear independence",
+            "span",
+            "abstract"
+          ]
+        },
+        {
+          "node_id": "basis_dimension",
+          "title": "Basis and Dimension",
+          "objectives": [
+            "Define a basis for a vector space and find a basis for common vector spaces.",
+            "Understand the concept of dimension and calculate the dimension of a vector space/subspace.",
+            "Explain coordinate vectors and how to find them relative to a given basis.",
+            "Perform a change of basis between different bases."
+          ],
+          "prerequisites": [
+            "vector_spaces_subspaces"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "basis",
+            "dimension",
+            "coordinates",
+            "change of basis"
+          ]
+        },
+        {
+          "node_id": "linear_transformations",
+          "title": "Linear Transformations",
+          "objectives": [
+            "Define a linear transformation and identify its properties.",
+            "Find the matrix representation of a linear transformation.",
+            "Understand the concepts of one-to-one (injective) and onto (surjective) transformations.",
+            "Relate linear transformations to geometric operations (e.g., rotation, scaling, projection)."
+          ],
+          "prerequisites": [
+            "basis_dimension"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "linear transformation",
+            "matrix representation",
+            "mapping",
+            "geometric"
+          ]
+        },
+        {
+          "node_id": "kernel_range",
+          "title": "Kernel, Range, and Rank-Nullity Theorem",
+          "objectives": [
+            "Define the kernel (null space) and range (column space) of a linear transformation/matrix.",
+            "Compute bases for the kernel and range of a given matrix.",
+            "State and apply the Rank-Nullity Theorem.",
+            "Understand the relationship between the dimensions of the kernel and range."
+          ],
+          "prerequisites": [
+            "linear_transformations"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "kernel",
+            "null space",
+            "range",
+            "column space",
+            "rank-nullity"
+          ]
+        },
+        {
+          "node_id": "eigenvalues_eigenvectors",
+          "title": "Eigenvalues and Eigenvectors",
+          "objectives": [
+            "Define eigenvalues and eigenvectors and understand their significance.",
+            "Compute eigenvalues by solving the characteristic equation.",
+            "Find eigenvectors corresponding to specific eigenvalues.",
+            "Determine if a matrix is diagonalizable and perform matrix diagonalization."
+          ],
+          "prerequisites": [
+            "kernel_range",
+            "matrix_inverses_determinants"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "eigenvalues",
+            "eigenvectors",
+            "diagonalization",
+            "characteristic equation"
+          ]
+        },
+        {
+          "node_id": "inner_product_spaces",
+          "title": "Inner Product Spaces and Orthogonality",
+          "objectives": [
+            "Define an inner product and understand its properties.",
+            "Calculate dot products and general inner products in various vector spaces.",
+            "Understand concepts of orthogonality, orthonormal bases, and orthogonal complements.",
+            "Apply the Gram-Schmidt orthogonalization process to construct orthonormal bases."
+          ],
+          "prerequisites": [
+            "vector_spaces_subspaces"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "inner product",
+            "orthogonality",
+            "Gram-Schmidt",
+            "orthonormal basis"
+          ]
+        },
+        {
+          "node_id": "orthogonal_diagonalization",
+          "title": "Symmetric Matrices and Orthogonal Diagonalization",
+          "objectives": [
+            "Identify properties of symmetric matrices.",
+            "Understand the Spectral Theorem for symmetric matrices.",
+            "Perform orthogonal diagonalization of symmetric matrices.",
+            "Apply orthogonal diagonalization in contexts like quadratic forms."
+          ],
+          "prerequisites": [
+            "eigenvalues_eigenvectors",
+            "inner_product_spaces"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "symmetric matrices",
+            "orthogonal diagonalization",
+            "spectral theorem",
+            "quadratic forms"
+          ]
+        },
+        {
+          "node_id": "applications_linear_algebra",
+          "title": "Practical Applications of Linear Algebra",
+          "objectives": [
+            "Explore real-world applications of linear algebra (e.g., least squares, network analysis, image processing).",
+            "Understand the basic principles behind Principal Component Analysis (PCA) for dimensionality reduction.",
+            "Discuss the role of eigenvalues and eigenvectors in practical scenarios like stability analysis or PageRank.",
+            "Interpret the results of linear algebra methods in applied contexts."
+          ],
+          "prerequisites": [
+            "eigenvalues_eigenvectors"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "applications",
+            "real-world",
+            "PCA",
+            "PageRank",
+            "least squares"
+          ]
+        },
+        {
+          "node_id": "singular_value_decomposition_intro",
+          "title": "Introduction to Singular Value Decomposition (SVD)",
+          "objectives": [
+            "Understand the conceptual basis and purpose of Singular Value Decomposition (SVD).",
+            "Interpret the components of SVD: singular values, left and right singular vectors.",
+            "Recognize the broad applications of SVD in data compression, noise reduction, and recommender systems.",
+            "Briefly relate SVD to other matrix decompositions and its geometric interpretation."
+          ],
+          "prerequisites": [
+            "orthogonal_diagonalization",
+            "applications_linear_algebra"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "SVD",
+            "decomposition",
+            "data analysis",
+            "dimensionality reduction",
+            "matrix factorization"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 24205
+    },
+    {
+      "topic_id": "gt_phys_001",
+      "topic": "Classical Mechanics: Newton's Laws",
+      "request_id": "f7b068cb-c89f-4645-9444-8934eda923b9",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 16,
+      "nodes": [
+        {
+          "node_id": "intro_classical_mechanics",
+          "title": "Introduction to Classical Mechanics and Physics Fundamentals",
+          "objectives": [
+            "Define classical mechanics and its scope.",
+            "Understand the importance of studying classical mechanics.",
+            "Identify fundamental physical quantities like length, mass, and time.",
+            "Recognize common units in the SI system."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 30,
+          "tags": [
+            "Introduction",
+            "Overview",
+            "Fundamentals"
+          ]
+        },
+        {
+          "node_id": "mathematical_foundations",
+          "title": "Essential Mathematical Tools: Scalars, Vectors, and Basic Trigonometry",
+          "objectives": [
+            "Differentiate between scalar and vector quantities.",
+            "Perform basic vector operations (addition, subtraction) graphically and analytically.",
+            "Resolve vectors into their rectangular components.",
+            "Apply basic trigonometric functions (sine, cosine, tangent) to vector problems."
+          ],
+          "prerequisites": [
+            "intro_classical_mechanics"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "Math",
+            "Vectors",
+            "Trigonometry"
+          ]
+        },
+        {
+          "node_id": "kinematics_1d",
+          "title": "Describing Motion: Kinematics in One Dimension",
+          "objectives": [
+            "Define position, displacement, distance, speed, velocity, and acceleration.",
+            "Distinguish between average and instantaneous velocity/acceleration.",
+            "Solve problems involving constant acceleration in one dimension using kinematic equations.",
+            "Interpret position-time, velocity-time, and acceleration-time graphs."
+          ],
+          "prerequisites": [
+            "mathematical_foundations"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "Kinematics",
+            "1D Motion",
+            "Equations of Motion"
+          ]
+        },
+        {
+          "node_id": "kinematics_2d_basics",
+          "title": "Extending Motion: Basic Kinematics in Two Dimensions",
+          "objectives": [
+            "Represent 2D motion using vector components.",
+            "Apply kinematic equations independently to the x and y components of motion.",
+            "Understand the independence of horizontal and vertical motion.",
+            "Solve basic projectile motion problems (without air resistance)."
+          ],
+          "prerequisites": [
+            "kinematics_1d"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "Kinematics",
+            "2D Motion",
+            "Projectile Motion"
+          ]
+        },
+        {
+          "node_id": "introduction_to_force",
+          "title": "Understanding Force: The Cause of Motion Changes",
+          "objectives": [
+            "Define force as a push or a pull.",
+            "Identify different types of forces (contact vs. field forces).",
+            "Understand the SI unit of force (Newton).",
+            "Explain the concept of net force."
+          ],
+          "prerequisites": [
+            "intro_classical_mechanics",
+            "mathematical_foundations"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "Force",
+            "Concepts"
+          ]
+        },
+        {
+          "node_id": "newtons_first_law",
+          "title": "Newton's First Law: The Law of Inertia and Equilibrium",
+          "objectives": [
+            "State Newton's First Law of Motion.",
+            "Define inertia and relate it to mass.",
+            "Identify conditions for an object to be in equilibrium (at rest or constant velocity).",
+            "Differentiate between balanced and unbalanced forces."
+          ],
+          "prerequisites": [
+            "introduction_to_force"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "Newton's Laws",
+            "Inertia",
+            "Equilibrium"
+          ]
+        },
+        {
+          "node_id": "mass_and_weight",
+          "title": "Mass, Weight, and Gravitational Force",
+          "objectives": [
+            "Differentiate clearly between mass and weight.",
+            "Understand mass as a measure of inertia.",
+            "Calculate the weight of an object using the acceleration due to gravity.",
+            "Explain how weight can change while mass remains constant."
+          ],
+          "prerequisites": [
+            "newtons_first_law"
+          ],
+          "estimated_minutes": 45,
+          "tags": [
+            "Mass",
+            "Weight",
+            "Gravity"
+          ]
+        },
+        {
+          "node_id": "newtons_second_law_part1",
+          "title": "Newton's Second Law: Force, Mass, and Acceleration (F=ma)",
+          "objectives": [
+            "State Newton's Second Law of Motion.",
+            "Relate net force, mass, and acceleration using the equation F=ma.",
+            "Solve simple problems involving F=ma in one dimension.",
+            "Understand the vector nature of F=ma."
+          ],
+          "prerequisites": [
+            "kinematics_1d",
+            "mass_and_weight",
+            "introduction_to_force"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "Newton's Laws",
+            "F=ma",
+            "Dynamics"
+          ]
+        },
+        {
+          "node_id": "free_body_diagrams",
+          "title": "Visualizing Forces: Introduction to Free-Body Diagrams",
+          "objectives": [
+            "Learn the steps to draw an accurate free-body diagram for an object.",
+            "Identify all forces acting on an object in a given scenario.",
+            "Choose an appropriate coordinate system for problem-solving.",
+            "Use free-body diagrams as a tool to apply Newton's Laws."
+          ],
+          "prerequisites": [
+            "newtons_second_law_part1",
+            "kinematics_2d_basics"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "Problem Solving",
+            "FBDs",
+            "Visualization"
+          ]
+        },
+        {
+          "node_id": "common_forces_part1",
+          "title": "Common Forces in Mechanics: Gravitational and Normal Force",
+          "objectives": [
+            "Define and calculate the force of gravity (weight) acting on an object.",
+            "Understand the concept and direction of the normal force.",
+            "Determine the magnitude of the normal force in various scenarios (flat surfaces, inclined planes).",
+            "Apply these forces in free-body diagrams."
+          ],
+          "prerequisites": [
+            "free_body_diagrams",
+            "mass_and_weight"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "Forces",
+            "Gravity",
+            "Normal Force"
+          ]
+        },
+        {
+          "node_id": "common_forces_part2",
+          "title": "Common Forces in Mechanics: Friction and Tension",
+          "objectives": [
+            "Define and differentiate between static and kinetic friction.",
+            "Calculate the force of static and kinetic friction using coefficients of friction.",
+            "Understand the concept of tension in ropes, strings, and cables.",
+            "Apply friction and tension forces in free-body diagrams and F=ma equations."
+          ],
+          "prerequisites": [
+            "common_forces_part1"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "Forces",
+            "Friction",
+            "Tension"
+          ]
+        },
+        {
+          "node_id": "newtons_third_law",
+          "title": "Newton's Third Law: Action-Reaction Pairs",
+          "objectives": [
+            "State Newton's Third Law of Motion.",
+            "Identify action-reaction force pairs for interacting objects.",
+            "Differentiate between action-reaction pairs and balanced forces.",
+            "Explain why action-reaction pairs do not cancel each other out."
+          ],
+          "prerequisites": [
+            "common_forces_part2"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "Newton's Laws",
+            "Action-Reaction",
+            "Interaction"
+          ]
+        },
+        {
+          "node_id": "solving_problems_nls_part1",
+          "title": "Applying Newton's Laws: Single Object Problems",
+          "objectives": [
+            "Develop a systematic approach to solving problems using Newton's Laws.",
+            "Apply free-body diagrams and Newton's Second Law to solve problems involving a single object in 1D.",
+            "Solve problems involving a single object on horizontal and vertical surfaces.",
+            "Calculate acceleration and unknown forces in various scenarios."
+          ],
+          "prerequisites": [
+            "newtons_third_law",
+            "common_forces_part2"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "Problem Solving",
+            "Application",
+            "Dynamics"
+          ]
+        },
+        {
+          "node_id": "solving_problems_nls_part2",
+          "title": "Applying Newton's Laws: Multi-Object and Inclined Plane Problems",
+          "objectives": [
+            "Solve problems involving multiple connected objects (e.g., Atwood machines, blocks on tables).",
+            "Analyze motion on inclined planes using Newton's Laws and resolved force components.",
+            "Apply Newton's Laws to systems with friction and tension.",
+            "Practice setting up and solving systems of equations for complex scenarios."
+          ],
+          "prerequisites": [
+            "solving_problems_nls_part1"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "Problem Solving",
+            "Application",
+            "Advanced Dynamics"
+          ]
+        },
+        {
+          "node_id": "newtons_laws_circular_motion",
+          "title": "Newton's Laws and Uniform Circular Motion",
+          "objectives": [
+            "Define centripetal acceleration and centripetal force.",
+            "Relate the net force required for uniform circular motion to mass, velocity, and radius.",
+            "Solve problems involving objects moving in horizontal and vertical circles.",
+            "Apply Newton's Second Law to analyze forces in circular motion."
+          ],
+          "prerequisites": [
+            "solving_problems_nls_part2",
+            "kinematics_2d_basics"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "Circular Motion",
+            "Application",
+            "Centripetal Force"
+          ]
+        },
+        {
+          "node_id": "review_and_synthesis",
+          "title": "Review and Synthesis of Newton's Laws",
+          "objectives": [
+            "Consolidate understanding of all three Newton's Laws and their interrelationships.",
+            "Practice a variety of problem types covering all concepts learned.",
+            "Identify common misconceptions related to Newton's Laws.",
+            "Develop strategies for approaching and solving complex dynamics problems."
+          ],
+          "prerequisites": [
+            "newtons_laws_circular_motion"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "Review",
+            "Practice",
+            "Synthesis",
+            "Consolidation"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 25238
+    },
+    {
+      "topic_id": "gt_phys_002",
+      "topic": "Electromagnetism Basics",
+      "request_id": "be865828-c6fe-4117-ae8e-f9870cfbbade",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 27,
+      "nodes": [
+        {
+          "node_id": "review_vector_calculus",
+          "title": "Review of Vector Calculus for EM",
+          "objectives": [
+            "Recall basic vector operations (dot product, cross product).",
+            "Understand gradient, divergence, and curl operators.",
+            "Review line, surface, and volume integrals.",
+            "Identify the physical significance of these operators in scalar and vector fields."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 90,
+          "tags": [
+            "mathematics",
+            "review",
+            "vector_calculus"
+          ]
+        },
+        {
+          "node_id": "intro_to_charge_current",
+          "title": "Introduction to Electric Charge and Current",
+          "objectives": [
+            "Define electric charge and its fundamental properties (quantization, conservation).",
+            "Differentiate between conductors and insulators.",
+            "Define electric current, current density, and drift velocity.",
+            "Explain Ohm's Law and its microscopic interpretation."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 60,
+          "tags": [
+            "electricity",
+            "fundamentals",
+            "charge",
+            "current"
+          ]
+        },
+        {
+          "node_id": "coulombs_law_electric_field",
+          "title": "Coulomb's Law and the Electric Field",
+          "objectives": [
+            "State Coulomb's Law for point charges.",
+            "Calculate the electric force between multiple point charges using superposition.",
+            "Define the electric field and calculate it for point charges and simple discrete charge distributions.",
+            "Visualize electric field lines and their properties."
+          ],
+          "prerequisites": [
+            "intro_to_charge_current",
+            "review_vector_calculus"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrostatics",
+            "coulombs_law",
+            "electric_field"
+          ]
+        },
+        {
+          "node_id": "electric_field_continuous_distributions",
+          "title": "Electric Fields from Continuous Charge Distributions",
+          "objectives": [
+            "Set up integral expressions for the electric field due to continuous charge distributions (line, surface, volume).",
+            "Calculate the electric field for simple symmetric continuous distributions (e.g., charged rod, ring, disk).",
+            "Understand the concept of charge density (linear, surface, volume)."
+          ],
+          "prerequisites": [
+            "coulombs_law_electric_field"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "electrostatics",
+            "electric_field",
+            "integration"
+          ]
+        },
+        {
+          "node_id": "gauss_law_electric_flux",
+          "title": "Gauss's Law and Electric Flux",
+          "objectives": [
+            "Define electric flux through an arbitrary surface.",
+            "State Gauss's Law in integral form.",
+            "Understand the relationship between enclosed charge and electric flux.",
+            "Apply Gauss's Law to calculate electric fields for highly symmetric charge distributions."
+          ],
+          "prerequisites": [
+            "electric_field_continuous_distributions"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrostatics",
+            "gauss_law",
+            "electric_flux"
+          ]
+        },
+        {
+          "node_id": "electric_potential_energy",
+          "title": "Electric Potential Energy and Potential",
+          "objectives": [
+            "Define electric potential energy for a system of point charges.",
+            "Relate electric potential energy to the work done by the electric field.",
+            "Define electric potential (voltage) and potential difference.",
+            "Calculate potential difference for various electric fields."
+          ],
+          "prerequisites": [
+            "gauss_law_electric_flux"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrostatics",
+            "potential_energy",
+            "electric_potential",
+            "voltage"
+          ]
+        },
+        {
+          "node_id": "potential_from_charge_distributions",
+          "title": "Calculating Electric Potential from Charge Distributions",
+          "objectives": [
+            "Derive the electric potential from the electric field using integration.",
+            "Calculate electric potential for point charges and continuous charge distributions.",
+            "Understand the relationship between electric field and electric potential (E = -grad V).",
+            "Sketch equipotential lines and relate them to electric field lines."
+          ],
+          "prerequisites": [
+            "electric_potential_energy"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "electrostatics",
+            "electric_potential",
+            "gradient"
+          ]
+        },
+        {
+          "node_id": "capacitance_capacitors",
+          "title": "Capacitance and Capacitors",
+          "objectives": [
+            "Define capacitance and calculate it for parallel-plate, spherical, and cylindrical capacitors.",
+            "Analyze capacitors in series and parallel circuits.",
+            "Calculate the energy stored in a capacitor.",
+            "Understand the concept of electric energy density."
+          ],
+          "prerequisites": [
+            "potential_from_charge_distributions"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrostatics",
+            "capacitors",
+            "capacitance",
+            "energy_storage"
+          ]
+        },
+        {
+          "node_id": "dielectrics_polarization",
+          "title": "Dielectrics and Electric Polarization",
+          "objectives": [
+            "Explain the effect of dielectric materials on capacitance.",
+            "Define dielectric constant and electric susceptibility.",
+            "Describe electric polarization in dielectric materials.",
+            "Understand the concept of bound charges and their role in modifying electric fields."
+          ],
+          "prerequisites": [
+            "capacitance_capacitors"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "electrostatics",
+            "dielectrics",
+            "polarization"
+          ]
+        },
+        {
+          "node_id": "intro_to_magnetism_fields",
+          "title": "Introduction to Magnetism and Magnetic Fields",
+          "objectives": [
+            "Differentiate between electric and magnetic forces and fields.",
+            "Describe sources of magnetic fields (permanent magnets, moving charges, currents).",
+            "Visualize magnetic field lines and their properties.",
+            "Understand the concept of magnetic flux."
+          ],
+          "prerequisites": [
+            "intro_to_charge_current",
+            "review_vector_calculus"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "magnetostatics",
+            "magnetic_fields",
+            "fundamentals"
+          ]
+        },
+        {
+          "node_id": "lorentz_force_on_charge",
+          "title": "The Lorentz Force on Moving Charges",
+          "objectives": [
+            "State the Lorentz force law for a charged particle moving in electric and magnetic fields.",
+            "Calculate the magnetic force on a single moving charge.",
+            "Analyze the motion of charged particles in uniform magnetic fields (e.g., cyclotron motion).",
+            "Understand applications like velocity selectors and mass spectrometers."
+          ],
+          "prerequisites": [
+            "intro_to_magnetism_fields",
+            "coulombs_law_electric_field"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "magnetostatics",
+            "lorentz_force",
+            "magnetic_force",
+            "charged_particles"
+          ]
+        },
+        {
+          "node_id": "magnetic_force_on_current",
+          "title": "Magnetic Force on Current-Carrying Wires",
+          "objectives": [
+            "Derive the magnetic force on a current-carrying wire segment in a magnetic field.",
+            "Calculate the force on straight wires and current loops.",
+            "Explain the concept of magnetic torque on a current loop.",
+            "Understand the principle of electric motors."
+          ],
+          "prerequisites": [
+            "lorentz_force_on_charge"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "magnetostatics",
+            "magnetic_force",
+            "current_loops",
+            "torque"
+          ]
+        },
+        {
+          "node_id": "biot_savart_law",
+          "title": "Biot-Savart Law for Magnetic Fields",
+          "objectives": [
+            "State the Biot-Savart Law for calculating magnetic fields from current elements.",
+            "Apply the Biot-Savart Law to calculate magnetic fields for simple current configurations (e.g., long straight wire, circular loop on axis).",
+            "Understand the vector nature of the Biot-Savart Law and its integral form."
+          ],
+          "prerequisites": [
+            "magnetic_force_on_current"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "magnetostatics",
+            "biot_savart_law",
+            "magnetic_field_calculation"
+          ]
+        },
+        {
+          "node_id": "amperes_law_magnetostatics",
+          "title": "Ampere's Law in Magnetostatics",
+          "objectives": [
+            "Define Ampere's Law in integral form.",
+            "Apply Ampere's Law to calculate magnetic fields for highly symmetric current distributions (e.g., infinitely long wire, solenoid, toroid).",
+            "Compare and contrast Ampere's Law with Gauss's Law."
+          ],
+          "prerequisites": [
+            "biot_savart_law"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "magnetostatics",
+            "amperes_law",
+            "magnetic_field_calculation"
+          ]
+        },
+        {
+          "node_id": "magnetic_dipoles_magnetization",
+          "title": "Magnetic Dipoles and Magnetization",
+          "objectives": [
+            "Define magnetic dipole moment for a current loop.",
+            "Understand the torque and potential energy of a magnetic dipole in an external magnetic field.",
+            "Explain the concept of magnetization and magnetic susceptibility.",
+            "Differentiate between diamagnetic, paramagnetic, and ferromagnetic materials."
+          ],
+          "prerequisites": [
+            "amperes_law_magnetostatics"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "magnetostatics",
+            "magnetic_dipoles",
+            "magnetization",
+            "materials"
+          ]
+        },
+        {
+          "node_id": "faradays_law_induction",
+          "title": "Faraday's Law of Electromagnetic Induction",
+          "objectives": [
+            "State Faraday's Law of Induction and explain its physical meaning.",
+            "Calculate induced EMF due to changing magnetic flux.",
+            "Understand the concept of motional EMF.",
+            "Identify factors affecting the magnitude and direction of induced currents."
+          ],
+          "prerequisites": [
+            "magnetic_dipoles_magnetization",
+            "electric_potential_energy"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrodynamics",
+            "faradays_law",
+            "induction",
+            "emf"
+          ]
+        },
+        {
+          "node_id": "lenz_law_and_motional_emf",
+          "title": "Lenz's Law and Applications of Induction",
+          "objectives": [
+            "Apply Lenz's Law to determine the direction of induced current and EMF.",
+            "Solve problems involving motional EMF in various scenarios (e.g., moving rod in a field).",
+            "Describe practical applications of electromagnetic induction (e.g., generators, transformers).",
+            "Understand eddy currents and their effects."
+          ],
+          "prerequisites": [
+            "faradays_law_induction"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "electrodynamics",
+            "lenz_law",
+            "motional_emf",
+            "applications"
+          ]
+        },
+        {
+          "node_id": "inductance_inductors",
+          "title": "Inductance and Inductors",
+          "objectives": [
+            "Define self-inductance and mutual inductance.",
+            "Calculate the inductance of simple geometries (e.g., solenoid, toroid).",
+            "Analyze inductors in series and parallel circuits.",
+            "Understand the energy stored in an inductor and magnetic energy density."
+          ],
+          "prerequisites": [
+            "lenz_law_and_motional_emf"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrodynamics",
+            "inductance",
+            "inductors",
+            "energy_storage"
+          ]
+        },
+        {
+          "node_id": "rl_rc_circuits_review",
+          "title": "Review of RL and RC Circuits (Time-Varying)",
+          "objectives": [
+            "Analyze the transient behavior of RL circuits (charging and discharging).",
+            "Analyze the transient behavior of RC circuits (charging and discharging).",
+            "Understand time constants for RL and RC circuits.",
+            "Solve differential equations describing these circuits."
+          ],
+          "prerequisites": [
+            "inductance_inductors",
+            "capacitance_capacitors"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "circuits",
+            "transient_analysis",
+            "rl_circuits",
+            "rc_circuits"
+          ]
+        },
+        {
+          "node_id": "displacement_current_amperes_law_modified",
+          "title": "Displacement Current and Modified Ampere's Law",
+          "objectives": [
+            "Explain the concept of displacement current introduced by Maxwell.",
+            "Derive and state the modified Ampere's Law (Ampere-Maxwell Law).",
+            "Understand the necessity of displacement current for consistency with charge conservation.",
+            "Calculate displacement current in simple cases (e.g., charging capacitor)."
+          ],
+          "prerequisites": [
+            "inductance_inductors",
+            "dielectrics_polarization"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "electrodynamics",
+            "maxwell_equations",
+            "displacement_current"
+          ]
+        },
+        {
+          "node_id": "maxwells_equations_integral",
+          "title": "Maxwell's Equations in Integral Form",
+          "objectives": [
+            "State all four Maxwell's Equations in their integral form.",
+            "Explain the physical meaning and significance of each equation.",
+            "Identify which previous laws are unified by Maxwell's Equations.",
+            "Understand how these equations describe the interrelationship between electric and magnetic fields."
+          ],
+          "prerequisites": [
+            "gauss_law_electric_flux",
+            "faradays_law_induction",
+            "amperes_law_magnetostatics",
+            "displacement_current_amperes_law_modified"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "electrodynamics",
+            "maxwell_equations",
+            "unification"
+          ]
+        },
+        {
+          "node_id": "electromagnetic_waves_qualitative",
+          "title": "Qualitative Introduction to Electromagnetic Waves",
+          "objectives": [
+            "Explain how Maxwell's equations predict the existence of electromagnetic waves.",
+            "Describe the basic properties of electromagnetic waves (transverse, self-propagating).",
+            "Relate the speed of light to fundamental constants (permeability and permittivity of free space).",
+            "Visualize the oscillating electric and magnetic fields in an EM wave."
+          ],
+          "prerequisites": [
+            "maxwells_equations_integral"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "electrodynamics",
+            "em_waves",
+            "light",
+            "propagation"
+          ]
+        },
+        {
+          "node_id": "electromagnetic_spectrum_applications",
+          "title": "The Electromagnetic Spectrum and Applications",
+          "objectives": [
+            "Identify different regions of the electromagnetic spectrum (radio waves, microwaves, IR, visible, UV, X-rays, gamma rays).",
+            "Describe the general characteristics and common applications of each region.",
+            "Understand the relationship between wavelength, frequency, and energy for EM waves.",
+            "Discuss the generation and detection of different types of EM waves."
+          ],
+          "prerequisites": [
+            "electromagnetic_waves_qualitative"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "electrodynamics",
+            "em_spectrum",
+            "applications"
+          ]
+        },
+        {
+          "node_id": "energy_momentum_em_waves",
+          "title": "Energy and Momentum in Electromagnetic Waves",
+          "objectives": [
+            "Define the Poynting vector and explain its significance for energy flow in EM waves.",
+            "Calculate the intensity of an electromagnetic wave.",
+            "Understand the concept of radiation pressure exerted by EM waves.",
+            "Relate energy and momentum of EM waves to their properties."
+          ],
+          "prerequisites": [
+            "electromagnetic_spectrum_applications"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "electrodynamics",
+            "em_waves",
+            "poynting_vector",
+            "energy",
+            "momentum"
+          ]
+        },
+        {
+          "node_id": "boundary_conditions_em_fields",
+          "title": "Boundary Conditions for Electric and Magnetic Fields",
+          "objectives": [
+            "Derive and apply boundary conditions for electric fields (tangential E, normal D) at interfaces between different media.",
+            "Derive and apply boundary conditions for magnetic fields (tangential H, normal B) at interfaces.",
+            "Solve problems involving EM fields at boundaries (e.g., conductor-dielectric interface).",
+            "Understand the physical implications of these boundary conditions."
+          ],
+          "prerequisites": [
+            "maxwells_equations_integral",
+            "dielectrics_polarization",
+            "magnetic_dipoles_magnetization"
+          ],
+          "estimated_minutes": 150,
+          "tags": [
+            "electrodynamics",
+            "boundary_conditions",
+            "interfaces"
+          ]
+        },
+        {
+          "node_id": "review_problem_solving_workshop",
+          "title": "Electromagnetism Basics: Comprehensive Problem Solving Workshop",
+          "objectives": [
+            "Apply all fundamental principles and laws of electromagnetism to solve complex problems.",
+            "Integrate concepts from electrostatics, magnetostatics, and electrodynamics.",
+            "Develop strategies for approaching multi-concept EM problems.",
+            "Reinforce understanding through diverse problem types and applications."
+          ],
+          "prerequisites": [
+            "energy_momentum_em_waves",
+            "boundary_conditions_em_fields",
+            "rl_rc_circuits_review"
+          ],
+          "estimated_minutes": 240,
+          "tags": [
+            "review",
+            "problem_solving",
+            "workshop",
+            "application"
+          ]
+        },
+        {
+          "node_id": "advanced_topics_preview",
+          "title": "Preview of Advanced Electromagnetism Topics",
+          "objectives": [
+            "Briefly introduce advanced concepts like Maxwell's equations in differential form, wave guides, and plasma physics.",
+            "Discuss the limitations of the 'basics' covered and the need for more advanced treatments.",
+            "Identify areas for further study in electromagnetism.",
+            "Reflect on the historical development and impact of EM theory."
+          ],
+          "prerequisites": [
+            "review_problem_solving_workshop"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "advanced_preview",
+            "future_study",
+            "summary"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 20,
+        "max": 30
+      },
+      "error": null,
+      "duration_ms": 31020
+    },
+    {
+      "topic_id": "gt_bus_001",
+      "topic": "Financial Statement Analysis",
+      "request_id": "35a9e608-bf4a-4e7e-8658-8ee82b62132d",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 18,
+      "nodes": [
+        {
+          "node_id": "fsa_introduction_purpose",
+          "title": "Introduction to Financial Statement Analysis (FSA) and Its Purpose",
+          "objectives": [
+            "Define financial statement analysis and its importance for various stakeholders.",
+            "Identify the primary financial statements used in analysis.",
+            "Understand the overall framework and steps involved in performing FSA."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 45,
+          "tags": [
+            "introduction",
+            "overview",
+            "fundamentals"
+          ]
+        },
+        {
+          "node_id": "balance_sheet_deep_dive",
+          "title": "Deep Dive into the Balance Sheet: Structure and Insights",
+          "objectives": [
+            "Analyze the components of assets, liabilities, and equity on the balance sheet.",
+            "Interpret the balance sheet to understand a company's financial position and capital structure.",
+            "Identify key accounts and their implications for financial health."
+          ],
+          "prerequisites": [
+            "fsa_introduction_purpose"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "balance sheet",
+            "assets",
+            "liabilities",
+            "equity"
+          ]
+        },
+        {
+          "node_id": "income_statement_deep_dive",
+          "title": "Deep Dive into the Income Statement: Performance and Profitability",
+          "objectives": [
+            "Analyze the components of revenue, expenses, and different profit metrics on the income statement.",
+            "Interpret the income statement to understand a company's operational performance and profitability.",
+            "Distinguish between operating and non-operating items and their impact."
+          ],
+          "prerequisites": [
+            "fsa_introduction_purpose"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "income statement",
+            "revenue",
+            "expenses",
+            "profitability"
+          ]
+        },
+        {
+          "node_id": "cash_flow_statement_deep_dive",
+          "title": "Deep Dive into the Cash Flow Statement: Cash Generation and Usage",
+          "objectives": [
+            "Analyze cash flows from operating, investing, and financing activities.",
+            "Understand the difference between direct and indirect methods of presenting operating cash flows.",
+            "Interpret the cash flow statement to assess a company's liquidity and solvency."
+          ],
+          "prerequisites": [
+            "fsa_introduction_purpose"
+          ],
+          "estimated_minutes": 100,
+          "tags": [
+            "cash flow statement",
+            "cash flow",
+            "liquidity"
+          ]
+        },
+        {
+          "node_id": "interrelationships_financial_statements",
+          "title": "Interrelationships Among the Financial Statements",
+          "objectives": [
+            "Explain how the balance sheet, income statement, and cash flow statement are interconnected.",
+            "Trace the impact of transactions across all three financial statements.",
+            "Utilize the relationships to identify inconsistencies or potential issues in financial reporting."
+          ],
+          "prerequisites": [
+            "balance_sheet_deep_dive",
+            "income_statement_deep_dive",
+            "cash_flow_statement_deep_dive"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "integration",
+            "connections",
+            "financial modeling"
+          ]
+        },
+        {
+          "node_id": "horizontal_trend_analysis",
+          "title": "Horizontal (Trend) Analysis: Identifying Performance Changes Over Time",
+          "objectives": [
+            "Perform horizontal analysis on financial statements to identify trends.",
+            "Calculate period-over-period and multi-period percentage changes.",
+            "Interpret trends in key financial figures to understand performance evolution."
+          ],
+          "prerequisites": [
+            "interrelationships_financial_statements"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "trend analysis",
+            "horizontal analysis",
+            "time series"
+          ]
+        },
+        {
+          "node_id": "vertical_common_size_analysis",
+          "title": "Vertical (Common-Size) Analysis: Benchmarking Relative Proportions",
+          "objectives": [
+            "Perform vertical analysis by expressing financial statement items as percentages of a base figure.",
+            "Interpret common-size financial statements to compare a company's structure over time or against peers.",
+            "Identify changes in the relative importance of accounts."
+          ],
+          "prerequisites": [
+            "interrelationships_financial_statements"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "common-size analysis",
+            "vertical analysis",
+            "benchmarking"
+          ]
+        },
+        {
+          "node_id": "liquidity_solvency_ratios",
+          "title": "Liquidity and Solvency Ratios: Short-term and Long-term Health",
+          "objectives": [
+            "Calculate and interpret key liquidity ratios (current, quick, cash).",
+            "Calculate and interpret key solvency ratios (debt-to-equity, debt-to-assets, interest coverage).",
+            "Assess a company's ability to meet its short-term and long-term obligations."
+          ],
+          "prerequisites": [
+            "interrelationships_financial_statements"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "ratios",
+            "liquidity",
+            "solvency",
+            "debt"
+          ]
+        },
+        {
+          "node_id": "profitability_efficiency_ratios",
+          "title": "Profitability and Efficiency Ratios: Performance and Asset Utilization",
+          "objectives": [
+            "Calculate and interpret key profitability ratios (gross margin, operating margin, net margin, ROA, ROE).",
+            "Calculate and interpret key efficiency ratios (inventory turnover, receivables turnover, asset turnover).",
+            "Evaluate a company's ability to generate profits and utilize its assets effectively."
+          ],
+          "prerequisites": [
+            "interrelationships_financial_statements"
+          ],
+          "estimated_minutes": 100,
+          "tags": [
+            "ratios",
+            "profitability",
+            "efficiency",
+            "performance"
+          ]
+        },
+        {
+          "node_id": "market_valuation_ratios",
+          "title": "Market and Valuation Ratios: Investor Perspective",
+          "objectives": [
+            "Calculate and interpret basic market ratios (P/E, P/B, EPS, dividend yield).",
+            "Understand the basic concept of enterprise value multiples.",
+            "Relate financial statement analysis to market perception and valuation."
+          ],
+          "prerequisites": [
+            "interrelationships_financial_statements"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "ratios",
+            "valuation",
+            "market analysis",
+            "investing"
+          ]
+        },
+        {
+          "node_id": "du_pont_framework_analysis",
+          "title": "DuPont Framework Analysis: Deconstructing Return on Equity",
+          "objectives": [
+            "Apply the DuPont framework to decompose Return on Equity (ROE) into its core components.",
+            "Identify the drivers of ROE: profitability, asset efficiency, and financial leverage.",
+            "Use DuPont analysis to pinpoint strengths and weaknesses in a company's financial strategy."
+          ],
+          "prerequisites": [
+            "profitability_efficiency_ratios"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "du pont",
+            "roe",
+            "profitability",
+            "efficiency",
+            "leverage"
+          ]
+        },
+        {
+          "node_id": "quality_of_earnings_analysis",
+          "title": "Quality of Earnings Analysis: Assessing Reporting Reliability",
+          "objectives": [
+            "Identify red flags and potential aggressive accounting practices that can distort reported earnings.",
+            "Distinguish between sustainable and unsustainable earnings.",
+            "Evaluate the reliability of a company's reported profits and cash flows."
+          ],
+          "prerequisites": [
+            "income_statement_deep_dive",
+            "cash_flow_statement_deep_dive"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "earnings quality",
+            "accounting",
+            "fraud",
+            "sustainability"
+          ]
+        },
+        {
+          "node_id": "free_cash_flow_analysis",
+          "title": "Free Cash Flow Analysis: Measuring Discretionary Cash",
+          "objectives": [
+            "Calculate different measures of free cash flow (e.g., Free Cash Flow to Firm, Free Cash Flow to Equity).",
+            "Interpret free cash flow to assess a company's ability to fund growth, pay down debt, or distribute to shareholders.",
+            "Understand the importance of free cash flow for valuation and capital allocation decisions."
+          ],
+          "prerequisites": [
+            "cash_flow_statement_deep_dive"
+          ],
+          "estimated_minutes": 80,
+          "tags": [
+            "free cash flow",
+            "valuation",
+            "cash flow",
+            "capital allocation"
+          ]
+        },
+        {
+          "node_id": "segment_geographical_analysis",
+          "title": "Segment and Geographical Analysis: Disaggregated Performance",
+          "objectives": [
+            "Analyze financial performance at the business segment and geographical region level.",
+            "Identify high-performing and underperforming parts of a diversified company.",
+            "Understand the strategic implications of disaggregated data for investment decisions."
+          ],
+          "prerequisites": [
+            "horizontal_trend_analysis",
+            "vertical_common_size_analysis"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "segment reporting",
+            "geographical",
+            "diversification",
+            "strategy"
+          ]
+        },
+        {
+          "node_id": "limitations_fsa_qualitative_factors",
+          "title": "Limitations of FSA and Incorporating Qualitative Factors",
+          "objectives": [
+            "Recognize the inherent limitations of financial statement analysis (e.g., historical data, accounting choices).",
+            "Identify key qualitative factors (management quality, corporate governance, brand strength) that influence performance.",
+            "Integrate qualitative assessments with quantitative analysis for a holistic view."
+          ],
+          "prerequisites": [
+            "du_pont_framework_analysis",
+            "quality_of_earnings_analysis"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "limitations",
+            "qualitative",
+            "governance",
+            "risk"
+          ]
+        },
+        {
+          "node_id": "forecasting_financial_performance",
+          "title": "Forecasting Financial Performance: Introduction to Modeling",
+          "objectives": [
+            "Understand the basic principles and steps of financial forecasting.",
+            "Apply simple forecasting methods for revenue, expenses, and asset accounts.",
+            "Construct basic projected financial statements (Income Statement, Balance Sheet, Cash Flow Statement)."
+          ],
+          "prerequisites": [
+            "horizontal_trend_analysis",
+            "profitability_efficiency_ratios"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "forecasting",
+            "financial modeling",
+            "projections"
+          ]
+        },
+        {
+          "node_id": "industry_economic_analysis_context",
+          "title": "Industry and Economic Analysis: Setting the Context for FSA",
+          "objectives": [
+            "Understand how industry structure, competitive landscape, and macroeconomic factors impact company performance.",
+            "Integrate industry-specific trends and economic outlook into financial analysis.",
+            "Benchmark a company's performance against industry averages and competitors."
+          ],
+          "prerequisites": [
+            "limitations_fsa_qualitative_factors"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "industry analysis",
+            "economic factors",
+            "macroeconomics",
+            "competition"
+          ]
+        },
+        {
+          "node_id": "integrated_financial_analysis_case_study",
+          "title": "Integrated Financial Analysis: Comprehensive Case Study",
+          "objectives": [
+            "Apply all learned financial statement analysis techniques to a real-world company case.",
+            "Develop a comprehensive financial analysis report, including quantitative and qualitative insights.",
+            "Formulate well-reasoned conclusions and recommendations based on the analysis."
+          ],
+          "prerequisites": [
+            "forecasting_financial_performance",
+            "industry_economic_analysis_context"
+          ],
+          "estimated_minutes": 180,
+          "tags": [
+            "case study",
+            "application",
+            "synthesis",
+            "report writing"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 26189
+    },
+    {
+      "topic_id": "gt_bus_002",
+      "topic": "Project Management Fundamentals",
+      "request_id": "139db25b-efa2-46c1-bcad-efa02b3e16b5",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 15,
+      "nodes": [
+        {
+          "node_id": "introduction_to_projects",
+          "title": "What is a Project? What is Project Management?",
+          "objectives": [
+            "Define what constitutes a 'project' and differentiate it from routine operations.",
+            "Understand the purpose and value of project management.",
+            "Identify key characteristics of a successful project."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 60,
+          "tags": [
+            "introduction",
+            "definitions",
+            "core concepts"
+          ]
+        },
+        {
+          "node_id": "project_manager_role",
+          "title": "The Role and Responsibilities of a Project Manager",
+          "objectives": [
+            "Describe the primary duties and responsibilities of a Project Manager.",
+            "Identify essential skills for effective project management.",
+            "Understand the importance of leadership and communication in project success."
+          ],
+          "prerequisites": [
+            "introduction_to_projects"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "roles",
+            "skills",
+            "leadership"
+          ]
+        },
+        {
+          "node_id": "project_life_cycle_overview",
+          "title": "Understanding the Project Life Cycle",
+          "objectives": [
+            "Explain the typical phases of a project life cycle.",
+            "Recognize how project complexity influences the life cycle.",
+            "Understand the concept of project deliverables at each phase."
+          ],
+          "prerequisites": [
+            "project_manager_role"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "life cycle",
+            "phases",
+            "structure"
+          ]
+        },
+        {
+          "node_id": "initiating_process_group",
+          "title": "Initiating a Project: Defining the Vision",
+          "objectives": [
+            "Describe the activities involved in the project initiating phase.",
+            "Understand the purpose of a Project Charter.",
+            "Identify key stakeholders and their initial involvement."
+          ],
+          "prerequisites": [
+            "project_life_cycle_overview"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "initiating",
+            "project charter",
+            "stakeholders"
+          ]
+        },
+        {
+          "node_id": "planning_process_group_intro",
+          "title": "Planning Fundamentals: Laying the Groundwork",
+          "objectives": [
+            "Explain the importance of comprehensive project planning.",
+            "Identify the key outputs of the planning process group.",
+            "Understand the iterative nature of planning."
+          ],
+          "prerequisites": [
+            "initiating_process_group"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "planning",
+            "strategy",
+            "roadmap"
+          ]
+        },
+        {
+          "node_id": "scope_management_basics",
+          "title": "Scope Management: What Are We Building?",
+          "objectives": [
+            "Define project scope and its importance.",
+            "Explain how to create a Work Breakdown Structure (WBS).",
+            "Understand the concept of scope creep and how to manage it."
+          ],
+          "prerequisites": [
+            "planning_process_group_intro"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "scope",
+            "WBS",
+            "requirements"
+          ]
+        },
+        {
+          "node_id": "schedule_management_basics",
+          "title": "Schedule Management: When Will It Be Done?",
+          "objectives": [
+            "Understand techniques for estimating activity durations.",
+            "Explain how to develop a project schedule.",
+            "Introduce Gantt charts and critical path method concepts."
+          ],
+          "prerequisites": [
+            "planning_process_group_intro"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "schedule",
+            "timeline",
+            "gantt",
+            "critical path"
+          ]
+        },
+        {
+          "node_id": "cost_management_basics",
+          "title": "Cost Management: How Much Will It Cost?",
+          "objectives": [
+            "Understand the principles of project cost estimation.",
+            "Learn how to create a project budget.",
+            "Identify common cost control techniques."
+          ],
+          "prerequisites": [
+            "planning_process_group_intro"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "cost",
+            "budget",
+            "estimation"
+          ]
+        },
+        {
+          "node_id": "risk_management_basics",
+          "title": "Risk Management: What Could Go Wrong?",
+          "objectives": [
+            "Define project risk and its impact.",
+            "Understand the process of identifying and analyzing project risks.",
+            "Learn basic strategies for planning risk responses."
+          ],
+          "prerequisites": [
+            "planning_process_group_intro"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "risk",
+            "mitigation",
+            "contingency"
+          ]
+        },
+        {
+          "node_id": "executing_process_group",
+          "title": "Executing the Project: Doing the Work",
+          "objectives": [
+            "Describe the activities involved in the project executing phase.",
+            "Understand the importance of team management and leadership during execution.",
+            "Explain how to manage project resources effectively."
+          ],
+          "prerequisites": [
+            "scope_management_basics",
+            "schedule_management_basics",
+            "cost_management_basics",
+            "risk_management_basics"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "execution",
+            "team management",
+            "resources"
+          ]
+        },
+        {
+          "node_id": "monitoring_controlling_process_group",
+          "title": "Monitoring & Controlling: Keeping the Project on Track",
+          "objectives": [
+            "Understand the purpose of monitoring and controlling project progress.",
+            "Identify methods for tracking schedule and cost performance.",
+            "Explain how to manage changes to the project plan."
+          ],
+          "prerequisites": [
+            "executing_process_group"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "monitoring",
+            "control",
+            "change management",
+            "performance"
+          ]
+        },
+        {
+          "node_id": "communication_stakeholder_management",
+          "title": "Communication and Stakeholder Management",
+          "objectives": [
+            "Understand the importance of effective project communication.",
+            "Identify different communication methods and channels.",
+            "Learn strategies for engaging and managing project stakeholders."
+          ],
+          "prerequisites": [
+            "monitoring_controlling_process_group"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "communication",
+            "stakeholders",
+            "engagement"
+          ]
+        },
+        {
+          "node_id": "closing_process_group",
+          "title": "Closing the Project: Finalizing and Learning",
+          "objectives": [
+            "Describe the activities involved in formally closing a project or phase.",
+            "Understand the importance of lessons learned documentation.",
+            "Explain how to gain final acceptance for project deliverables."
+          ],
+          "prerequisites": [
+            "communication_stakeholder_management"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "closing",
+            "lessons learned",
+            "acceptance"
+          ]
+        },
+        {
+          "node_id": "introduction_to_agile",
+          "title": "Introduction to Agile Project Management Concepts",
+          "objectives": [
+            "Understand the core values and principles of the Agile Manifesto.",
+            "Differentiate between traditional (waterfall) and Agile approaches.",
+            "Identify common Agile frameworks like Scrum or Kanban (brief overview)."
+          ],
+          "prerequisites": [
+            "project_life_cycle_overview"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "agile",
+            "scrum",
+            "kanban",
+            "methodologies"
+          ]
+        },
+        {
+          "node_id": "practical_scenario_application",
+          "title": "Practical Application: Managing a Simple Project Scenario",
+          "objectives": [
+            "Apply fundamental project management concepts to a hypothetical scenario.",
+            "Practice identifying project phases and key deliverables.",
+            "Develop a basic project plan outline for a given problem."
+          ],
+          "prerequisites": [
+            "closing_process_group",
+            "introduction_to_agile"
+          ],
+          "estimated_minutes": 180,
+          "tags": [
+            "practice",
+            "scenario",
+            "application",
+            "hands-on"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 12,
+        "max": 20
+      },
+      "error": null,
+      "duration_ms": 18657
+    },
+    {
+      "topic_id": "gt_bio_001",
+      "topic": "Cell Biology and Genetics",
+      "request_id": "93c31a51-7c0f-4de7-8b77-88ee16ae72b6",
+      "schema_valid_first_try": true,
+      "schema_valid_after_retry": true,
+      "retry_count": 0,
+      "dag_valid": true,
+      "node_count": 27,
+      "nodes": [
+        {
+          "node_id": "intro_to_biology",
+          "title": "Introduction to Biology and Life",
+          "objectives": [
+            "Define biology as a scientific discipline.",
+            "List and describe the fundamental characteristics of living organisms.",
+            "Understand the hierarchical organization of life from atoms to the biosphere."
+          ],
+          "prerequisites": [],
+          "estimated_minutes": 60,
+          "tags": [
+            "foundations",
+            "biology"
+          ]
+        },
+        {
+          "node_id": "basic_chemistry_for_biology",
+          "title": "Basic Chemistry for Cell Biology",
+          "objectives": [
+            "Recall fundamental concepts of atoms, elements, and chemical bonds.",
+            "Describe the properties of water and its importance for life.",
+            "Understand the basics of pH and buffers in biological systems."
+          ],
+          "prerequisites": [
+            "intro_to_biology"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "chemistry",
+            "foundations"
+          ]
+        },
+        {
+          "node_id": "macromolecules_of_life",
+          "title": "The Four Macromolecules of Life",
+          "objectives": [
+            "Identify the four major classes of biological macromolecules: carbohydrates, lipids, proteins, and nucleic acids.",
+            "Describe the basic building blocks (monomers) and polymers for each class.",
+            "Explain the primary functions of each macromolecule within a cell."
+          ],
+          "prerequisites": [
+            "basic_chemistry_for_biology"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "biochemistry",
+            "macromolecules"
+          ]
+        },
+        {
+          "node_id": "tools_for_cell_biology",
+          "title": "Exploring Cells: Microscopy Basics",
+          "objectives": [
+            "Explain the basic principles of light microscopy.",
+            "Differentiate between resolution and magnification.",
+            "Identify the major components of a light microscope and their functions."
+          ],
+          "prerequisites": [
+            "intro_to_biology"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "methods",
+            "microscopy"
+          ]
+        },
+        {
+          "node_id": "prokaryotic_vs_eukaryotic",
+          "title": "Prokaryotic vs. Eukaryotic Cells",
+          "objectives": [
+            "Distinguish between prokaryotic and eukaryotic cells based on their structural features.",
+            "Provide examples of organisms that are prokaryotic and eukaryotic.",
+            "Understand the evolutionary significance of these two cell types."
+          ],
+          "prerequisites": [
+            "intro_to_biology",
+            "macromolecules_of_life"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "cell types",
+            "basic cell structure"
+          ]
+        },
+        {
+          "node_id": "eukaryotic_cell_overview",
+          "title": "Overview of Eukaryotic Cell Structure",
+          "objectives": [
+            "Identify the major organelles found in a typical animal and plant eukaryotic cell.",
+            "Describe the general function of each major organelle.",
+            "Understand the concept of cellular compartmentalization."
+          ],
+          "prerequisites": [
+            "prokaryotic_vs_eukaryotic"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "eukaryotic cell",
+            "organelles"
+          ]
+        },
+        {
+          "node_id": "cell_membrane_structure",
+          "title": "The Cell Membrane: Structure and Function",
+          "objectives": [
+            "Describe the fluid mosaic model of the cell membrane.",
+            "Identify the main components of the cell membrane (phospholipids, proteins, carbohydrates, cholesterol).",
+            "Explain the role of each component in membrane structure and function."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "macromolecules_of_life"
+          ],
+          "estimated_minutes": 75,
+          "tags": [
+            "cell membrane",
+            "lipids",
+            "proteins"
+          ]
+        },
+        {
+          "node_id": "membrane_transport",
+          "title": "Membrane Transport: Moving Molecules Across the Cell",
+          "objectives": [
+            "Differentiate between passive transport (diffusion, facilitated diffusion, osmosis) and active transport.",
+            "Explain how different types of molecules cross the cell membrane.",
+            "Understand the role of transport proteins and energy in active transport."
+          ],
+          "prerequisites": [
+            "cell_membrane_structure"
+          ],
+          "estimated_minutes": 100,
+          "tags": [
+            "transport",
+            "diffusion",
+            "active transport"
+          ]
+        },
+        {
+          "node_id": "nucleus_and_chromatin",
+          "title": "The Nucleus: Control Center of the Cell",
+          "objectives": [
+            "Describe the structure and function of the cell nucleus.",
+            "Explain how DNA is organized into chromatin and chromosomes.",
+            "Understand the role of the nuclear envelope and nuclear pores."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "macromolecules_of_life"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "nucleus",
+            "dna",
+            "chromatin"
+          ]
+        },
+        {
+          "node_id": "endoplasmic_reticulum_golgi",
+          "title": "ER and Golgi: Protein Synthesis and Processing",
+          "objectives": [
+            "Describe the structure and interconnected functions of the endoplasmic reticulum (rough and smooth).",
+            "Explain the role of the Golgi apparatus in modifying, sorting, and packaging proteins and lipids.",
+            "Understand the secretory pathway within the cell."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "macromolecules_of_life"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "organelles",
+            "protein synthesis",
+            "secretion"
+          ]
+        },
+        {
+          "node_id": "mitochondria_and_energy",
+          "title": "Mitochondria: The Powerhouses of the Cell",
+          "objectives": [
+            "Describe the structure of mitochondria.",
+            "Explain the basic process of cellular respiration and its purpose.",
+            "Understand how mitochondria generate ATP to power cellular activities."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "macromolecules_of_life"
+          ],
+          "estimated_minutes": 80,
+          "tags": [
+            "mitochondria",
+            "energy",
+            "cellular respiration"
+          ]
+        },
+        {
+          "node_id": "chloroplasts_and_photosynthesis",
+          "title": "Chloroplasts: Capturing Light Energy (Plant Cells)",
+          "objectives": [
+            "Identify chloroplasts as key organelles in plant and algal cells.",
+            "Describe the basic structure of a chloroplast.",
+            "Understand the overall process of photosynthesis and its importance for life on Earth."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "mitochondria_and_energy"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "chloroplasts",
+            "photosynthesis",
+            "plant cells"
+          ]
+        },
+        {
+          "node_id": "lysosomes_peroxisomes_vacuoles",
+          "title": "Lysosomes, Peroxisomes, and Vacuoles: Waste Management and Storage",
+          "objectives": [
+            "Explain the function of lysosomes in cellular digestion and waste breakdown.",
+            "Describe the role of peroxisomes in detoxification.",
+            "Understand the diverse functions of vacuoles in plant and animal cells."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "organelles",
+            "waste management"
+          ]
+        },
+        {
+          "node_id": "cytoskeleton",
+          "title": "The Cytoskeleton: Support and Movement",
+          "objectives": [
+            "Identify the three main types of cytoskeletal filaments: microtubules, microfilaments, and intermediate filaments.",
+            "Describe the primary functions of the cytoskeleton in maintaining cell shape, enabling movement, and intracellular transport.",
+            "Understand how motor proteins interact with the cytoskeleton."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview"
+          ],
+          "estimated_minutes": 80,
+          "tags": [
+            "cytoskeleton",
+            "cell movement",
+            "cell shape"
+          ]
+        },
+        {
+          "node_id": "cell_junctions_and_adhesion",
+          "title": "Cell Junctions and Adhesion: Connecting Cells",
+          "objectives": [
+            "Describe the different types of cell junctions (tight junctions, desmosomes, gap junctions) found in animal cells.",
+            "Explain the function of each type of cell junction.",
+            "Understand the role of cell adhesion molecules in tissue formation."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "cell_membrane_structure"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "cell communication",
+            "tissues",
+            "cell adhesion"
+          ]
+        },
+        {
+          "node_id": "cell_cycle_overview",
+          "title": "The Cell Cycle: Life and Division of a Cell",
+          "objectives": [
+            "Outline the main phases of the eukaryotic cell cycle (Interphase and M phase).",
+            "Describe the key events occurring in G1, S, G2, and M phases.",
+            "Understand the concept of cell cycle checkpoints."
+          ],
+          "prerequisites": [
+            "eukaryotic_cell_overview",
+            "nucleus_and_chromatin"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "cell cycle",
+            "cell division"
+          ]
+        },
+        {
+          "node_id": "mitosis",
+          "title": "Mitosis: Somatic Cell Division",
+          "objectives": [
+            "Describe the stages of mitosis (prophase, metaphase, anaphase, telophase).",
+            "Explain the process of cytokinesis.",
+            "Understand the outcome of mitosis: two genetically identical daughter cells."
+          ],
+          "prerequisites": [
+            "cell_cycle_overview"
+          ],
+          "estimated_minutes": 100,
+          "tags": [
+            "mitosis",
+            "somatic cells",
+            "cell division"
+          ]
+        },
+        {
+          "node_id": "meiosis",
+          "title": "Meiosis: Forming Gametes for Reproduction",
+          "objectives": [
+            "Describe the stages of meiosis I and meiosis II.",
+            "Explain the significance of crossing over and independent assortment in generating genetic variation.",
+            "Compare and contrast mitosis and meiosis, highlighting their different outcomes."
+          ],
+          "prerequisites": [
+            "cell_cycle_overview",
+            "mitosis"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "meiosis",
+            "gametes",
+            "genetic variation"
+          ]
+        },
+        {
+          "node_id": "introduction_to_genetics",
+          "title": "Introduction to Genetics: Mendelian Principles",
+          "objectives": [
+            "Explain Mendel's laws of inheritance (segregation and independent assortment).",
+            "Define key genetic terms: gene, allele, genotype, phenotype, homozygous, heterozygous.",
+            "Solve basic monohybrid and dihybrid cross problems using Punnett squares."
+          ],
+          "prerequisites": [
+            "meiosis"
+          ],
+          "estimated_minutes": 120,
+          "tags": [
+            "genetics",
+            "mendelian genetics",
+            "inheritance"
+          ]
+        },
+        {
+          "node_id": "dna_structure",
+          "title": "DNA: The Molecule of Heredity",
+          "objectives": [
+            "Describe the double helix structure of DNA.",
+            "Identify the components of a DNA nucleotide (sugar, phosphate, nitrogenous base).",
+            "Explain how complementary base pairing (A-T, G-C) is crucial for DNA structure and function."
+          ],
+          "prerequisites": [
+            "macromolecules_of_life",
+            "nucleus_and_chromatin"
+          ],
+          "estimated_minutes": 80,
+          "tags": [
+            "dna",
+            "nucleic acids",
+            "heredity"
+          ]
+        },
+        {
+          "node_id": "dna_replication",
+          "title": "DNA Replication: Copying the Genetic Material",
+          "objectives": [
+            "Explain the semi-conservative model of DNA replication.",
+            "Identify the key enzymes involved in DNA replication (e.g., DNA polymerase, helicase).",
+            "Outline the basic steps of DNA replication."
+          ],
+          "prerequisites": [
+            "dna_structure",
+            "cell_cycle_overview"
+          ],
+          "estimated_minutes": 100,
+          "tags": [
+            "dna replication",
+            "enzymes",
+            "genetic information"
+          ]
+        },
+        {
+          "node_id": "rna_and_transcription",
+          "title": "RNA and Transcription: From DNA to RNA",
+          "objectives": [
+            "Compare and contrast the structure and types of RNA (mRNA, tRNA, rRNA) with DNA.",
+            "Describe the process of transcription, including initiation, elongation, and termination.",
+            "Understand the role of RNA polymerase in synthesizing RNA from a DNA template."
+          ],
+          "prerequisites": [
+            "dna_structure",
+            "nucleus_and_chromatin"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "rna",
+            "transcription",
+            "gene expression"
+          ]
+        },
+        {
+          "node_id": "protein_synthesis_translation",
+          "title": "Protein Synthesis: Translation and the Genetic Code",
+          "objectives": [
+            "Explain how the genetic code translates mRNA sequences into amino acid sequences.",
+            "Describe the process of translation, including initiation, elongation, and termination.",
+            "Identify the roles of ribosomes, mRNA, and tRNA in protein synthesis."
+          ],
+          "prerequisites": [
+            "rna_and_transcription",
+            "endoplasmic_reticulum_golgi"
+          ],
+          "estimated_minutes": 110,
+          "tags": [
+            "protein synthesis",
+            "translation",
+            "genetic code",
+            "ribosomes"
+          ]
+        },
+        {
+          "node_id": "gene_expression_regulation",
+          "title": "Basic Concepts of Gene Expression Regulation",
+          "objectives": [
+            "Understand why gene expression needs to be regulated.",
+            "Describe simple mechanisms of gene regulation in prokaryotes (e.g., operons).",
+            "Briefly explain that gene regulation in eukaryotes is more complex."
+          ],
+          "prerequisites": [
+            "protein_synthesis_translation"
+          ],
+          "estimated_minutes": 70,
+          "tags": [
+            "gene regulation",
+            "gene expression"
+          ]
+        },
+        {
+          "node_id": "mutations_and_disease",
+          "title": "Mutations: Changes in Genetic Information",
+          "objectives": [
+            "Define what a gene mutation is and its potential causes.",
+            "Differentiate between point mutations and chromosomal mutations.",
+            "Explain how mutations can lead to altered proteins and genetic diseases."
+          ],
+          "prerequisites": [
+            "dna_replication",
+            "protein_synthesis_translation"
+          ],
+          "estimated_minutes": 90,
+          "tags": [
+            "mutations",
+            "genetic disease",
+            "dna damage"
+          ]
+        },
+        {
+          "node_id": "biotechnology_basics",
+          "title": "Introduction to Biotechnology and Genetic Engineering",
+          "objectives": [
+            "Define biotechnology and genetic engineering.",
+            "Describe basic concepts of common biotechnology techniques (e.g., PCR, gene cloning).",
+            "Understand the potential applications of genetic engineering in medicine and agriculture."
+          ],
+          "prerequisites": [
+            "dna_structure",
+            "rna_and_transcription",
+            "protein_synthesis_translation"
+          ],
+          "estimated_minutes": 100,
+          "tags": [
+            "biotechnology",
+            "genetic engineering",
+            "applications"
+          ]
+        },
+        {
+          "node_id": "ethics_in_genetics",
+          "title": "Ethical Considerations in Genetics and Biotechnology",
+          "objectives": [
+            "Identify ethical issues associated with genetic testing and genetic engineering.",
+            "Discuss the societal implications of advancements in cell biology and genetics.",
+            "Encourage critical thinking about the responsible use of genetic technologies."
+          ],
+          "prerequisites": [
+            "biotechnology_basics",
+            "mutations_and_disease"
+          ],
+          "estimated_minutes": 60,
+          "tags": [
+            "ethics",
+            "societal impact",
+            "bioethics"
+          ]
+        }
+      ],
+      "node_count_in_range": true,
+      "expected_node_count": {
+        "min": 20,
+        "max": 30
+      },
+      "error": null,
+      "duration_ms": 30972
+    }
+  ]
+}

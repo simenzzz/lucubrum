@@ -1,0 +1,229 @@
+{
+  "evaluator": "exercises",
+  "run_timestamp": "2026-01-29T09:08:47.195504+00:00",
+  "service_url": "http://localhost:8000",
+  "metrics": {
+    "total_items": 10,
+    "successful": 10,
+    "failed": 0,
+    "schema_valid": 10,
+    "count_correct": 10,
+    "type_match": 10,
+    "errors": [],
+    "schema_valid_rate": 1.0,
+    "count_correct_rate": 1.0,
+    "type_match_rate": 1.0
+  },
+  "results": [
+    {
+      "item_id": "gt_cs_001",
+      "node_title": "BST Insertion Algorithm",
+      "request_id": "aa9d359b-855d-4df7-aa0c-d615dfe10740",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "coding",
+        "short_answer"
+      ],
+      "actual_types": [
+        "mcq",
+        "coding",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 31210
+    },
+    {
+      "item_id": "gt_cs_002",
+      "node_title": "HTTP Methods and Status Codes",
+      "request_id": "39908c11-7986-456c-ae52-278eaae0351a",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "actual_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 12843
+    },
+    {
+      "item_id": "gt_cs_003",
+      "node_title": "Writing Your First Dockerfile",
+      "request_id": "7433f4b2-24c4-4e25-8b03-c2934a7bdaf2",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "coding",
+        "fill_blank"
+      ],
+      "actual_types": [
+        "fill_blank",
+        "mcq",
+        "coding"
+      ],
+      "error": null,
+      "duration_ms": 21584
+    },
+    {
+      "item_id": "gt_math_001",
+      "node_title": "The Power Rule for Derivatives",
+      "request_id": "b37756a9-2161-4f0c-8503-7ea1e586f9bd",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "actual_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 10043
+    },
+    {
+      "item_id": "gt_math_002",
+      "node_title": "Matrix Multiplication",
+      "request_id": "1df0b0f0-62c1-4b8f-b034-efcad39df7b0",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer",
+        "fill_blank"
+      ],
+      "actual_types": [
+        "fill_blank",
+        "mcq",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 14616
+    },
+    {
+      "item_id": "gt_phys_001",
+      "node_title": "Newton's Second Law: F = ma",
+      "request_id": "ba05ea40-82ea-4403-8365-1acb35beb062",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "actual_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 12559
+    },
+    {
+      "item_id": "gt_phys_002",
+      "node_title": "Coulomb's Law",
+      "request_id": "f2c7161b-b157-4a0e-b78c-c5ff393cb08f",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "actual_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 18519
+    },
+    {
+      "item_id": "gt_bus_001",
+      "node_title": "Reading the Balance Sheet",
+      "request_id": "1721c956-e5ca-4a46-827d-ae120cf6e650",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "actual_types": [
+        "mcq",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 23147
+    },
+    {
+      "item_id": "gt_bus_002",
+      "node_title": "The Project Life Cycle",
+      "request_id": "0dce7447-7844-4f03-8f72-6f515bfa0f0c",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer",
+        "flashcard"
+      ],
+      "actual_types": [
+        "mcq",
+        "flashcard",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 9446
+    },
+    {
+      "item_id": "gt_bio_001",
+      "node_title": "DNA Structure and Replication",
+      "request_id": "2664d34a-217b-4117-800f-a962703143e5",
+      "schema_valid": true,
+      "count_correct": true,
+      "type_match": true,
+      "exercise_count": 5,
+      "expected_count": 5,
+      "expected_types": [
+        "mcq",
+        "short_answer",
+        "flashcard"
+      ],
+      "actual_types": [
+        "mcq",
+        "flashcard",
+        "short_answer"
+      ],
+      "error": null,
+      "duration_ms": 11251
+    }
+  ]
+}

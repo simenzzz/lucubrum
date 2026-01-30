@@ -1,0 +1,252 @@
+{
+  "evaluator": "grade",
+  "run_timestamp": "2026-01-29T09:12:22.386147+00:00",
+  "service_url": "http://localhost:8000",
+  "metrics": {
+    "total_items": 10,
+    "successful": 0,
+    "failed": 10,
+    "schema_valid": 0,
+    "is_correct_matches": 0,
+    "score_within_tolerance": 0,
+    "feedback_present": 0,
+    "total_test_cases": 11,
+    "errors": [],
+    "schema_valid_rate": 0.0,
+    "is_correct_agreement_rate": 0.0,
+    "score_accuracy_rate": 0.0,
+    "feedback_present_rate": 0.0
+  },
+  "results": [
+    {
+      "item_id": "gt_cs_001",
+      "topic": "Binary Search Trees",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "mcq",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"What is the time complexity of BST insertion in a balanced tree?\",\"rubric\":\"Student must identify O(log n) for balanced trees.\",\"correct_answer\":\"O(log n)\",\"user_answer\":\"O(log n)\",\"user_level\":\"intermediate\",\"request_id\":\"8d7b59cb-5141-4587-94c7-9b7b2d06f512\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"What is the "
+        },
+        {
+          "exercise_type": "short_answer",
+          "expected_is_correct": true,
+          "expected_score_min": 0.7,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"prompt\":\"Explain why BST insertion can be O(n) in the worst case.\",\"rubric\":\"Must mention degenerate/skewed tree becoming like a linked list.\",\"correct_answer\":\"When the tree becomes unbalanced (all nodes on one side), it degenerates into a linked list.\",\"user_answer\":\"If you insert sorted elements, the tree becomes a line and you have to traverse everything.\",\"user_level\":\"inter"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 19
+    },
+    {
+      "item_id": "gt_cs_002",
+      "topic": "REST API Design Best Practices",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "mcq",
+          "expected_is_correct": false,
+          "expected_score_min": 0.0,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"Which HTTP method should be used to update a resource partially?\",\"rubric\":\"PATCH is for partial updates, PUT is for full replacement.\",\"correct_answer\":\"PATCH\",\"user_answer\":\"PUT\",\"user_level\":\"intermediate\",\"request_id\":\"4dd5dbb1-ac02-4101-8973-07e483ef102b\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"Which HTTP m"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 6
+    },
+    {
+      "item_id": "gt_cs_003",
+      "topic": "Docker Containerization",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "coding",
+          "expected_is_correct": true,
+          "expected_score_min": 0.6,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"coding\",\"prompt\":\"Write a Dockerfile that starts from python:3.11-slim, copies requirements.txt, installs dependencies, and runs app.py\",\"rubric\":\"Must have FROM, COPY, RUN pip install, CMD. Order matters for layer caching.\",\"correct_answer\":\"FROM python:3.11-slim\\nWORKDIR /app\\nCOPY requirements.txt .\\nRUN pip install -r requirements.txt\\nCOPY . .\\nCMD [\\\"python\\\", \\\"app.py\\\"]\",\"user_answer\":\""
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 5
+    },
+    {
+      "item_id": "gt_math_001",
+      "topic": "Calculus: Derivatives and Integrals",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "short_answer",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"prompt\":\"Find the derivative of f(x) = 3x^4 + 2x^2 - 5\",\"rubric\":\"Apply power rule: bring down exponent, reduce by 1. f'(x) = 12x^3 + 4x\",\"correct_answer\":\"f'(x) = 12x\u00b3 + 4x\",\"user_answer\":\"12x^3 + 4x\",\"user_level\":\"beginner\",\"request_id\":\"8f6be3af-f01e-49ab-aebc-c7b645c3a107\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answ"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 17
+    },
+    {
+      "item_id": "gt_math_002",
+      "topic": "Linear Algebra Fundamentals",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "mcq",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"Is matrix multiplication commutative (AB = BA)?\",\"rubric\":\"No, matrix multiplication is generally not commutative.\",\"correct_answer\":\"No\",\"user_answer\":\"No, except for special cases like identity matrices\",\"user_level\":\"intermediate\",\"request_id\":\"f2adeeec-c309-400a-ad62-ba89c65ae65c\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mc"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 6
+    },
+    {
+      "item_id": "gt_phys_001",
+      "topic": "Classical Mechanics: Newton's Laws",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "short_answer",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"prompt\":\"A 5 kg object accelerates at 2 m/s\u00b2. What is the net force?\",\"rubric\":\"F = ma = 5 * 2 = 10 N\",\"correct_answer\":\"10 N\",\"user_answer\":\"10 Newtons\",\"user_level\":\"beginner\",\"request_id\":\"ed6ee0d4-0f9d-465c-9872-6a3b270d6aae\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"prompt\":\"A 5 kg object accelerates at 2 m/s"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 6
+    },
+    {
+      "item_id": "gt_phys_002",
+      "topic": "Electromagnetism Basics",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "mcq",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"If the distance between two charges doubles, the electrostatic force becomes:\",\"rubric\":\"F \u221d 1/r\u00b2. Doubling r means F becomes 1/4.\",\"correct_answer\":\"1/4 of the original\",\"user_answer\":\"One quarter of the original force\",\"user_level\":\"intermediate\",\"request_id\":\"ad964d01-41cd-477e-ad02-756daa2ae302\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exe"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 5
+    },
+    {
+      "item_id": "gt_bus_001",
+      "topic": "Financial Statement Analysis",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "short_answer",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"prompt\":\"What is the accounting equation?\",\"rubric\":\"Assets = Liabilities + Equity (or Shareholders' Equity)\",\"correct_answer\":\"Assets = Liabilities + Shareholders' Equity\",\"user_answer\":\"Assets equals Liabilities plus Equity\",\"user_level\":\"intermediate\",\"request_id\":\"ec467948-303d-4cdc-8de4-27335eb8d1cc\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\""
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 7
+    },
+    {
+      "item_id": "gt_bus_002",
+      "topic": "Project Management Fundamentals",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "mcq",
+          "expected_is_correct": false,
+          "expected_score_min": 0.0,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt\":\"Which phase typically comes first in the project life cycle?\",\"rubric\":\"Initiation (or Initiate) comes before Planning, Execution, and Closure.\",\"correct_answer\":\"Initiation\",\"user_answer\":\"Planning\",\"user_level\":\"beginner\",\"request_id\":\"bf4764ca-39dc-46f1-b2a2-fe3d478f233c\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"mcq\",\"prompt"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 5
+    },
+    {
+      "item_id": "gt_bio_001",
+      "topic": "Cell Biology and Genetics",
+      "schema_valid": false,
+      "test_results": [
+        {
+          "exercise_type": "short_answer",
+          "expected_is_correct": true,
+          "expected_score_min": 0.9,
+          "actual_is_correct": null,
+          "actual_score": null,
+          "feedback_present": false,
+          "schema_valid": false,
+          "error": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"plan_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"prompt\":\"What are the four nucleotide bases in DNA?\",\"rubric\":\"Adenine, Thymine, Guanine, Cytosine (A, T, G, C)\",\"correct_answer\":\"Adenine, Thymine, Guanine, Cytosine\",\"user_answer\":\"A, T, G, C\",\"user_level\":\"beginner\",\"request_id\":\"1fd08246-e698-4baa-b4dd-3e8ccaeeef2a\"}},{\"type\":\"missing\",\"loc\":[\"body\",\"node_id\"],\"msg\":\"Field required\",\"input\":{\"exercise_type\":\"short_answer\",\"pr"
+        }
+      ],
+      "is_correct_matches": 0,
+      "score_within_tolerance": 0,
+      "feedback_present": 0,
+      "error": null,
+      "duration_ms": 5
+    }
+  ]
+}

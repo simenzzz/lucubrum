@@ -1,4 +1,4 @@
-.PHONY: help setup dev dev-local dev-docker dev-infra dev-node dev-python test test-docker lint build clean stop
+.PHONY: help setup dev dev-local dev-docker dev-infra dev-node dev-python test test-docker lint typecheck build clean stop ssh-node db-reset generate-schemas eval eval-plan eval-exercises eval-grade eval-queries eval-staleness eval-validate-video eval-all
 
 # Default target
 help:
@@ -26,7 +26,7 @@ setup:
 	@echo "Installing Node dependencies..."
 	cd apps/api-node && npm install
 	@echo "Installing Python dependencies..."
-	cd apps/curriculum-python && python -m venv venv && . venv/bin/activate && pip install -r requirements.txt
+	cd apps/curriculum-python && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
 	@echo "Setup complete!"
 
 dev-infra:
@@ -76,7 +76,7 @@ test-node:
 
 test-python:
 	@echo "Running Python tests locally..."
-	cd apps/curriculum-python && . venv/bin/activate && pytest
+	cd apps/curriculum-python && . .venv/bin/activate && pytest
 
 test: test-node test-python
 
@@ -91,13 +91,13 @@ lint:
 	@echo "Linting Node service..."
 	cd apps/api-node && npm run lint
 	@echo "Linting Python service..."
-	cd apps/curriculum-python && . venv/bin/activate && ruff check src/
+	cd apps/curriculum-python && . .venv/bin/activate && ruff check src/
 
 typecheck:
 	@echo "Type checking Node service..."
 	cd apps/api-node && npm run typecheck
 	@echo "Type checking Python service..."
-	cd apps/curriculum-python && . venv/bin/activate && mypy src/
+	cd apps/curriculum-python && . .venv/bin/activate && mypy src/
 
 build:
 	@echo "Building Node service..."
@@ -121,4 +121,36 @@ db-reset:
 
 generate-schemas:
 	@echo "Generating JSON schemas from Pydantic models..."
-	cd apps/curriculum-python && . venv/bin/activate && python -m scripts.generate_schemas
+	python scripts/generate-schemas.py
+
+eval:
+	@echo "Running plan evaluation (default)..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt plan $(if $(TOPICS),--topics $(TOPICS))
+
+eval-plan:
+	@echo "Running plan evaluation..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt plan $(if $(TOPICS),--topics $(TOPICS))
+
+eval-exercises:
+	@echo "Running exercises evaluation..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt exercises $(if $(TOPICS),--topics $(TOPICS))
+
+eval-grade:
+	@echo "Running grade evaluation..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt grade $(if $(TOPICS),--topics $(TOPICS))
+
+eval-queries:
+	@echo "Running queries evaluation..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt queries $(if $(TOPICS),--topics $(TOPICS))
+
+eval-staleness:
+	@echo "Running staleness evaluation (currently disabled pending MCP)..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt staleness $(if $(TOPICS),--topics $(TOPICS))
+
+eval-validate-video:
+	@echo "Running video validation evaluation..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt validate_video $(if $(TOPICS),--topics $(TOPICS))
+
+eval-all:
+	@echo "Running all evaluations..."
+	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt all $(if $(TOPICS),--topics $(TOPICS))

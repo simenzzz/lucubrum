@@ -96,7 +96,7 @@ Use the appropriate skill when working on each service:
 | Logger | `src/utils/logger.py` | ✅ Uses Python logging module |
 | Retry logic | `src/utils/retry.py` | ✅ 216 lines, retry with validation |
 
-**API Endpoints (Partial)**:
+**API Endpoints (100% Complete)**:
 | Endpoint | File | Status |
 |----------|------|--------|
 | POST /llm/transcript | `src/api/transcript.py` | ✅ 63 lines |
@@ -105,24 +105,14 @@ Use the appropriate skill when working on each service:
 | POST /llm/plan | `src/api/plan.py` | ✅ 179 lines, full implementation |
 | POST /llm/exercises | `src/api/exercises.py` | ✅ Full implementation with web search |
 | POST /llm/grade | `src/api/grade.py` | ✅ Full implementation (local + LLM grading) |
-| POST /llm/queries | `src/api/queries.py` | ❌ Empty skeleton |
-
-**Utilities (100% Complete)**:
-| Utility | File | Status |
-|---------|------|--------|
-| Transcript fetcher | `src/utils/transcripts.py` | ✅ 192 lines, youtube-transcript-api |
-| Prompt loader | `src/utils/prompts.py` | ✅ 44 lines, LRU cached |
-| Hashing | `src/utils/hashing.py` | ✅ 28 lines, SHA-256 |
-| Logger | `src/utils/logger.py` | ✅ ~85 lines, structlog JSON/console |
-| Retry logic | `src/utils/retry.py` | ✅ 216 lines, retry with validation |
-| Web search | `src/utils/web_search.py` | ✅ Google CSE integration with graceful degradation |
+| POST /llm/queries | `src/api/queries.py` | ✅ 183 lines, full implementation with retry |
 
 **Middleware**:
 | Middleware | File | Status |
 |------------|------|--------|
 | Service token auth | `src/middleware/service_auth.py` | ✅ ~75 lines, protects /llm/* endpoints |
 
-**Prompts (Partial)**:
+**Prompts (100% Complete)**:
 | Prompt | File | Status |
 |--------|------|--------|
 | validate_video/v1 | `src/prompts/validate_video/v1.txt` | ✅ 80 lines |
@@ -130,7 +120,7 @@ Use the appropriate skill when working on each service:
 | plan/v1 | `src/prompts/plan/v1.txt` | ✅ 65 lines |
 | exercises/v1 | `src/prompts/exercises/v1.txt` | ✅ Full prompt with all exercise types |
 | grade/v1 | `src/prompts/grade/v1.txt` | ✅ Full prompt with rubric-based grading |
-| queries/v1 | `src/prompts/queries/v1.txt` | ❌ Empty |
+| queries/v1 | `src/prompts/queries/v1.txt` | ✅ 89 lines, full prompt with examples |
 
 ### Node Service - Orchestrator (`apps/api-node/`)
 

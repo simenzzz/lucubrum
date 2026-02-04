@@ -20,6 +20,7 @@ from .exercise import (
 )
 from .grade import Grade
 from .query_suggestions import QuerySuggestions
+from .exam import ExamExerciseSet, GenerateExamRequest, RawExamOutput
 
 __all__ = [
     # Metadata
@@ -40,6 +41,10 @@ __all__ = [
     "FlashcardExercise",
     "MCQExercise",
     "ShortAnswerExercise",
+    # Exam
+    "ExamExerciseSet",
+    "GenerateExamRequest",
+    "RawExamOutput",
     # Grade
     "Grade",
     # Query Suggestions

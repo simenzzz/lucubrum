@@ -1,4 +1,4 @@
-.PHONY: help setup dev dev-local dev-docker dev-infra dev-node dev-python test test-docker lint typecheck build clean stop ssh-node db-reset generate-schemas eval eval-plan eval-exercises eval-grade eval-queries eval-staleness eval-validate-video eval-all
+.PHONY: help setup dev dev-local dev-docker dev-infra dev-node dev-python dev-web test test-docker lint typecheck build clean stop ssh-node db-reset generate-schemas eval eval-plan eval-exercises eval-grade eval-queries eval-staleness eval-validate-video eval-all test-web typecheck-web lint-web
 
 # Default target
 help:
@@ -14,6 +14,13 @@ help:
 	@echo "  make dev-docker      - Start EVERYTHING in Docker (Simulate prod)"
 	@echo "  make stop            - Stop all containers"
 	@echo ""
+	@echo "Web Development:"
+	@echo "  make dev-web         - Start Web frontend (Vite)"
+	@echo "  make build-web       - Build Web frontend for production"
+	@echo "  make test-web        - Run Web frontend tests"
+	@echo "  make typecheck-web   - Type check Web frontend"
+	@echo "  make lint-web        - Lint Web frontend"
+	@echo ""
 	@echo "Testing:"
 	@echo "  make test            - Run tests locally"
 	@echo "  make test-docker     - Run tests INSIDE Docker containers"
@@ -27,6 +34,8 @@ setup:
 	cd apps/api-node && npm install
 	@echo "Installing Python dependencies..."
 	cd apps/curriculum-python && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+	@echo "Installing Web dependencies..."
+	cd apps/web && npm install
 	@echo "Setup complete!"
 
 dev-infra:
@@ -35,7 +44,7 @@ dev-infra:
 
 dev-node:
 	@echo "Starting Node service..."
-	cd apps/api-node && npm run dev
+	cd apps/api-node && DOTENV_CONFIG_PATH=../../.env npm run dev
 
 dev-python:
 	@echo "Starting Python service..."
@@ -103,6 +112,30 @@ build:
 	@echo "Building Node service..."
 	cd apps/api-node && npm run build
 	@echo "Python service is interpreted, no build needed."
+
+# ==========================================
+# WEB DEVELOPMENT
+# ==========================================
+
+dev-web:
+	@echo "Starting Web frontend..."
+	cd apps/web && npm run dev
+
+build-web:
+	@echo "Building Web frontend..."
+	cd apps/web && npm run build
+
+test-web:
+	@echo "Running Web tests..."
+	cd apps/web && npm run test:coverage
+
+typecheck-web:
+	@echo "Type checking Web frontend..."
+	cd apps/web && npm run typecheck
+
+lint-web:
+	@echo "Linting Web frontend..."
+	cd apps/web && npm run lint
 
 clean:
 	@echo "Cleaning build artifacts..."

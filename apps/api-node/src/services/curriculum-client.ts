@@ -203,6 +203,29 @@ export interface GetFactsResponse {
   sources: string[];
 }
 
+// Exam types
+export interface GenerateExamRequest {
+  plan_id: string;
+  node_id: string;
+  topic: string;
+  node_title: string;
+  objectives: string[];
+  user_level: 'beginner' | 'intermediate' | 'advanced';
+  current_mastery: number;
+  exercise_count?: number;
+  request_id: string;
+}
+
+export interface ExamExerciseSet {
+  schema_version: string;
+  plan_id: string;
+  node_id: string;
+  user_level: string;
+  exercises: Exercise[];
+  exam_difficulty: number;
+  metadata: ArtifactMetadata;
+}
+
 // Error types
 export class CurriculumServiceError extends Error {
   constructor(
@@ -482,6 +505,30 @@ class CurriculumClient {
           (data?.message as string) || error.message,
           error.response?.status || 500,
           (data?.error as string) || 'FACT_FETCH_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generate an exam for a learning node.
+   */
+  async generateExam(request: GenerateExamRequest): Promise<ExamExerciseSet> {
+    try {
+      const response = await this.client.post<{ exam_exercise_set: ExamExerciseSet }>(
+        '/llm/exam',
+        request
+      );
+      return response.data.exam_exercise_set;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'EXAM_GENERATION_FAILED',
           data
         );
       }

@@ -1,7 +1,9 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import planRoutes from './routes/plan.routes';
 import authRoutes from './routes/auth.routes';
 import exerciseRoutes from './routes/exercise.routes';
+import examRoutes from './routes/exam.routes';
 import masteryRoutes from './routes/mastery.routes';
 import adminRoutes from './routes/admin.routes';
 import userRoutes from './routes/user.routes';
@@ -10,11 +12,102 @@ import { db } from './db/client';
 import { redis } from './db/redis';
 import { curriculumClient } from './services/curriculum-client';
 import { startQualitySignalsJob } from './jobs/quality-signals';
+import { csrfProtection } from './middleware/csrf.middleware';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-app.use(express.json());
+// Validate CORS_ORIGIN at startup
+function validateCorsOrigin(): void {
+  // CORS_ORIGIN must not be '*' with cookie-based auth
+  if (CORS_ORIGIN === '*') {
+    throw new Error(
+      'CORS_ORIGIN cannot be "*" with cookie-based authentication. ' +
+      'Set it to a specific origin (e.g., "http://localhost:5173" or "https://app.example.com").'
+    );
+  }
+
+  // Validate it's a proper URL
+  try {
+    const parsed = new URL(CORS_ORIGIN);
+    // Only allow http(s) protocols
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error(
+        `CORS_ORIGIN must use http or https protocol. Got: "${parsed.protocol}"`
+      );
+    }
+
+    // Warn if using localhost in production
+    if (NODE_ENV === 'production' &&
+        (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')) {
+      logger.warn(
+        { corsOrigin: CORS_ORIGIN },
+        'CORS_ORIGIN is set to localhost in production environment'
+      );
+    }
+
+    logger.info({ corsOrigin: CORS_ORIGIN }, 'CORS_ORIGIN validated');
+  } catch (error) {
+    if ((error as Error).message.includes('CORS_ORIGIN')) {
+      throw error; // Re-throw our custom errors
+    }
+    throw new Error(
+      `CORS_ORIGIN is not a valid URL: "${CORS_ORIGIN}". ` +
+      `Expected format: "http://localhost:5173" or "https://app.example.com"`
+    );
+  }
+}
+
+// Validate configuration at startup
+validateCorsOrigin();
+
+// Validate required environment variables
+function validateRequiredEnvVars(): void {
+  const requiredVars = {
+    'JWT_SECRET': process.env.JWT_SECRET,
+    'GOOGLE_CLIENT_ID': process.env.GOOGLE_CLIENT_ID,
+    'GOOGLE_CLIENT_SECRET': process.env.GOOGLE_CLIENT_SECRET,
+  };
+
+  const missing = Object.entries(requiredVars)
+    .filter(([_, value]) => !value)
+    .map(([name]) => name);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(', ')}`
+    );
+  }
+
+  logger.info('All required environment variables validated');
+}
+
+validateRequiredEnvVars();
+
+// CORS configuration for cookie-based auth
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  // No Authorization header - using HTTP-only cookies for auth
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+
+app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
+
+// CSRF protection for state-changing requests
+// Must come after cookie parser, before route handlers
+app.use(csrfProtection);
 
 // Request logging middleware
 app.use((req, _res, next) => {
@@ -86,6 +179,7 @@ app.get('/health', async (_req, res) => {
 app.use('/auth', authRoutes);
 app.use('/api/plan', planRoutes);
 app.use('/api/plan', exerciseRoutes);
+app.use('/api/plan', examRoutes);
 app.use('/api', masteryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/admin', adminRoutes);

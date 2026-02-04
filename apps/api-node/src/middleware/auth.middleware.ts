@@ -6,6 +6,7 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt';
 import { redis } from '../db/redis';
 import logger from '../utils/logger';
+import { getAccessTokenFromCookies } from '../utils/cookies';
 
 /**
  * Extend Express Request to include user info.
@@ -34,15 +35,11 @@ interface AuthErrorResponse {
 }
 
 /**
- * Extract Bearer token from Authorization header.
+ * Extract access token from request cookies.
+ * Authentication is cookie-only - no Authorization header support.
  */
-function extractBearerToken(authHeader: string | undefined): string | null {
-  if (!authHeader) return null;
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
-    return null;
-  }
-  return parts[1];
+function extractToken(req: Request): string | null {
+  return getAccessTokenFromCookies(req.cookies || {}) || null;
 }
 
 /**
@@ -63,13 +60,13 @@ export async function requireAuth(
 ): Promise<void> {
   const requestId = getRequestId(req);
 
-  // Extract token from Authorization header
-  const token = extractBearerToken(req.headers.authorization);
+  // Extract token from cookies
+  const token = extractToken(req);
   if (!token) {
-    logger.debug({ requestId, path: req.path }, 'Missing authorization token');
+    logger.debug({ requestId, path: req.path }, 'Missing access token cookie');
     res.status(401).json({
       error: 'UNAUTHORIZED',
-      message: 'Missing authorization token',
+      message: 'Missing access token',
       request_id: requestId,
     });
     return;
@@ -88,7 +85,12 @@ export async function requireAuth(
   }
 
   // Check Redis blacklist (fail-open - if Redis is down, allow the request)
-  const isBlacklisted = await redis.isTokenBlacklisted(payload.jti);
+  let isBlacklisted = false;
+  try {
+    isBlacklisted = await redis.isTokenBlacklisted(payload.jti);
+  } catch (e) {
+    logger.warn({ error: e, jti: payload.jti }, 'Redis unavailable, skipping blacklist check');
+  }
   if (isBlacklisted) {
     logger.warn({ requestId, jti: payload.jti }, 'Token is blacklisted');
     res.status(401).json({
@@ -164,8 +166,8 @@ export async function optionalAuth(
 ): Promise<void> {
   const requestId = getRequestId(req);
 
-  // Extract token from Authorization header
-  const token = extractBearerToken(req.headers.authorization);
+  // Extract token from cookies
+  const token = extractToken(req);
   if (!token) {
     // No token - continue without user
     next();

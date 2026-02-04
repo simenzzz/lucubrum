@@ -109,19 +109,37 @@ export const OAuthCallbackSchema = z.object({
 });
 export type OAuthCallbackRequest = z.infer<typeof OAuthCallbackSchema>;
 
-/**
- * Request schema for refreshing access token.
- * POST /auth/refresh
- */
-export const RefreshTokenSchema = z.object({
-  refresh_token: z.string().min(1, 'Refresh token is required'),
-});
-export type RefreshTokenRequest = z.infer<typeof RefreshTokenSchema>;
+// Note: RefreshTokenSchema and LogoutSchema removed - using HTTP-only cookies for auth tokens
+
+// ==================== Exam Schemas ====================
 
 /**
- * Request schema for logout.
- * POST /auth/logout
+ * Request schema for starting an exam.
+ * POST /api/plan/:planId/nodes/:nodeId/exam/start
  */
-export const LogoutSchema = z.object({
-  refresh_token: z.string().min(1, 'Refresh token is required'),
+export const StartExamRequestSchema = z.object({
+  time_limit_seconds: z
+    .number()
+    .int()
+    .min(300, 'Time limit must be at least 5 minutes')
+    .max(7200, 'Time limit must be at most 2 hours')
+    .optional(),
 });
+export type StartExamRequest = z.infer<typeof StartExamRequestSchema>;
+
+/**
+ * Request schema for submitting an exam.
+ * POST /api/plan/:planId/nodes/:nodeId/exam/submit
+ */
+export const SubmitExamRequestSchema = z.object({
+  session_id: z.string().uuid('Session ID must be a valid UUID'),
+  answers: z
+    .array(
+      z.object({
+        exercise_id: z.string().min(1, 'Exercise ID is required'),
+        user_answer: z.union([z.string(), z.record(z.unknown())]),
+      })
+    )
+    .min(1, 'At least one answer is required'),
+});
+export type SubmitExamRequest = z.infer<typeof SubmitExamRequestSchema>;

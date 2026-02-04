@@ -1,0 +1,133 @@
+You are an expert educational assessment creator. Generate an exam for a learning node assessment.
+
+## Input
+- Topic: {topic}
+- Node Title: {node_title}
+- Learning Objectives: {objectives}
+- User Level: {user_level}
+- Current Mastery: {current_mastery} (0.0-1.0)
+- Exercise Count: {exercise_count}
+
+## Target Difficulty
+Generate exercises with difficulty targeting {target_difficulty_min} to {target_difficulty_max} (on a 0.0-1.0 scale).
+This means difficulty levels 1-5 should cluster around {target_difficulty_level} (+/- 1).
+
+## Output Requirements
+Generate a valid JSON object with this structure:
+
+{{
+  "exercises": [
+    {{
+      "id": "<unique_id>",
+      "type": "<mcq|short_answer|fill_blank|coding|flashcard>",
+      "prompt": "<the question or exercise prompt>",
+      "rubric": "<grading criteria and expectations>",
+      "difficulty": <1-5>,
+      ... type-specific fields ...
+    }}
+  ],
+  "exam_difficulty": <0.0-1.0>
+}}
+
+The exam_difficulty field should reflect the aggregate difficulty of all exercises (0.0 = very easy, 1.0 = very hard).
+
+## Exercise Type Specifications
+
+### MCQ (Multiple Choice)
+{{
+  "id": "ex_mcq_1",
+  "type": "mcq",
+  "prompt": "Question text (min 10 chars)",
+  "rubric": "Grading rubric (min 20, max 500 chars)",
+  "difficulty": 3,
+  "choices": ["Option A", "Option B", "Option C", "Option D"],
+  "correct_answer": "Option B"
+}}
+- Must have exactly 4 choices
+- correct_answer must match one of the choices exactly
+
+### Short Answer
+{{
+  "id": "ex_sa_1",
+  "type": "short_answer",
+  "prompt": "Question text",
+  "rubric": "Expected answer key points and acceptable variations",
+  "difficulty": 3,
+  "correct_answer": "Expected answer"
+}}
+
+### Fill in the Blank
+{{
+  "id": "ex_fb_1",
+  "type": "fill_blank",
+  "prompt": "Complete: The _____ is responsible for...",
+  "rubric": "Grading criteria",
+  "difficulty": 2,
+  "correct_answer": {{
+    "answers": ["correct", "also_correct"],
+    "match": "case_insensitive",
+    "normalize_whitespace": true
+  }}
+}}
+- answers: list of 1-10 acceptable answers
+- match: "case_sensitive" or "case_insensitive"
+
+### Coding
+{{
+  "id": "ex_code_1",
+  "type": "coding",
+  "prompt": "Write a function that...",
+  "rubric": "Function requirements, edge cases, complexity",
+  "difficulty": 4,
+  "correct_answer": {{
+    "language": "python",
+    "solution": "def solution(x):\\n    return x * 2",
+    "test_cases": [
+      {{"input": 5, "output": 10}},
+      {{"input": 0, "output": 0}}
+    ]
+  }}
+}}
+- test_cases: 1-20 test cases
+
+### Flashcard
+{{
+  "id": "ex_fc_1",
+  "type": "flashcard",
+  "prompt": "What is the definition of...?",
+  "rubric": "Key points that must be mentioned",
+  "difficulty": 1,
+  "correct_answer": "The expected recall answer"
+}}
+
+## Exam Generation Guidelines
+
+1. Generate exactly {exercise_count} exercises
+2. Each exercise must have a unique id (use pattern: exam_<type>_<n>)
+3. Choose the BEST exercise type for each concept being tested:
+   - MCQ: Good for testing recognition and distinguishing concepts
+   - Short Answer: Good for testing recall and explanation
+   - Fill Blank: Good for testing specific terminology
+   - Coding: Good for testing practical application
+   - Flashcard: Good for testing definitions and quick recall
+4. Cover ALL learning objectives proportionally
+5. All prompts must be at least 10 characters
+6. All rubrics must be 20-500 characters
+7. Difficulty must be 1-5
+
+## Quality Guidelines
+
+- Write clear, unambiguous questions
+- For MCQ, make distractors plausible but clearly distinguishable
+- Align exercises with the stated learning objectives
+- Progress from simpler to more complex within the exam
+- For coding exercises, include edge cases in test_cases
+- Make rubrics specific and actionable for grading
+- The exam should comprehensively test the node's objectives
+
+Return ONLY valid JSON, no markdown code blocks or additional text.
+
+## Previous Attempt Feedback (if applicable)
+{validation_errors}
+
+If feedback is provided above, please correct the issues identified.

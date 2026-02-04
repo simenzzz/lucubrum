@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none" opacity="0.08">
+  <!-- Outer decorative ring -->
+  <circle cx="200" cy="200" r="190" stroke="#C4A052" stroke-width="4"/>
+  <circle cx="200" cy="200" r="180" stroke="#1A1915" stroke-width="2" stroke-dasharray="10,5"/>
+  <circle cx="200" cy="200" r="170" stroke="#C4A052" stroke-width="1"/>
+
+  <!-- Compass star (32 points) -->
+  <g stroke="#C4A052" stroke-width="1.5">
+    <!-- Main cardinal points -->
+    <line x1="200" y1="30" x2="200" y2="120"/>
+    <line x1="200" y1="280" x2="200" y2="370"/>
+    <line x1="30" y1="200" x2="120" y2="200"/>
+    <line x1="280" y1="200" x2="370" y2="200"/>
+
+    <!-- Diagonal points -->
+    <line x1="79" y1="79" x2="140" y2="140"/>
+    <line x1="260" y1="260" x2="321" y2="321"/>
+    <line x1="321" y1="79" x2="260" y2="140"/>
+    <line x1="140" y1="260" x2="79" y2="321"/>
+  </g>
+
+  <!-- Inner circle with degree markings -->
+  <circle cx="200" cy="200" r="80" stroke="#1A1915" stroke-width="1" fill="#F7F3E8"/>
+
+  <!-- Degree ticks -->
+  <g stroke="#1A1915" stroke-width="1">
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(0, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(30, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(60, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(90, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(120, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(150, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(180, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(210, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(240, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(270, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(300, 200, 200)"/>
+    <line x1="200" y1="115" x2="200" y2="125" transform="rotate(330, 200, 200)"/>
+  </g>
+
+  <!-- Compass needle -->
+  <polygon points="200,100 185,200 200,300 215,200" fill="#8B8680"/>
+  <polygon points="200,100 185,200 200,160" fill="#C4A052"/>
+
+  <!-- Cardinal direction letters -->
+  <text x="200" y="75" text-anchor="middle" font-family="serif" font-size="28" fill="#1A1915" font-weight="bold">N</text>
+  <text x="200" y="340" text-anchor="middle" font-family="serif" font-size="28" fill="#1A1915" font-weight="bold">S</text>
+  <text x="65" y="210" text-anchor="middle" font-family="serif" font-size="28" fill="#1A1915" font-weight="bold">W</text>
+  <text x="335" y="210" text-anchor="middle" font-family="serif" font-size="28" fill="#1A1915" font-weight="bold">E</text>
+
+  <!-- Center pivot -->
+  <circle cx="200" cy="200" r="15" fill="#1A1915"/>
+  <circle cx="200" cy="200" r="10" fill="#C4A052"/>
+  <circle cx="200" cy="200" r="5" fill="#F7F3E8"/>
+</svg>

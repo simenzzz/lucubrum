@@ -183,3 +183,43 @@ CREATE TABLE quality_metrics (
 );
 CREATE INDEX idx_quality_measured ON quality_metrics(measured_at);
 CREATE INDEX idx_quality_plan ON quality_metrics(plan_id);
+
+-- Exam Sessions (track in-progress exams)
+CREATE TABLE exam_sessions (
+  session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id VARCHAR(255) NOT NULL,
+  plan_id UUID NOT NULL,
+  node_id VARCHAR(255) NOT NULL,
+  exercises JSONB NOT NULL,
+  exam_difficulty DECIMAL(3,2) NOT NULL,
+  time_limit_seconds INTEGER NOT NULL DEFAULT 1800,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  completed_at TIMESTAMPTZ,
+  FOREIGN KEY (plan_id, node_id) REFERENCES nodes(plan_id, node_id) ON DELETE CASCADE
+);
+CREATE INDEX idx_exam_sessions_user ON exam_sessions(user_id, plan_id, node_id);
+
+-- Exam Attempts (completed exams with results)
+CREATE TABLE exam_attempts (
+  exam_attempt_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID NOT NULL REFERENCES exam_sessions(session_id),
+  user_id VARCHAR(255) NOT NULL,
+  plan_id UUID NOT NULL,
+  node_id VARCHAR(255) NOT NULL,
+  mastery_level_old DECIMAL(3,2) NOT NULL,
+  mastery_level_new DECIMAL(3,2) NOT NULL,
+  exam_difficulty DECIMAL(3,2) NOT NULL,
+  score DECIMAL(3,2) NOT NULL,
+  exercises_count INTEGER NOT NULL DEFAULT 10,
+  correct_count INTEGER NOT NULL,
+  answers JSONB NOT NULL,
+  grades JSONB NOT NULL,
+  started_at TIMESTAMPTZ NOT NULL,
+  completed_at TIMESTAMPTZ NOT NULL,
+  time_limit_seconds INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  FOREIGN KEY (plan_id, node_id) REFERENCES nodes(plan_id, node_id) ON DELETE CASCADE
+);
+CREATE INDEX idx_exam_attempts_user ON exam_attempts(user_id);
+CREATE INDEX idx_exam_attempts_plan_node ON exam_attempts(plan_id, node_id);

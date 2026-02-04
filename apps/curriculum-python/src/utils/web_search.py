@@ -1,6 +1,6 @@
 """
 Web search utility for exercise inspiration.
-Uses Brave Search API (2,000 free queries/month).
+Uses Google Custom Search API (100 free queries/day).
 
 Graceful degradation: Returns empty list if quota exhausted or API fails.
 TODO (Phase 7 MCP Migration): Replace with MCP web search tool.
@@ -14,7 +14,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-# Brave Search API endpoint
+# Google Custom Search API endpoint
 BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
 
 class SearchResult(TypedDict):
@@ -23,53 +23,6 @@ class SearchResult(TypedDict):
     title: str
     description: str
     url: str
-
-
-async def search_web(
-    query: str,
-    num_results: int = 5,
-) -> list[dict]:
-    """Generic web search for any query.
-
-    Args:
-        query: The search query.
-        num_results: Maximum number of results (1-10).
-
-    Returns:
-        List of dicts with title, snippet, and url keys.
-        Returns empty list on any error (graceful degradation).
-    """
-    # Check if web search is enabled
-    if os.getenv("WEB_SEARCH_ENABLED", "true").lower() != "true":
-        return []
-
-    # Get API credentials
-    api_key = os.getenv("BRAVE_SEARCH_API_KEY")
-    if not api_key:
-        return []
-
-    headers = {"X-Subscription-Token": api_key}
-    params = {"q": query, "count": min(max(num_results, 1), 10)}
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(BRAVE_SEARCH_URL, params=params, headers=headers)
-
-            if response.status_code != 200:
-                return []
-
-            data = response.json()
-            results = []
-            for item in data.get("web", {}).get("results", []):
-                results.append({
-                    "title": item.get("title", ""),
-                    "snippet": item.get("description", ""),
-                    "url": item.get("url", ""),
-                })
-            return results
-
-    except Exception:
-        return []
 
 
 async def search_exercises(
@@ -88,11 +41,11 @@ async def search_exercises(
         max_results: Maximum number of results to return (1-10).
 
     Returns:
-        List of SearchResult dicts with title, description, and url.
+        List of SearchResult dicts with title, snippet, and url.
         Returns empty list on any error (graceful degradation).
 
     Note:
-        Brave Search has 2,000 free queries/month limit. This function
+        Google CSE has 100 free queries/day limit. This function
         returns empty list when quota is exhausted or on any error.
     """
     # Check if web search is enabled
@@ -105,8 +58,8 @@ async def search_exercises(
 
     if not api_key:
         logger.warning(
-            "Brave Search credentials not configured. "
-            "Set BRAVE_SEARCH_API_KEY to enable web search."
+            "Brave CSE credentials not configured. "
+            "Set BRAVE_API_KEY to enable web search."
         )
         return []
 
@@ -133,7 +86,7 @@ async def search_exercises(
             # Handle other errors
             if response.status_code != 200:
                 logger.warning(
-                    f"Brave Search returned status {response.status_code}. "
+                    f"Google CSE returned status {response.status_code}. "
                     f"Response: {response.text[:200]}"
                 )
                 return []
@@ -142,10 +95,10 @@ async def search_exercises(
             return _parse_search_results(data)
 
     except httpx.TimeoutException:
-        logger.warning("Brave Search request timed out. Returning empty results.")
+        logger.warning("Google CSE request timed out. Returning empty results.")
         return []
     except httpx.RequestError as e:
-        logger.warning(f"Brave Search request failed: {e}. Returning empty results.")
+        logger.warning(f"Google CSE request failed: {e}. Returning empty results.")
         return []
     except Exception as e:
         logger.exception(f"Unexpected error in web search: {e}")
@@ -176,7 +129,7 @@ def _build_search_query(topic: str, exercise_type: str) -> str:
 
 
 def _parse_search_results(data: dict) -> list[SearchResult]:
-    """Parse Brave Search response into SearchResult list.
+    """Parse Google CSE response into SearchResult list.
 
     Args:
         data: The JSON response from Brave Search.
@@ -184,7 +137,6 @@ def _parse_search_results(data: dict) -> list[SearchResult]:
     Returns:
         List of parsed SearchResult dicts.
     """
-    results: list[SearchResult] = []
     web_results = data.get("web", {}).get("results", [])
 
     for item in web_results:
@@ -193,7 +145,7 @@ def _parse_search_results(data: dict) -> list[SearchResult]:
         url = item.get("url", "")
 
         if title and url:
-            results.append(
+            web_results.append(
                 SearchResult(
                     title=title[:200],  # Truncate long titles
                     description=description[:500],  # Truncate long snippets
@@ -201,4 +153,4 @@ def _parse_search_results(data: dict) -> list[SearchResult]:
                 )
             )
 
-    return results
+    return web_results

@@ -85,7 +85,7 @@ Generate a learning plan for a topic.
     "metadata": {
       "provider": "gemini",
       "model": "gemini-2.5-flash",
-      "prompt_version": "plan/v1",
+      "prompt_version": "plan/v2",
       "created_at": "2025-01-06T10:30:00Z"
     }
   }
@@ -245,6 +245,8 @@ Submit and grade a user's answer to an exercise.
 
 ---
 
+---
+
 ### GET /api/plan/:planId
 Retrieve a plan by ID.
 
@@ -344,10 +346,9 @@ Get recommended next node for the user to study.
 ### GET /api/users/:userId/plans
 List all plans for a user.
 
-**Authorization**: User can only access their own plans (or admin can access any).
-
 **Query Parameters**:
-- `limit` (int, optional): Max results (default: 50, max: 100)
+- `status` (string, optional): Filter by status ("in_progress" | "completed")
+- `limit` (int, optional): Max results (default: 20, max: 100)
 - `offset` (int, optional): Pagination offset (default: 0)
 
 **Response** (200 OK):
@@ -358,48 +359,19 @@ List all plans for a user.
       "plan_id": "550e8400-e29b-41d4-a716-446655440000",
       "topic": "Binary Search Trees",
       "user_level": "intermediate",
-      "plan_size": "moderate",
-      "started_at": "2025-01-06T10:30:00Z",
-      "last_accessed_at": "2025-01-06T14:30:00Z"
+      "created_at": "2025-01-06T10:30:00Z",
+      "progress": {
+        "nodes_completed": 3,
+        "total_nodes": 12,
+        "completion_percentage": 25
+      }
     }
   ],
   "total": 1,
-  "limit": 50,
+  "limit": 20,
   "offset": 0
 }
 ```
-
-**Errors**:
-- 400: Invalid user ID format
-- 403: Forbidden (accessing another user's plans)
-- 500: Internal error
-
----
-
-### GET /api/plan/:planId/mastery
-Get mastery overview for all nodes in a plan.
-
-**Response** (200 OK):
-```json
-{
-  "mastery_by_node": {
-    "bst_introduction": {
-      "score": 0.85,
-      "level": "proficient",
-      "total_attempts": 15
-    },
-    "bst_insertion": {
-      "score": 0.45,
-      "level": "learning",
-      "total_attempts": 8
-    }
-  }
-}
-```
-
-**Errors**:
-- 400: Invalid plan ID format
-- 500: Internal error
 
 ---
 
@@ -438,7 +410,7 @@ Generate a learning plan via LLM.
     "metadata": {
       "provider": "gemini",
       "model": "gemini-2.5-flash",
-      "prompt_version": "plan/v1",
+      "prompt_version": "plan/v2",
       "created_at": "2025-01-06T10:30:00Z"
     }
   }
@@ -450,81 +422,6 @@ Generate a learning plan via LLM.
 - 422: Validation error (LLM output failed schema validation after retries)
 - 500: LLM provider error
 - 503: LLM provider rate limit exceeded
-
----
-
-### POST /llm/normalize-topic
-Normalize a user's free-text topic to canonical form.
-
-**Request**:
-```json
-{
-  "topic": "binary search trees",
-  "request_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-}
-```
-
-**Fields**:
-- `topic` (string, required): The raw user-provided topic
-- `request_id` (string, required): UUID for request tracing
-
-**Response** (200 OK):
-```json
-{
-  "topic_normalized": "binary_search_trees",
-  "domain_category": "cs",
-  "staleness_policy": "annual",
-  "metadata": {
-    "provider": "gemini",
-    "model": "gemini-2.5-flash",
-    "prompt_version": "normalize/v1",
-    "created_at": "2025-01-06T10:30:00Z",
-    "request_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-    "raw_output_hash": "abc123...",
-    "final_artifact_hash": "def456..."
-  }
-}
-```
-
-**Errors**:
-- 422: Validation error (LLM output failed schema validation)
-- 500: LLM provider error
-- 503: Staleness policies service unavailable
-
----
-
-### POST /llm/get-facts
-Gather current facts about a topic from MCP sources (Context7, Brave Search).
-
-**Request**:
-```json
-{
-  "normalized_topic": "machine_learning",
-  "keywords": ["neural networks", "deep learning"],
-  "request_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
-}
-```
-
-**Fields**:
-- `normalized_topic` (string, required): The normalized topic name (e.g., "machine_learning")
-- `keywords` (array, optional): Related keywords for search
-- `request_id` (string, required): UUID for request tracing
-
-**Response** (200 OK):
-```json
-{
-  "facts": [
-    "PyTorch 2.0 introduces torch.compile() for faster execution",
-    "Transformers are now the dominant architecture for NLP tasks"
-  ],
-  "sources": ["mcp_sources"]
-}
-```
-
-**Errors**:
-- 500: Internal error
-
-**Note**: Uses fail-open behavior - if MCP sources are unavailable, returns empty facts array.
 
 ---
 
@@ -827,45 +724,6 @@ Health check endpoint for both services.
   ]
 }
 ```
-
----
-
-## Admin API Endpoints (Node Service)
-
-All admin endpoints require `admin` role authentication.
-
-### DELETE /admin/cache/plans/:cacheKey
-Invalidate a specific plan cache entry by cache key.
-
-**Request**: No body required. The `cacheKey` should be the full Redis key (e.g., `plan:machine_learning:beginner`).
-
-**Response** (200 OK):
-```json
-{
-  "message": "Cache key deleted",
-  "deleted": true
-}
-```
-
-**Errors**:
-- 404: Cache key not found
-- 503: Redis cache unavailable
-
----
-
-### GET /admin/llm-calls/filters
-Get available filter options for LLM call logs.
-
-**Response** (200 OK):
-```json
-{
-  "operations": ["plan", "exercises", "grade", "normalize-topic", "validate-video"],
-  "providers": ["gemini", "claude"]
-}
-```
-
-**Errors**:
-- 500: Database error
 
 ---
 

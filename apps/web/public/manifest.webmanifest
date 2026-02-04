@@ -1,0 +1,39 @@
+{
+  "name": "Learning Helper - Chart Your Course",
+  "short_name": "Learning Helper",
+  "description": "Personalized learning roadmaps with AI-powered exercises",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F3E8",
+  "theme_color": "#1A1915",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshots/landing.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "label": "Landing Page"
+    },
+    {
+      "src": "/screenshots/roadmap.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "label": "Learning Roadmap"
+    }
+  ]
+}

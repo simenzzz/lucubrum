@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Outer ring -->
+  <circle cx="50" cy="50" r="45" stroke="#C4A052" stroke-width="3" fill="#F7F3E8"/>
+  <!-- Inner circle -->
+  <circle cx="50" cy="50" r="38" stroke="#1A1915" stroke-width="1.5" fill="none"/>
+  <!-- Cardinal directions -->
+  <text x="50" y="18" text-anchor="middle" font-family="serif" font-size="8" fill="#1A1915" font-weight="bold">N</text>
+  <text x="50" y="90" text-anchor="middle" font-family="serif" font-size="8" fill="#1A1915" font-weight="bold">S</text>
+  <text x="12" y="54" text-anchor="middle" font-family="serif" font-size="8" fill="#1A1915" font-weight="bold">W</text>
+  <text x="88" y="54" text-anchor="middle" font-family="serif" font-size="8" fill="#1A1915" font-weight="bold">E</text>
+  <!-- Compass needle -->
+  <polygon points="50,20 45,50 50,80 55,50" fill="#C45D3A"/>
+  <polygon points="50,20 45,50 50,35" fill="#C4A052"/>
+  <!-- Center pivot -->
+  <circle cx="50" cy="50" r="4" fill="#1A1915"/>
+  <!-- Tick marks -->
+  <g stroke="#1A1915" stroke-width="1">
+    <line x1="50" y1="25" x2="50" y2="28"/>
+    <line x1="50" y1="72" x2="50" y2="75"/>
+    <line x1="25" y1="50" x2="28" y2="50"/>
+    <line x1="72" y1="50" x2="75" y2="50"/>
+  </g>
+</svg>

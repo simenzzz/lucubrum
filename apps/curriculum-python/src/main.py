@@ -19,6 +19,7 @@ from .api.validate_video import router as validate_video_router
 from .api.transcript import router as transcript_router
 from .api.normalize import router as normalize_router
 from .api.facts import router as facts_router
+from .api.exam import router as exam_router
 from .middleware import ServiceTokenMiddleware
 from .services import StalenessPolicyService
 from .utils.logger import configure_logging, get_logger
@@ -112,6 +113,7 @@ app.include_router(validate_video_router)
 app.include_router(transcript_router)
 app.include_router(normalize_router)
 app.include_router(facts_router)
+app.include_router(exam_router)
 
 
 @app.get("/health")

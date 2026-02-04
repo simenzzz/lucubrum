@@ -320,6 +320,20 @@ class AuthService {
 
     logger.info({ userId: payload.sub, requestId }, 'User logged out');
   }
+
+  /**
+   * Blacklist an access token only (when refresh token is not available).
+   * This ensures the access token can't be used even if refresh token cookie is missing.
+   */
+  async blacklistAccessToken(
+    accessJti: string,
+    accessExp: number,
+    requestId: string
+  ): Promise<void> {
+    const expiresAt = new Date(accessExp * 1000);
+    await redis.blacklistToken(accessJti, expiresAt);
+    logger.info({ jti: accessJti, requestId }, 'Access token blacklisted');
+  }
 }
 
 /**

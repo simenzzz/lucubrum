@@ -84,12 +84,18 @@ export async function requireAuth(
     return;
   }
 
-  // Check Redis blacklist (fail-open - if Redis is down, allow the request)
-  let isBlacklisted = false;
+  // Check Redis blacklist (fail-closed - if Redis is down, reject the request)
+  let isBlacklisted: boolean;
   try {
     isBlacklisted = await redis.isTokenBlacklisted(payload.jti);
   } catch (e) {
-    logger.warn({ error: e, jti: payload.jti }, 'Redis unavailable, skipping blacklist check');
+    logger.warn({ error: e, jti: payload.jti }, 'Redis unavailable for blacklist check');
+    res.status(503).json({
+      error: 'SERVICE_UNAVAILABLE',
+      message: 'Authentication service temporarily unavailable',
+      request_id: requestId,
+    });
+    return;
   }
   if (isBlacklisted) {
     logger.warn({ requestId, jti: payload.jti }, 'Token is blacklisted');
@@ -183,8 +189,15 @@ export async function optionalAuth(
     return;
   }
 
-  // Check Redis blacklist (fail-open)
-  const isBlacklisted = await redis.isTokenBlacklisted(payload.jti);
+  // Check Redis blacklist - on error, continue as anonymous
+  let isBlacklisted: boolean;
+  try {
+    isBlacklisted = await redis.isTokenBlacklisted(payload.jti);
+  } catch (e) {
+    logger.warn({ error: e, jti: payload.jti }, 'Redis unavailable for optional auth, continuing without user');
+    next();
+    return;
+  }
   if (isBlacklisted) {
     // Blacklisted token - continue without user
     logger.debug({ requestId, jti: payload.jti }, 'Optional auth token is blacklisted, continuing without user');

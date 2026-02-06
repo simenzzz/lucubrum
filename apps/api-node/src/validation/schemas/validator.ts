@@ -33,10 +33,8 @@ class SchemaValidator {
   private schemasDir: string;
 
   constructor(schemasDir?: string) {
-    // Default to packages/contracts/schemas relative to project root
     this.schemasDir =
-      schemasDir ||
-      join(__dirname, '..', '..', '..', '..', '..', 'packages', 'contracts', 'schemas');
+      schemasDir || join(__dirname, '..', '..', '..', '..', '..', 'packages', 'contracts', 'schemas');
 
     this.ajv = new Ajv({
       allErrors: true,

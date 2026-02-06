@@ -1,10 +1,16 @@
-import pytest
+"""Pytest configuration and shared fixtures."""
+
 import asyncio
 import os
-import asyncpg
 
-# Set test environment
+import asyncpg
+import pytest
+from httpx import ASGITransport, AsyncClient
+from unittest.mock import AsyncMock, MagicMock
+
+# Set test environment before any app imports
 os.environ["ENVIRONMENT"] = "test"
+os.environ.setdefault("SERVICE_TOKEN", "test-service-token")
 
 
 @pytest.fixture(scope="session")
@@ -25,7 +31,7 @@ def test_postgres():
             "port": 5432,
             "user": "test_user",
             "password": "test_password",
-            "database": "learning_helper_test"
+            "database": "learning_helper_test",
         }
     else:
         # Fallback to testcontainers for local dev
@@ -47,7 +53,7 @@ def test_postgres():
                 "port": 5433,
                 "user": "test_user",
                 "password": "test_password",
-                "database": "learning_helper_test"
+                "database": "learning_helper_test",
             }
 
 
@@ -73,9 +79,67 @@ async def cleanup_database(test_postgres):
         """)
         await conn.close()
     except Exception as e:
-        # Log the error instead of silently passing
         import logging
         logging.warning(f"Database cleanup failed: {e}")
+
+
+# Register LLM mock fixtures so they're available to all tests
+pytest_plugins = ["tests.fixtures.llm_mocks"]
+
+
+# --- Unit test fixtures ---
+
+
+@pytest.fixture
+def test_client():
+    """Async HTTP client wired to the FastAPI app via ASGI transport.
+
+    Automatically injects a valid X-Service-Token header so tests
+    don't need to worry about auth unless they're specifically testing it.
+    """
+    from src.main import app
+
+    async def _make_client(headers: dict | None = None):
+        default_headers = {"X-Service-Token": "test-service-token"}
+        if headers:
+            default_headers.update(headers)
+        transport = ASGITransport(app=app)
+        return AsyncClient(transport=transport, base_url="http://test", headers=default_headers)
+
+    return _make_client
+
+
+@pytest.fixture
+def mock_service_token(monkeypatch):
+    """Set SERVICE_TOKEN env var and return auth headers dict."""
+    token = "test-service-token"
+    monkeypatch.setenv("SERVICE_TOKEN", token)
+    return {"X-Service-Token": token}
+
+
+@pytest.fixture
+def mock_load_prompt(mocker):
+    """Patch load_prompt to return a controllable template string.
+
+    Returns the mock so tests can set .return_value or .side_effect.
+    """
+    mock = mocker.patch("src.utils.prompts.load_prompt")
+    mock.return_value = "Generate {topic} for {user_level}. {validation_errors}"
+    return mock
+
+
+@pytest.fixture
+def mock_provider(mocker):
+    """Patch get_provider to return a mock LLMProvider.
+
+    Returns the mock provider instance.
+    """
+    provider = AsyncMock()
+    provider.provider_name = "gemini"
+    provider.model_name = "gemini-2.0-flash"
+    provider.generate = AsyncMock(return_value='{"stub": true}')
+    mocker.patch("src.providers.base.get_provider", return_value=provider)
+    return provider
 
 
 # Pytest configuration

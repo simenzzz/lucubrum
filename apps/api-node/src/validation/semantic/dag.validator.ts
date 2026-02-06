@@ -54,7 +54,7 @@ export function validateDag(nodes: NodeForValidation[]): DagValidationResult {
     }
   }
 
-  // Check for cycles using DFS with coloring
+  // Check for cycles using DFS with coloring (excluding self-references)
   const { hasCycle, cycleNodes } = detectCycle(nodes, nodeMap);
 
   if (hasCycle) {
@@ -73,6 +73,9 @@ export function validateDag(nodes: NodeForValidation[]): DagValidationResult {
 
 /**
  * Detect cycles in the prerequisite graph using DFS with coloring.
+ *
+ * Self-references are excluded from cycle detection since they are
+ * caught separately as self-reference errors.
  *
  * Returns the cycle path if found.
  */
@@ -115,9 +118,15 @@ function detectCycle(
     path.push(nodeId);
 
     // Visit all prerequisites (nodes that must come before)
+    // Skip self-references since they are caught separately
     const node = nodeMap.get(nodeId);
     if (node) {
       for (const prereq of node.prerequisites) {
+        // Skip self-reference edges in cycle detection
+        // (A -> A is already caught as a self-reference error)
+        if (prereq === nodeId) {
+          continue;
+        }
         const cycle = dfs(prereq);
         if (cycle) {
           return cycle;

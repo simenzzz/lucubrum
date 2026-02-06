@@ -483,7 +483,7 @@ class MasteryService {
         : 0;
 
     // Difficulty bonus (10% weight) - max 5, so divide by 5
-    const difficultyBonus = maxDifficulty / 5;
+    const difficultyBonus = Math.min(maxDifficulty, 5) / 5;
 
     const score =
       recentAccuracy * 0.6 + historicalAccuracy * 0.3 + difficultyBonus * 0.1;

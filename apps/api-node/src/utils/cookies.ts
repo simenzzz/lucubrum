@@ -4,6 +4,7 @@
 
 import { Response } from 'express';
 import logger from './logger';
+import { parseDurationMs } from './duration';
 
 // Cookie names
 const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -18,42 +19,9 @@ const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true' || NODE_ENV === 'prod
 const ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
 const REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '7d';
 
-/**
- * Parse duration string to milliseconds.
- * Supports formats: 30s, 15m, 1h, 7d, 2w
- * Throws at startup if format is invalid.
- */
-export function parseExpiry(expiry: string, envVar: string): number {
-  const match = expiry.match(/^(\d+)([smhdw])$/);
-  if (!match) {
-    throw new Error(
-      `Invalid ${envVar} format: "${expiry}". Expected format: <number><unit> where unit is s (seconds), m (minutes), h (hours), d (days), or w (weeks). Examples: 30s, 15m, 1h, 7d, 2w`
-    );
-  }
-
-  const value = parseInt(match[1], 10);
-  const unit = match[2];
-
-  switch (unit) {
-    case 's':
-      return value * 1000;
-    case 'm':
-      return value * 60 * 1000;
-    case 'h':
-      return value * 60 * 60 * 1000;
-    case 'd':
-      return value * 24 * 60 * 60 * 1000;
-    case 'w':
-      return value * 7 * 24 * 60 * 60 * 1000;
-    default:
-      // This should never happen due to regex, but TypeScript requires it
-      throw new Error(`Unknown time unit: ${unit}`);
-  }
-}
-
 // Parse and validate expiry times at startup - will throw if invalid
-const ACCESS_MAX_AGE = parseExpiry(ACCESS_EXPIRY, 'JWT_ACCESS_EXPIRY');
-const REFRESH_MAX_AGE = parseExpiry(REFRESH_EXPIRY, 'JWT_REFRESH_EXPIRY');
+const ACCESS_MAX_AGE = parseDurationMs(ACCESS_EXPIRY, 'JWT_ACCESS_EXPIRY');
+const REFRESH_MAX_AGE = parseDurationMs(REFRESH_EXPIRY, 'JWT_REFRESH_EXPIRY');
 
 // Log parsed expiry values at startup for debugging
 logger.info(

@@ -1,4 +1,7 @@
 // Mock for ioredis
+// Note: This file uses @ts-expect-error for jest.fn() implementations because
+// @jest/globals types jest.fn() with UnknownFunction which is incompatible with
+// typed implementations. This is a known limitation of the jest types.
 import { EventEmitter } from 'events';
 import { jest } from '@jest/globals';
 
@@ -36,10 +39,12 @@ class MockRedis extends EventEmitter {
   }
 
   // Public API methods with jest.fn() wrappers for spy/assertion capabilities
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   get = jest.fn().mockImplementation(async (key: string): Promise<string | null> => {
     return this._getValue(key);
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   set = jest.fn().mockImplementation(async (key: string, value: string, ...args: unknown[]): Promise<string> => {
     let expiry: number | undefined;
     // Handle SET key value EX seconds or SET key value PX milliseconds
@@ -56,12 +61,14 @@ class MockRedis extends EventEmitter {
     return 'OK';
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   setex = jest.fn().mockImplementation(async (key: string, seconds: number, value: string): Promise<string> => {
     const expiry = Date.now() + seconds * 1000;
     this._setValue(key, value, expiry);
     return 'OK';
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   del = jest.fn().mockImplementation(async (...keys: string[]): Promise<number> => {
     let count = 0;
     for (const key of keys) {
@@ -75,6 +82,7 @@ class MockRedis extends EventEmitter {
     return count;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   expire = jest.fn().mockImplementation(async (key: string, seconds: number): Promise<number> => {
     const item = this.data.get(key);
     if (item) {
@@ -84,6 +92,7 @@ class MockRedis extends EventEmitter {
     return 0;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   ttl = jest.fn().mockImplementation(async (key: string): Promise<number> => {
     const item = this.data.get(key);
     if (!item) return -2; // Key doesn't exist
@@ -92,6 +101,7 @@ class MockRedis extends EventEmitter {
     return remaining > 0 ? remaining : -2;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   exists = jest.fn().mockImplementation(async (...keys: string[]): Promise<number> => {
     let count = 0;
     for (const key of keys) {
@@ -102,6 +112,7 @@ class MockRedis extends EventEmitter {
     return count;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   incr = jest.fn().mockImplementation(async (key: string): Promise<number> => {
     const current = parseInt(this._getValue(key) ?? '0', 10);
     const newValue = current + 1;
@@ -109,6 +120,7 @@ class MockRedis extends EventEmitter {
     return newValue;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   incrby = jest.fn().mockImplementation(async (key: string, increment: number): Promise<number> => {
     const current = parseInt(this._getValue(key) ?? '0', 10);
     const newValue = current + increment;
@@ -116,6 +128,7 @@ class MockRedis extends EventEmitter {
     return newValue;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   decr = jest.fn().mockImplementation(async (key: string): Promise<number> => {
     const current = parseInt(this._getValue(key) ?? '0', 10);
     const newValue = current - 1;
@@ -123,6 +136,7 @@ class MockRedis extends EventEmitter {
     return newValue;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   decrby = jest.fn().mockImplementation(async (key: string, decrement: number): Promise<number> => {
     const current = parseInt(this._getValue(key) ?? '0', 10);
     const newValue = current - decrement;
@@ -131,6 +145,7 @@ class MockRedis extends EventEmitter {
   });
 
   // Hash operations
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   hset = jest.fn().mockImplementation(async (key: string, ...args: unknown[]): Promise<number> => {
     let hash = this.hashData.get(key);
     if (!hash) {
@@ -148,17 +163,20 @@ class MockRedis extends EventEmitter {
     return newFields;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   hget = jest.fn().mockImplementation(async (key: string, field: string): Promise<string | null> => {
     const hash = this.hashData.get(key);
     if (!hash) return null;
     return hash[field] ?? null;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   hgetall = jest.fn().mockImplementation(async (key: string): Promise<Record<string, string>> => {
     const hash = this.hashData.get(key);
     return hash ? { ...hash } : {};
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   hdel = jest.fn().mockImplementation(async (key: string, ...fields: string[]): Promise<number> => {
     const hash = this.hashData.get(key);
     if (!hash) return 0;
@@ -173,6 +191,7 @@ class MockRedis extends EventEmitter {
   });
 
   // Multi-key operations
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   mget = jest.fn().mockImplementation(async (...keys: string[]): Promise<(string | null)[]> => {
     return keys.map(key => this._getValue(key));
   });
@@ -187,6 +206,7 @@ class MockRedis extends EventEmitter {
   });
 
   // List operations
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   lpush = jest.fn().mockImplementation(async (key: string, ...values: string[]): Promise<number> => {
     let list = this.listData.get(key);
     if (!list) {
@@ -197,6 +217,7 @@ class MockRedis extends EventEmitter {
     return list.length;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   rpush = jest.fn().mockImplementation(async (key: string, ...values: string[]): Promise<number> => {
     let list = this.listData.get(key);
     if (!list) {
@@ -207,6 +228,7 @@ class MockRedis extends EventEmitter {
     return list.length;
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   lrange = jest.fn().mockImplementation(async (key: string, start: number, stop: number): Promise<string[]> => {
     const list = this.listData.get(key);
     if (!list) return [];
@@ -215,6 +237,7 @@ class MockRedis extends EventEmitter {
   });
 
   // Key pattern matching
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   keys = jest.fn().mockImplementation(async (pattern: string): Promise<string[]> => {
     // Convert Redis glob pattern to regex
     const regexPattern = pattern
@@ -231,6 +254,7 @@ class MockRedis extends EventEmitter {
     return [...new Set(allKeys)].filter(key => regex.test(key));
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   scan = jest.fn().mockImplementation(async (
     cursor: string | number,
     ...args: unknown[]
@@ -248,7 +272,7 @@ class MockRedis extends EventEmitter {
       }
     }
 
-    const allKeys = await this.keys(pattern);
+    const allKeys = await this.keys(pattern) as string[];
     const cursorNum = Number(cursor);
     const nextKeys = allKeys.slice(cursorNum, cursorNum + count);
     const nextCursor = cursorNum + count >= allKeys.length ? '0' : String(cursorNum + count);
@@ -264,7 +288,8 @@ class MockRedis extends EventEmitter {
   });
 
   flushall = jest.fn().mockImplementation(async (): Promise<string> => {
-    return this.flushdb();
+    await this.flushdb();
+    return 'OK';
   });
 
   disconnect = jest.fn().mockImplementation(async (): Promise<void> => {
@@ -280,16 +305,19 @@ class MockRedis extends EventEmitter {
     return 'OK';
   });
 
+  // @ts-expect-error - jest.fn() types incompatible with ioredis method signatures
   connect = jest.fn().mockResolvedValue(undefined);
 
-  on = jest.fn().mockImplementation((event: string, callback: (...args: unknown[]) => void) => {
-    super.on(event, callback);
+  // Override on() to track calls while delegating to parent
+  override on(event: string, callback: (...args: unknown[]) => void): this {
+    super.on(event, callback as (...args: unknown[]) => void);
     return this;
-  });
+  }
 
   // Pipeline support (simplified)
   pipeline = jest.fn().mockImplementation(() => {
     const commands: Array<{ method: string; args: unknown[] }> = [];
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
     const pipelineInstance = {

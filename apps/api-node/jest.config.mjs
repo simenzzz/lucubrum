@@ -1,7 +1,6 @@
 export default {
-  preset: 'ts-jest/presets/default-esm',
+  preset: 'ts-jest',
   testEnvironment: 'node',
-  extensionsToTreatAsEsm: ['.ts'],
   roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
@@ -11,10 +10,13 @@ export default {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
-        useESM: true,
         tsconfig: {
           esModuleInterop: true,
           allowSyntheticDefaultImports: true,
+          module: 'commonjs',
+          moduleResolution: 'node',
+          noUnusedLocals: false,
+          noUnusedParameters: false,
         },
       },
     ],
@@ -34,7 +36,7 @@ export default {
   //   }
   // },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  testTimeout: 30000,
+  testTimeout: 10000,
   verbose: true,
-  maxWorkers: '50%'
+  maxWorkers: '50%',
 };

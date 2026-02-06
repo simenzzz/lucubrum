@@ -127,15 +127,15 @@ async def normalize_topic(
             request_id=request.request_id,
             prompt_version=prompt_version,
             provider=provider.provider_name,
-            model=provider.model,
-            duration_ms=duration_ms,
+            model=provider.model_name,
             created_at=datetime.now(timezone.utc)
             .isoformat()
             .replace("+00:00", "Z"),
             raw_output_hash=compute_sha256(raw_output),
-            final_artifact_hash=compute_sha256(
+            artifact_hash=compute_sha256(
                 json.dumps(validated.model_dump(), sort_keys=True)
             ),
+            validation_retry_count=0,
         )
 
         logger.info(

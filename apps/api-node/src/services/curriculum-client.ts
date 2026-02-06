@@ -252,7 +252,7 @@ export class TranscriptNotAvailableError extends CurriculumServiceError {
 /**
  * Client for the Python Curriculum Service.
  */
-class CurriculumClient {
+export class CurriculumClient {
   private client: AxiosInstance;
 
   constructor() {

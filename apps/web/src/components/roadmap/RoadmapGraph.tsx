@@ -188,7 +188,7 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
   if (!layout) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-ink/50">Loading roadmap...</div>
+        <div className="animate-pulse text-warm-400">Loading roadmap...</div>
       </div>
     );
   }
@@ -199,7 +199,7 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-parchment cursor-grab active:cursor-grabbing"
+      className="relative w-full h-full overflow-hidden bg-hearth-900 cursor-grab active:cursor-grabbing"
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -209,19 +209,14 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Grid background pattern */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+      {/* Dot grid background */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none">
         <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path
-              d="M 40 0 L 0 0 0 40"
-              fill="none"
-              stroke="#C4A052"
-              strokeWidth="0.5"
-            />
+          <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="10" cy="10" r="1" fill="#D4A55A" opacity="0.04" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <rect width="100%" height="100%" fill="url(#dots)" />
       </svg>
 
       {/* Transformed content */}
@@ -234,7 +229,7 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
           transformOrigin: 'center center',
         }}
         animate={{ scale: zoomLevel }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
       >
         {/* Edges SVG layer */}
         <svg
@@ -288,13 +283,13 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
       />
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 z-10 p-3 rounded-lg bg-parchment/90 backdrop-blur-sm border border-gold/30 shadow-md">
-        <div className="text-xs font-medium text-ink/70 mb-2">Legend</div>
+      <div className="absolute bottom-4 left-4 z-10 glass-panel p-3">
+        <div className="text-xs font-medium text-warm-400 mb-2">Legend</div>
         <div className="space-y-1.5">
           <LegendItem color="locked" label="Locked" />
-          <LegendItem color="gold" label="Available" />
-          <LegendItem color="ocean" label="In Progress" />
-          <LegendItem color="forest" label="Mastered" />
+          <LegendItem color="amber" label="Available" />
+          <LegendItem color="lavender" label="In Progress" />
+          <LegendItem color="sage" label="Mastered" />
         </div>
       </div>
     </div>
@@ -304,15 +299,15 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
 function LegendItem({ color, label }: { color: string; label: string }) {
   const colorClasses: Record<string, string> = {
     locked: 'bg-locked/40 border-locked/60',
-    gold: 'bg-gold/40 border-gold',
-    ocean: 'bg-ocean/40 border-ocean',
-    forest: 'bg-forest/40 border-forest',
+    amber: 'bg-amber/30 border-amber',
+    lavender: 'bg-lavender/30 border-lavender',
+    sage: 'bg-sage/30 border-sage',
   };
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`w-3 h-3 rounded border ${colorClasses[color]}`} />
-      <span className="text-xs text-ink/60">{label}</span>
+      <div className={`w-3 h-3 rounded-full border ${colorClasses[color]}`} />
+      <span className="text-xs text-warm-200">{label}</span>
     </div>
   );
 }

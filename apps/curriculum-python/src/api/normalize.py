@@ -17,6 +17,7 @@ from ..models.normalize import (
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.logger import get_logger
+from ..utils.retry import _extract_json_from_response
 
 logger = get_logger(__name__)
 
@@ -100,7 +101,8 @@ async def normalize_topic(
 
         # Parse and validate
         try:
-            data = json.loads(raw_output)
+            cleaned = _extract_json_from_response(raw_output)
+            data = json.loads(cleaned)
             validated = RawNormalizeOutput.model_validate(data)
         except (json.JSONDecodeError, Exception) as e:
             logger.warning(

@@ -13,6 +13,7 @@ from ..models.transcript import StalenessResult
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.prompts import load_prompt, format_prompt
+from ..utils.retry import _extract_json_from_response
 
 router = APIRouter(prefix="/llm", tags=["staleness"])
 
@@ -128,13 +129,8 @@ async def check_staleness(request: StalenessCheckRequest) -> StalenessCheckRespo
 
         # Parse the JSON response
         try:
-            response_text = raw_response.strip()
-            # Handle potential markdown code blocks
-            if response_text.startswith("```"):
-                lines = response_text.split("\n")
-                response_text = "\n".join(lines[1:-1])
-
-            parsed = json.loads(response_text)
+            cleaned = _extract_json_from_response(raw_response)
+            parsed = json.loads(cleaned)
         except json.JSONDecodeError as e:
             raise HTTPException(
                 status_code=422,

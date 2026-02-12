@@ -36,19 +36,20 @@ export function CodingExercise({
   examMode,
 }: CodingExerciseProps) {
   const [showTestCases, setShowTestCases] = useState(false);
-  const code = (answer as string) || exercise.starter_code;
-  const language = LANGUAGE_MAP[exercise.language.toLowerCase()] || 'plaintext';
+  const { language: exerciseLanguage, test_cases, solution } = exercise.correct_answer;
+  const code = (answer as string) || solution;
+  const language = LANGUAGE_MAP[exerciseLanguage.toLowerCase()] || 'plaintext';
 
   return (
     <div className="space-y-4">
       {/* Question */}
       <div>
-        <p className="text-ink font-medium mb-2">{exercise.question}</p>
-        <Badge variant="coding">{exercise.language}</Badge>
+        <p className="text-warm-50 font-medium mb-2">{exercise.prompt}</p>
+        <Badge variant="coding">{exerciseLanguage}</Badge>
       </div>
 
       {/* Code editor */}
-      <div className="rounded-lg overflow-hidden border border-gold/30">
+      <div className="rounded-xl overflow-hidden border border-border-moderate">
         <Editor
           height="300px"
           language={language}
@@ -69,37 +70,37 @@ export function CodingExercise({
       </div>
 
       {/* Test cases */}
-      <div className="rounded-lg border border-gold/20 overflow-hidden">
+      <div className="rounded-xl border border-border-moderate overflow-hidden">
         <button
           onClick={() => setShowTestCases(!showTestCases)}
-          className="w-full flex items-center justify-between p-3 bg-parchment-dark/50 hover:bg-parchment-dark transition-colors"
+          className="w-full flex items-center justify-between p-3 bg-hearth-700/50 hover:bg-hearth-700 transition-colors"
         >
-          <span className="text-sm font-medium text-ink">
-            Test Cases ({exercise.test_cases.length})
+          <span className="text-sm font-medium text-warm-50">
+            Test Cases ({test_cases.length})
           </span>
           {showTestCases ? (
-            <ChevronUp className="w-4 h-4 text-ink/60" />
+            <ChevronUp className="w-4 h-4 text-warm-400" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-ink/60" />
+            <ChevronDown className="w-4 h-4 text-warm-400" />
           )}
         </button>
 
         {showTestCases && (
-          <div className="p-3 space-y-3 bg-parchment">
-            {exercise.test_cases.map((testCase, index) => (
+          <div className="p-3 space-y-3 bg-hearth-800">
+            {test_cases.map((testCase, index) => (
               <div
                 key={index}
-                className="p-3 rounded-md bg-parchment-dark/50 border border-gold/10"
+                className="p-3 rounded-lg bg-hearth-700/50 border border-border-subtle"
               >
-                <div className="text-xs text-ink/50 mb-1">Test Case {index + 1}</div>
+                <div className="text-xs text-warm-400 mb-1">Test Case {index + 1}</div>
                 <div className="space-y-1 font-mono text-sm">
                   <div className="flex gap-2">
-                    <span className="text-ink/60">Input:</span>
-                    <code className="text-ocean">{testCase.input}</code>
+                    <span className="text-warm-400">Input:</span>
+                    <code className="text-lavender">{String(testCase.input)}</code>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-ink/60">Expected:</span>
-                    <code className="text-forest">{testCase.expected_output}</code>
+                    <span className="text-warm-400">Expected:</span>
+                    <code className="text-sage">{String(testCase.output)}</code>
                   </div>
                 </div>
               </div>

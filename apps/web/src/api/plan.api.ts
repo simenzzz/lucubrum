@@ -1,6 +1,8 @@
 import apiClient, { getApiError } from './client';
 import {
   CreatePlanResponseSchema,
+  GetPlanResponseSchema,
+  BackendResourcesResponseSchema,
   ExerciseSetResponseSchema,
   AttemptResponseSchema,
   NodeMasteryResponseSchema,
@@ -23,8 +25,35 @@ import type {
   GetUserPlansRequest,
 } from '@/types/api.types';
 
+import type { z } from 'zod';
+
 interface RequestOptions {
   signal?: AbortSignal;
+}
+
+type BackendResourcesResponse = z.infer<typeof BackendResourcesResponseSchema>;
+
+function transformResourcesResponse(
+  data: BackendResourcesResponse,
+  planId: string,
+): ResourceAttachmentResponse {
+  return {
+    plan_id: planId,
+    resources: Object.entries(data.resources_by_node).map(([nodeId, selected]) => ({
+      node_id: nodeId,
+      resources: selected.map((r) => ({
+        video_id: r.videoId,
+        title: r.title,
+        channel: r.channelTitle,
+        duration_seconds: r.durationSeconds,
+        thumbnail_url: `https://img.youtube.com/vi/${r.videoId}/mqdefault.jpg`,
+        relevance_score: r.rankScore,
+        url: r.url,
+        type: r.type,
+        rationale: r.rationale,
+      })),
+    })),
+  };
 }
 
 /**
@@ -47,13 +76,18 @@ export const planApi = {
 
   /**
    * Get a plan by ID
+   * GET /api/plan/:planId returns { plan: {...} } — no plan_id in wrapper
    */
   async get(planId: string, options?: RequestOptions): Promise<CreatePlanResponse> {
     try {
-      const response = await apiClient.get<CreatePlanResponse>(`/api/plan/${planId}`, {
+      const response = await apiClient.get(`/api/plan/${planId}`, {
         signal: options?.signal,
       });
-      return safeParseWithLogging(CreatePlanResponseSchema, response.data, 'planApi.get');
+      const parsed = safeParseWithLogging(GetPlanResponseSchema, response.data, 'planApi.get');
+      return {
+        plan_id: planId,
+        ...parsed.plan,
+      };
     } catch (error) {
       throw new Error(getApiError(error));
     }
@@ -64,12 +98,13 @@ export const planApi = {
    */
   async attachResources(planId: string, options?: RequestOptions): Promise<ResourceAttachmentResponse> {
     try {
-      const response = await apiClient.post<ResourceAttachmentResponse>(
+      const response = await apiClient.post(
         `/api/plan/${planId}/resources`,
         null,
         { signal: options?.signal }
       );
-      return response.data;
+      const validated = safeParseWithLogging(BackendResourcesResponseSchema, response.data, 'planApi.attachResources');
+      return transformResourcesResponse(validated, planId);
     } catch (error) {
       throw new Error(getApiError(error));
     }
@@ -80,11 +115,12 @@ export const planApi = {
    */
   async getResources(planId: string, options?: RequestOptions): Promise<ResourceAttachmentResponse> {
     try {
-      const response = await apiClient.get<ResourceAttachmentResponse>(
+      const response = await apiClient.get(
         `/api/plan/${planId}/resources`,
         { signal: options?.signal }
       );
-      return response.data;
+      const validated = safeParseWithLogging(BackendResourcesResponseSchema, response.data, 'planApi.getResources');
+      return transformResourcesResponse(validated, planId);
     } catch (error) {
       throw new Error(getApiError(error));
     }
@@ -105,10 +141,13 @@ export const exerciseApi = {
     options?: RequestOptions
   ): Promise<ExerciseSetResponse> {
     try {
+      const body = params
+        ? { difficulty_target: params.difficulty_target, force: params.force }
+        : {};
       const response = await apiClient.post<ExerciseSetResponse>(
         `/api/plan/${planId}/nodes/${nodeId}/exercises`,
-        null,
-        { params, signal: options?.signal }
+        body,
+        { signal: options?.signal }
       );
       return safeParseWithLogging(ExerciseSetResponseSchema, response.data, 'exerciseApi.generate');
     } catch (error) {

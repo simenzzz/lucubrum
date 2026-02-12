@@ -200,7 +200,7 @@ import { jest } from '@jest/globals';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test_user:test_password@localhost:5433/learning_helper_test';
 process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6380';
-process.env.PYTHON_SERVICE_TOKEN = 'test-service-token';
+process.env.SERVICE_TOKEN = 'test-service-token';
 
 jest.setTimeout(30000);
 ```

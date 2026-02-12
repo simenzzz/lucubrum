@@ -7,6 +7,7 @@ import { OAuth2Client, TokenPayload, CodeChallengeMethod } from 'google-auth-lib
 import logger from '../utils/logger';
 import { redis } from '../db/redis';
 import { createTokenPair, verifyRefreshToken, signAccessToken } from '../utils/jwt';
+import { parseDurationMs } from '../utils/duration';
 import { upsertUser, getUserById, UserRow } from '../db/queries/users';
 import {
   createRefreshToken,
@@ -18,7 +19,7 @@ import {
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5173/oauth/callback';
 
 // Google OAuth scopes
 const GOOGLE_SCOPES = ['openid', 'email', 'profile'];
@@ -279,7 +280,7 @@ class AuthService {
 
     // Calculate expiry
     const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
-    const expiryMs = parseExpiryToMs(JWT_ACCESS_EXPIRY);
+    const expiryMs = parseDurationMs(JWT_ACCESS_EXPIRY, 'JWT_ACCESS_EXPIRY');
     const expiresAt = new Date(Date.now() + expiryMs);
 
     logger.info({ userId: user.user_id, requestId }, 'Access token refreshed');
@@ -333,30 +334,6 @@ class AuthService {
     const expiresAt = new Date(accessExp * 1000);
     await redis.blacklistToken(accessJti, expiresAt);
     logger.info({ jti: accessJti, requestId }, 'Access token blacklisted');
-  }
-}
-
-/**
- * Parse expiry string like '15m' or '7d' to milliseconds.
- */
-function parseExpiryToMs(expiry: string): number {
-  const match = expiry.match(/^(\d+)([smhd])$/);
-  if (!match) {
-    return 15 * 60 * 1000; // Default 15 minutes
-  }
-  const value = parseInt(match[1], 10);
-  const unit = match[2];
-  switch (unit) {
-    case 's':
-      return value * 1000;
-    case 'm':
-      return value * 60 * 1000;
-    case 'h':
-      return value * 60 * 60 * 1000;
-    case 'd':
-      return value * 24 * 60 * 60 * 1000;
-    default:
-      return 15 * 60 * 1000;
   }
 }
 

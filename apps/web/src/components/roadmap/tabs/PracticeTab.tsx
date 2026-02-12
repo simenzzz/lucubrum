@@ -34,7 +34,7 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
     generateMutation.mutate({
       planId,
       nodeId: node.node_id,
-      params: { difficulty, force: true },
+      params: { difficulty_target: difficulty, force: true },
     });
     setCurrentExerciseIndex(0);
     setCompletedExercises(new Set());
@@ -57,16 +57,16 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
       {/* Controls */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <label className="text-sm text-ink/70">Difficulty:</label>
+          <label className="text-sm text-warm-200">Difficulty:</label>
           <div className="flex gap-1">
             {([1, 2, 3, 4, 5] as const).map((level) => (
               <button
                 key={level}
                 onClick={() => setDifficulty(level)}
-                className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${
+                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                   difficulty === level
-                    ? 'bg-gold text-ink'
-                    : 'bg-parchment-dark text-ink/60 hover:bg-gold/20'
+                    ? 'bg-amber text-hearth-900'
+                    : 'bg-hearth-700 text-warm-400 hover:bg-hearth-600'
                 }`}
               >
                 {level}
@@ -101,16 +101,16 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
               onClick={() => setCurrentExerciseIndex(index)}
               className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
                 index === currentExerciseIndex
-                  ? 'bg-gold text-ink ring-2 ring-gold/50'
+                  ? 'bg-amber text-hearth-900 ring-2 ring-amber/50'
                   : completedExercises.has(ex.id)
-                    ? 'bg-forest/20 text-forest border border-forest/30'
-                    : 'bg-parchment-dark text-ink/60 hover:bg-gold/10'
+                    ? 'bg-sage/20 text-sage border border-sage/30'
+                    : 'bg-hearth-700 text-warm-400 hover:bg-hearth-600'
               }`}
             >
               {index + 1}
             </button>
           ))}
-          <span className="text-xs text-ink/50 ml-2">
+          <span className="text-xs text-warm-400 ml-2">
             {completedExercises.size}/{exercises.length} completed
           </span>
         </div>
@@ -120,17 +120,17 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-gold mx-auto mb-3" />
-            <p className="text-sm text-ink/60">
+            <Loader2 className="w-8 h-8 animate-spin text-amber mx-auto mb-3" />
+            <p className="text-sm text-warm-400">
               {generateMutation.isPending ? 'Generating exercises...' : 'Loading exercises...'}
             </p>
           </div>
         </div>
       ) : exercises.length === 0 ? (
-        <div className="text-center py-12 bg-parchment-dark/30 rounded-lg border border-gold/20">
-          <Play className="w-10 h-10 text-ink/30 mx-auto mb-3" />
-          <p className="text-ink/60 mb-2">No exercises generated yet</p>
-          <p className="text-sm text-ink/40">
+        <div className="text-center py-12 bg-hearth-700/30 rounded-xl border border-border-moderate">
+          <Play className="w-10 h-10 text-warm-400 mx-auto mb-3" />
+          <p className="text-warm-200 mb-2">No exercises generated yet</p>
+          <p className="text-sm text-warm-400">
             Click "Generate Exercises" to create practice questions for this topic.
           </p>
         </div>
@@ -146,9 +146,9 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
 
       {/* Session summary */}
       {exercises.length > 0 && completedExercises.size === exercises.length && (
-        <div className="p-4 rounded-lg bg-forest/10 border border-forest/30">
-          <h4 className="font-heading font-semibold text-forest mb-2">Practice Complete!</h4>
-          <p className="text-sm text-ink/70">
+        <div className="p-4 rounded-xl bg-sage/10 border border-sage/30">
+          <h4 className="font-heading font-semibold text-sage mb-2">Practice Complete!</h4>
+          <p className="text-sm text-warm-200">
             You've completed all {exercises.length} exercises. Generate new ones to continue practicing.
           </p>
         </div>

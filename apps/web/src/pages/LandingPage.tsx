@@ -74,7 +74,7 @@ export function LandingPage() {
       const response = await createPlanMutation.mutateAsync({
         topic: topic.trim(),
         user_level: data.userLevel,
-        size_preference: data.sizePreference,
+        plan_size: data.sizePreference,
       });
 
       addToast({
@@ -103,7 +103,7 @@ export function LandingPage() {
     <>
       <LandingSchema topic={topic} />
 
-      <div className="min-h-screen bg-parchment">
+      <div className="min-h-screen bg-hearth-900">
         {/* Hero Section */}
         {!showConfig && !isCreating && <Hero />}
 
@@ -133,7 +133,7 @@ export function LandingPage() {
                 >
                   <button
                     onClick={handleLogin}
-                    className="text-gold hover:text-gold-muted underline underline-offset-4 transition-colors"
+                    className="text-amber hover:text-amber/70 underline underline-offset-4 transition-colors"
                   >
                     Sign in to continue
                   </button>
@@ -153,7 +153,7 @@ export function LandingPage() {
               {/* Back button */}
               <button
                 onClick={() => setShowConfig(false)}
-                className="mb-6 text-ink/60 hover:text-ink transition-colors flex items-center gap-2 text-sm"
+                className="mb-6 text-warm-400 hover:text-warm-50 transition-colors flex items-center gap-2 text-sm"
               >
                 ← Change topic
               </button>
@@ -220,12 +220,12 @@ interface FeatureCardProps {
 function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      className="parchment-card p-6 rounded-lg text-center"
+      whileHover={{ y: -2 }}
+      className="organic-card p-6 rounded-xl text-center border border-border-moderate"
     >
       <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="font-heading font-semibold text-ink mb-2">{title}</h3>
-      <p className="text-sm text-ink/70">{description}</p>
+      <h3 className="font-heading font-semibold text-warm-50 mb-2">{title}</h3>
+      <p className="text-sm text-warm-200">{description}</p>
     </motion.div>
   );
 }

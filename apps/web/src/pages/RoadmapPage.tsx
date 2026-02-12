@@ -31,11 +31,11 @@ export function RoadmapPage() {
 
   if (!planId) {
     return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center">
+      <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-terracotta mx-auto mb-4" />
-          <h1 className="font-heading text-2xl text-ink mb-2">Invalid Plan</h1>
-          <p className="text-ink/60 mb-4">No plan ID was provided.</p>
+          <AlertCircle className="w-12 h-12 text-rose mx-auto mb-4" />
+          <h1 className="font-heading text-2xl text-warm-50 mb-2">Invalid Plan</h1>
+          <p className="text-warm-400 mb-4">No plan ID was provided.</p>
           <Link to="/">
             <Button variant="primary">Return Home</Button>
           </Link>
@@ -46,10 +46,10 @@ export function RoadmapPage() {
 
   if (planLoading || masteryLoading) {
     return (
-      <div className="min-h-screen bg-parchment">
+      <div className="min-h-screen bg-hearth-900">
         <div className="container mx-auto px-4 py-8">
           <LoadingSkeleton />
-          <p className="text-center text-ink/60 mt-4">Loading your learning roadmap...</p>
+          <p className="text-center text-warm-400 mt-4">Loading your learning roadmap...</p>
         </div>
       </div>
     );
@@ -57,11 +57,11 @@ export function RoadmapPage() {
 
   if (planError || !plan) {
     return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center">
+      <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-terracotta mx-auto mb-4" />
-          <h1 className="font-heading text-2xl text-ink mb-2">Failed to Load Plan</h1>
-          <p className="text-ink/60 mb-4">
+          <AlertCircle className="w-12 h-12 text-rose mx-auto mb-4" />
+          <h1 className="font-heading text-2xl text-warm-50 mb-2">Failed to Load Plan</h1>
+          <p className="text-warm-400 mb-4">
             {getSafeErrorMessage(planError, 'Failed to load your learning roadmap.')}
           </p>
           <Link to="/">
@@ -93,17 +93,17 @@ export function RoadmapPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-parchment">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-hearth-900">
       {/* Header */}
-      <header className="flex-shrink-0 border-b border-gold/20 bg-parchment/95 backdrop-blur px-4 py-3">
+      <header className="flex-shrink-0 border-b border-border-subtle bg-hearth-800/95 backdrop-blur px-4 py-3">
         <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-4">
-            <Link to="/my-roadmaps" className="text-ink/60 hover:text-ink transition-colors">
+            <Link to="/my-roadmaps" className="text-warm-400 hover:text-warm-50 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="font-heading text-xl font-semibold text-ink">{plan.topic}</h1>
-              <p className="text-sm text-ink/60">
+              <h1 className="font-heading text-xl font-semibold text-warm-50">{plan.topic}</h1>
+              <p className="text-sm text-warm-400">
                 {mastery
                   ? `${mastery.completed_nodes}/${mastery.total_nodes} nodes completed`
                   : `${plan.nodes.length} nodes`}
@@ -114,8 +114,8 @@ export function RoadmapPage() {
           {mastery && (
             <div className="hidden sm:flex items-center gap-3">
               <div className="text-right">
-                <div className="text-sm text-ink/60">Overall Mastery</div>
-                <div className="font-heading text-lg font-semibold text-gold">
+                <div className="text-sm text-warm-400">Overall Mastery</div>
+                <div className="font-heading text-lg font-semibold text-amber">
                   {Math.round(mastery.overall_mastery * 100)}%
                 </div>
               </div>
@@ -128,7 +128,7 @@ export function RoadmapPage() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="6"
-                    className="text-parchment-dark"
+                    className="text-hearth-700"
                   />
                   <circle
                     cx="40"
@@ -139,10 +139,10 @@ export function RoadmapPage() {
                     strokeLinecap="round"
                     strokeDasharray={226}
                     strokeDashoffset={226 - (mastery.overall_mastery * 226)}
-                    className="text-gold transition-all duration-500"
+                    className="text-amber transition-all duration-500"
                   />
                 </svg>
-                <BookOpen className="absolute inset-0 m-auto w-6 h-6 text-gold" />
+                <BookOpen className="absolute inset-0 m-auto w-6 h-6 text-amber" />
               </div>
             </div>
           )}
@@ -158,7 +158,7 @@ export function RoadmapPage() {
         />
       </main>
 
-      {/* Node Popup Modal */}
+      {/* Node Side Panel */}
       {selectedNode && (
         <NodePopup
           node={selectedNode}

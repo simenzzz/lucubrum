@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Compass, Menu, X, LogOut, User, Map } from 'lucide-react';
+import { Sparkles, Menu, X, LogOut, User, Map } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -10,7 +10,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Chart a Course', href: '/', icon: Compass },
+    { name: 'Create', href: '/', icon: Sparkles },
   ];
 
   const protectedLinks = isAuthenticated
@@ -37,31 +37,31 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gold/20 bg-parchment/95 backdrop-blur supports-[backdrop-filter]:bg-parchment/60">
+    <nav className="sticky top-0 z-50 w-full border-b border-border-subtle bg-hearth-800/95 backdrop-blur supports-[backdrop-filter]:bg-hearth-800/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo - "The Helm" */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
-              <Compass className="h-8 w-8 text-gold transition-transform group-hover:rotate-45 duration-300" />
-              <div className="absolute inset-0 rounded-full bg-gold/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity compass-pulse" />
+              <Sparkles className="h-7 w-7 text-amber transition-transform group-hover:scale-110 duration-300" />
+              <div className="absolute inset-0 rounded-full bg-amber/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="flex flex-col">
-              <span className="font-heading font-bold text-lg leading-tight text-ink">
+              <span className="font-heading font-bold text-lg leading-tight text-warm-50">
                 Learning Helper
               </span>
-              <span className="text-xs text-gold-muted">Chart Your Course</span>
+              <span className="text-xs text-warm-400">Shape Your Path</span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-gold ${
-                  isActive(link.href) ? 'text-gold' : 'text-ink/70'
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200 hover:text-amber hover:bg-hearth-700'
                 }`}
               >
                 <link.icon className="h-4 w-4" />
@@ -73,8 +73,8 @@ export function Navbar() {
               <Link
                 key={link.href}
                 to={link.href}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-gold ${
-                  isActive(link.href) ? 'text-gold' : 'text-ink/70'
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200 hover:text-amber hover:bg-hearth-700'
                 }`}
               >
                 <link.icon className="h-4 w-4" />
@@ -82,10 +82,10 @@ export function Navbar() {
               </Link>
             ))}
 
-            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gold/20">
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border-moderate">
               {isAuthenticated ? (
                 <>
-                  <span className="text-sm text-ink/70">
+                  <span className="text-sm text-warm-200">
                     {user?.name || user?.email?.split('@')[0]}
                   </span>
                   <Button
@@ -107,7 +107,7 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-ink hover:text-gold transition-colors"
+            className="md:hidden p-2 text-warm-50 hover:text-amber transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -117,15 +117,15 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gold/20">
+          <div className="md:hidden py-4 border-t border-border-moderate">
             <div className="flex flex-col gap-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-gold/10 ${
-                    isActive(link.href) ? 'text-gold bg-gold/10' : 'text-ink/70'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-hearth-700 ${
+                    isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200'
                   }`}
                 >
                   <link.icon className="h-4 w-4" />
@@ -138,8 +138,8 @@ export function Navbar() {
                   key={link.href}
                   to={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-gold/10 ${
-                    isActive(link.href) ? 'text-gold bg-gold/10' : 'text-ink/70'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-hearth-700 ${
+                    isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200'
                   }`}
                 >
                   <link.icon className="h-4 w-4" />
@@ -147,10 +147,10 @@ export function Navbar() {
                 </Link>
               ))}
 
-              <div className="flex items-center justify-between px-4 py-2 mt-2 border-t border-gold/20">
+              <div className="flex items-center justify-between px-4 py-2 mt-2 border-t border-border-moderate">
                 {isAuthenticated ? (
                   <>
-                    <span className="text-sm text-ink/70">
+                    <span className="text-sm text-warm-200">
                       {user?.name || user?.email?.split('@')[0]}
                     </span>
                     <Button

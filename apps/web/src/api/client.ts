@@ -9,12 +9,12 @@ import {
   broadcastLogout,
 } from '@/lib/authBroadcast';
 
-// API base URL from env - fail loudly if not configured
+// API base URL from env - empty string is valid (relative URLs behind nginx proxy)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-if (!API_BASE_URL) {
+if (API_BASE_URL === undefined || API_BASE_URL === null) {
   throw new Error(
     'VITE_API_BASE_URL environment variable is required. ' +
-    'Please set it in your .env file or environment.'
+    'Set it in your .env file (use empty string for relative URLs).'
   );
 }
 
@@ -24,7 +24,7 @@ if (!API_BASE_URL) {
  */
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 second timeout
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT_SECONDS || 120) * 1000,
   headers: {
     'Content-Type': 'application/json',
   },

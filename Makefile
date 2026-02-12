@@ -1,4 +1,4 @@
-.PHONY: help setup dev dev-local dev-docker dev-infra dev-node dev-python dev-web test test-docker lint typecheck build clean stop ssh-node db-reset generate-schemas eval eval-plan eval-exercises eval-grade eval-queries eval-staleness eval-validate-video eval-all test-web typecheck-web lint-web
+.PHONY: help setup dev dev-local dev-docker dev-docker-clean dev-infra dev-node dev-python dev-web test test-docker lint typecheck build clean stop ssh-node db-reset generate-schemas eval eval-plan eval-exercises eval-grade eval-queries eval-staleness eval-validate-video eval-all test-web typecheck-web lint-web test-compose dev-prod stop-prod stop-test
 
 # Default target
 help:
@@ -12,6 +12,7 @@ help:
 	@echo ""
 	@echo "Full Docker Mode (Consistent & Production-like):"
 	@echo "  make dev-docker      - Start EVERYTHING in Docker (Simulate prod)"
+	@echo "  make dev-docker-clean - Rebuild from scratch, no Docker cache"
 	@echo "  make stop            - Stop all containers"
 	@echo ""
 	@echo "Web Development:"
@@ -21,9 +22,15 @@ help:
 	@echo "  make typecheck-web   - Type check Web frontend"
 	@echo "  make lint-web        - Lint Web frontend"
 	@echo ""
+	@echo "Production-like:"
+	@echo "  make dev-prod        - Start production-like stack"
+	@echo "  make stop-prod       - Stop production stack"
+	@echo ""
 	@echo "Testing:"
 	@echo "  make test            - Run tests locally"
 	@echo "  make test-docker     - Run tests INSIDE Docker containers"
+	@echo "  make test-compose    - Run tests in isolated Docker environment"
+	@echo "  make stop-test       - Stop test containers"
 
 # ==========================================
 # 1. SETUP & LOCAL DEV (Your original flow)
@@ -40,7 +47,7 @@ setup:
 
 dev-infra:
 	@echo "Starting infrastructure (Postgres + Redis)..."
-	cd infra && docker-compose up -d postgres redis
+	cd infra && docker compose up -d postgres redis
 
 dev-node:
 	@echo "Starting Node service..."
@@ -64,16 +71,21 @@ dev-local: dev-infra
 # NEW: Starts the 'full' profile defined in your docker-compose.yml
 dev-docker:
 	@echo "Starting full stack in Docker..."
-	cd infra && docker-compose --profile full up --build
+	cd infra && docker compose --env-file ../.env --profile full up --build
+
+# Force a clean rebuild (no Docker layer cache) to pick up all code changes
+dev-docker-clean:
+	@echo "Starting full stack in Docker (clean rebuild, no cache)..."
+	cd infra && docker compose --env-file ../.env --profile full build --no-cache && docker compose --env-file ../.env --profile full up
 
 # NEW: Quick way to shut everything down
 stop:
 	@echo "Stopping all containers..."
-	cd infra && docker-compose down
+	cd infra && docker compose --profile full down
 
 # NEW: Enter the Node container shell (useful for debugging inside the image)
 ssh-node:
-	cd infra && docker-compose exec api-node /bin/sh
+	cd infra && docker compose exec api-node /bin/sh
 
 # ==========================================
 # 3. UTILITIES (Tests, Lint, Build)
@@ -93,8 +105,8 @@ test: test-node test-python
 # Great for CI/CD checks or verifying the Docker environment.
 test-docker:
 	@echo "Running tests inside Docker containers..."
-	cd infra && docker-compose run --rm api-node npm test
-	cd infra && docker-compose run --rm curriculum-python pytest
+	cd infra && docker compose run --rm api-node npm test
+	cd infra && docker compose run --rm curriculum-python pytest
 
 lint:
 	@echo "Linting Node service..."
@@ -146,8 +158,8 @@ clean:
 
 db-reset:
 	@echo "Resetting database..."
-	cd infra && docker-compose down -v
-	cd infra && docker-compose up -d postgres redis
+	cd infra && docker compose down -v
+	cd infra && docker compose up -d postgres redis
 	@echo "Waiting for Postgres to be ready..."
 	sleep 5
 	@echo "Database reset complete!"
@@ -187,3 +199,24 @@ eval-validate-video:
 eval-all:
 	@echo "Running all evaluations..."
 	cd apps/curriculum-python && . .venv/bin/activate && cd ../../eval && python run.py --prompt all $(if $(TOPICS),--topics $(TOPICS))
+
+# ==========================================
+# DOCKER COMPOSE UTILITIES
+# ==========================================
+
+test-compose:
+	@echo "Running tests in isolated Docker environment..."
+	docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+	docker compose -f docker-compose.test.yml down
+
+dev-prod:
+	@echo "Starting production-like stack..."
+	cd infra && docker compose --env-file ../.env -f docker-compose.prod.yml up --build
+
+stop-prod:
+	@echo "Stopping production stack..."
+	cd infra && docker compose -f docker-compose.prod.yml down
+
+stop-test:
+	@echo "Stopping test containers..."
+	docker compose -f docker-compose.test.yml down -v

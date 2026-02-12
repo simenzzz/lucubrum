@@ -45,7 +45,7 @@ export function ExerciseStatsChart({ data }: ExerciseStatsChartProps) {
       </CardHeader>
       <CardContent>
         {totalAttempted === 0 ? (
-          <div className="h-[250px] flex items-center justify-center text-ink/40">
+          <div className="h-[250px] flex items-center justify-center text-warm-600">
             No exercises attempted yet. Start practicing to see your stats.
           </div>
         ) : (
@@ -55,21 +55,22 @@ export function ExerciseStatsChart({ data }: ExerciseStatsChartProps) {
                 data={chartData}
                 margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(196, 160, 82, 0.1)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(212, 165, 90, 0.1)" />
                 <XAxis
                   dataKey="type"
-                  tick={{ fill: '#3D3A33', fontSize: 11 }}
-                  axisLine={{ stroke: 'rgba(196, 160, 82, 0.2)' }}
+                  tick={{ fill: '#7D7268', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(212, 165, 90, 0.2)' }}
                 />
                 <YAxis
-                  tick={{ fill: '#3D3A33', fontSize: 12 }}
-                  axisLine={{ stroke: 'rgba(196, 160, 82, 0.2)' }}
+                  tick={{ fill: '#7D7268', fontSize: 12 }}
+                  axisLine={{ stroke: 'rgba(212, 165, 90, 0.2)' }}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#F7F3E8',
-                    border: '1px solid rgba(196, 160, 82, 0.3)',
-                    borderRadius: '8px',
+                    backgroundColor: '#231F1B',
+                    border: '1px solid rgba(212, 165, 90, 0.3)',
+                    borderRadius: '12px',
+                    color: '#F0EAE0',
                   }}
                   formatter={(value: number, name: string) => [
                     value,
@@ -78,22 +79,22 @@ export function ExerciseStatsChart({ data }: ExerciseStatsChartProps) {
                 />
                 <Legend
                   formatter={(value) => (
-                    <span className="text-sm text-ink/70 capitalize">{value}</span>
+                    <span className="text-sm text-warm-400 capitalize">{value}</span>
                   )}
                 />
-                <Bar dataKey="attempted" fill="#2D4A5E" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="correct" fill="#4A6741" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="attempted" fill="#9488B2" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="correct" fill="#8BA888" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
 
             {/* Accuracy summary */}
-            <div className="grid grid-cols-5 gap-2 mt-4 pt-4 border-t border-gold/20">
+            <div className="grid grid-cols-5 gap-2 mt-4 pt-4 border-t border-border-moderate">
               {chartData.map((item) => (
                 <div key={item.type} className="text-center">
-                  <div className="font-heading text-lg font-semibold text-ink">
+                  <div className="font-heading text-lg font-semibold text-warm-50">
                     {item.accuracy}%
                   </div>
-                  <div className="text-xs text-ink/50 truncate">{item.type}</div>
+                  <div className="text-xs text-warm-400 truncate">{item.type}</div>
                 </div>
               ))}
             </div>

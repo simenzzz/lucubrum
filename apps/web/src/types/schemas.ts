@@ -27,21 +27,19 @@ export const AuthCallbackResponseSchema = z.object({
   authenticated: z.boolean(),
 });
 
-// Plan schemas
+// Plan schemas — aligned with Pydantic contract (source of truth)
 export const PlanNodeSchema = z.object({
   node_id: z.string(),
   title: z.string(),
-  description: z.string(),
   objectives: z.array(z.string()),
   estimated_minutes: z.number(),
-  difficulty: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
   prerequisites: z.array(z.string()),
+  tags: z.array(z.string()).nullable().optional(),
 });
 
 export const ScheduleItemSchema = z.object({
   node_id: z.string(),
   order: z.number(),
-  suggested_days: z.number(),
 });
 
 export const ArtifactMetadataSchema = z.object({
@@ -50,26 +48,46 @@ export const ArtifactMetadataSchema = z.object({
   provider: z.string(),
   model: z.string(),
   created_at: z.string(),
+  raw_output_hash: z.string(),
+  artifact_hash: z.string(),
+  validation_retry_count: z.number(),
 });
 
-export const CreatePlanResponseSchema = z.object({
-  plan_id: z.string(),
+export const PlanSchema = z.object({
+  schema_version: z.string().optional(),
   topic: z.string(),
   user_level: z.string(),
+  plan_size: z.string().optional(),
   nodes: z.array(PlanNodeSchema),
   schedule: z.array(ScheduleItemSchema),
   metadata: ArtifactMetadataSchema,
 });
 
-// YouTube Resource schemas
+// POST /api/plan returns { plan_id, plan: {...} } — validate nested, transform to flat
+export const CreatePlanResponseSchema = z.object({
+  plan_id: z.string(),
+  plan: PlanSchema,
+}).transform((data) => ({
+  plan_id: data.plan_id,
+  ...data.plan,
+}));
+
+// GET /api/plan/:planId returns { plan: {...} } — no plan_id in wrapper
+export const GetPlanResponseSchema = z.object({
+  plan: PlanSchema,
+});
+
+// YouTube Resource schemas (frontend shape after transformation)
 export const YouTubeResourceSchema = z.object({
   video_id: z.string(),
   title: z.string(),
   channel: z.string(),
   duration_seconds: z.number(),
-  thumbnail_url: z.string().url(),
+  thumbnail_url: z.string(),
   relevance_score: z.number(),
-  published_at: z.string(),
+  url: z.string().optional(),
+  type: z.enum(['must_watch', 'recommended']).optional(),
+  rationale: z.string().optional(),
 });
 
 export const NodeResourcesSchema = z.object({
@@ -77,54 +95,68 @@ export const NodeResourcesSchema = z.object({
   resources: z.array(YouTubeResourceSchema),
 });
 
-// Exercise schemas
+// Backend resource response schema (camelCase from Node API)
+export const BackendSelectedResourceSchema = z.object({
+  videoId: z.string(),
+  title: z.string(),
+  channelTitle: z.string(),
+  url: z.string(),
+  durationSeconds: z.number(),
+  rankScore: z.number(),
+  type: z.enum(['must_watch', 'recommended']),
+  rationale: z.string(),
+});
+
+export const BackendResourcesResponseSchema = z.object({
+  resources_by_node: z.record(z.string(), z.array(BackendSelectedResourceSchema)),
+  skipped_nodes: z.array(z.string()).optional(),
+});
+
+// Exercise schemas — aligned with Python/DB field names (source of truth)
 const BaseExerciseSchema = z.object({
   id: z.string(),
-  question: z.string(),
+  prompt: z.string(),
   difficulty: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
-  explanation: z.string().optional(),
+  rubric: z.string().optional(),
 });
 
 export const MCQExerciseSchema = BaseExerciseSchema.extend({
   type: z.literal('mcq'),
-  options: z.array(z.string()),
+  choices: z.array(z.string()),
   correct_answer: z.string(),
 });
 
 export const ShortAnswerExerciseSchema = BaseExerciseSchema.extend({
   type: z.literal('short_answer'),
   correct_answer: z.string(),
-  keywords: z.array(z.string()),
 });
 
 export const FillBlankExerciseSchema = BaseExerciseSchema.extend({
   type: z.literal('fill_blank'),
-  blanks: z.array(
-    z.object({
-      before: z.string(),
-      after: z.string().optional(),
-      answer: z.string(),
-    })
-  ),
+  correct_answer: z.object({
+    answers: z.array(z.string()),
+    match: z.enum(['case_sensitive', 'case_insensitive']),
+    normalize_whitespace: z.boolean(),
+  }),
 });
 
 export const CodingExerciseSchema = BaseExerciseSchema.extend({
   type: z.literal('coding'),
-  starter_code: z.string(),
-  language: z.string(),
-  test_cases: z.array(
-    z.object({
-      input: z.string(),
-      expected_output: z.string(),
-    })
-  ),
-  correct_answer: z.string(),
+  correct_answer: z.object({
+    language: z.string(),
+    solution: z.string(),
+    test_cases: z.array(
+      z.record(z.any()).transform((obj): { input: unknown; output: unknown } => ({
+        input: obj.input,
+        output: obj.output,
+      }))
+    ),
+  }),
 });
 
 export const FlashcardExerciseSchema = BaseExerciseSchema.extend({
   type: z.literal('flashcard'),
-  answer: z.string(),
-  hints: z.array(z.string()).optional(),
+  correct_answer: z.string(),
 });
 
 export const ExerciseSchema = z.discriminatedUnion('type', [
@@ -136,10 +168,9 @@ export const ExerciseSchema = z.discriminatedUnion('type', [
 ]);
 
 export const ExerciseSetResponseSchema = z.object({
-  exercise_set_id: z.string(),
   node_id: z.string(),
   exercises: z.array(ExerciseSchema),
-  metadata: ArtifactMetadataSchema,
+  cached: z.boolean().optional(),
 });
 
 // Mastery schemas
@@ -208,14 +239,14 @@ export const CreatePlanRequestSchema = z.object({
     .max(200, 'Topic must be at most 200 characters')
     .trim(),
   user_level: z.enum(['beginner', 'intermediate', 'advanced']),
-  size_preference: z.enum(['concise', 'standard', 'comprehensive']).optional(),
+  plan_size: z.enum(['basic', 'moderate', 'large', 'dynamic']).optional(),
 });
 
 /**
  * Safe parse helper that logs validation errors in development
  */
 export function safeParseWithLogging<T>(
-  schema: z.ZodSchema<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   data: unknown,
   context: string
 ): T {

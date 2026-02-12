@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -44,6 +42,17 @@ services:
       DATABASE_URL: postgresql://learning_helper:learning_helper_dev@postgres:5432/learning_helper
       REDIS_URL: redis://redis:6379
       PYTHON_SERVICE_URL: http://curriculum-python:8000
+      SERVICE_TOKEN: ${SERVICE_TOKEN}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:5173/oauth/callback}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     ports:
       - "3000:3000"
     depends_on:
@@ -51,8 +60,15 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     volumes:
       - ../apps/api-node/src:/app/src
+      - ../packages:/packages
     profiles:
       - full
 
@@ -64,11 +80,36 @@ services:
     environment:
       ENVIRONMENT: development
       PORT: 8000
-      LLM_PROVIDER: gemini
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      LLM_MODEL: ${LLM_MODEL:-gemini-2.5-flash}
+      DATABASE_URL: postgresql://learning_helper:learning_helper_dev@postgres:5432/learning_helper
+      SERVICE_TOKEN: ${SERVICE_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     volumes:
       - ../apps/curriculum-python/src:/app/src
+    profiles:
+      - full
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+        VITE_APP_URL: http://localhost:5173
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    container_name: learning-helper-web
+    ports:
+      - "5173:80"
+    depends_on:
+      api-node:
+        condition: service_healthy
     profiles:
       - full
 

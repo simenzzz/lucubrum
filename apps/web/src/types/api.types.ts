@@ -33,7 +33,7 @@ export interface User {
 export interface CreatePlanRequest {
   topic: string;
   user_level: 'beginner' | 'intermediate' | 'advanced';
-  size_preference?: 'concise' | 'standard' | 'comprehensive';
+  plan_size?: 'basic' | 'moderate' | 'large' | 'dynamic';
 }
 
 export interface CreatePlanResponse {
@@ -48,17 +48,15 @@ export interface CreatePlanResponse {
 export interface PlanNode {
   node_id: string;
   title: string;
-  description: string;
   objectives: string[];
   estimated_minutes: number;
-  difficulty: 1 | 2 | 3 | 4 | 5;
   prerequisites: string[];
+  tags?: string[] | null;
 }
 
 export interface ScheduleItem {
   node_id: string;
   order: number;
-  suggested_days: number;
 }
 
 export interface ArtifactMetadata {
@@ -67,19 +65,21 @@ export interface ArtifactMetadata {
   provider: string;
   model: string;
   created_at: string;
+  raw_output_hash: string;
+  artifact_hash: string;
+  validation_retry_count: number;
 }
 
 // Exercise types
 export interface GenerateExercisesRequest {
-  difficulty?: 1 | 2 | 3 | 4 | 5;
+  difficulty_target?: 1 | 2 | 3 | 4 | 5;
   force?: boolean;
 }
 
 export interface ExerciseSetResponse {
-  exercise_set_id: string;
   node_id: string;
   exercises: Exercise[];
-  metadata: ArtifactMetadata;
+  cached?: boolean;
 }
 
 export type Exercise = MCQExercise | ShortAnswerExercise | FillBlankExercise | CodingExercise | FlashcardExercise;
@@ -87,47 +87,43 @@ export type Exercise = MCQExercise | ShortAnswerExercise | FillBlankExercise | C
 export interface BaseExercise {
   id: string;
   type: 'mcq' | 'short_answer' | 'fill_blank' | 'coding' | 'flashcard';
-  question: string;
+  prompt: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
-  explanation?: string;
+  rubric?: string;
 }
 
 export interface MCQExercise extends BaseExercise {
   type: 'mcq';
-  options: string[];
+  choices: string[];
   correct_answer: string;
 }
 
 export interface ShortAnswerExercise extends BaseExercise {
   type: 'short_answer';
   correct_answer: string;
-  keywords: string[];
 }
 
 export interface FillBlankExercise extends BaseExercise {
   type: 'fill_blank';
-  blanks: {
-    before: string;
-    after?: string;
-    answer: string;
-  }[];
+  correct_answer: {
+    answers: string[];
+    match: 'case_sensitive' | 'case_insensitive';
+    normalize_whitespace: boolean;
+  };
 }
 
 export interface CodingExercise extends BaseExercise {
   type: 'coding';
-  starter_code: string;
-  language: string;
-  test_cases: Array<{
-    input: string;
-    expected_output: string;
-  }>;
-  correct_answer: string;
+  correct_answer: {
+    language: string;
+    solution: string;
+    test_cases: Array<{ input: unknown; output: unknown }>;
+  };
 }
 
 export interface FlashcardExercise extends BaseExercise {
   type: 'flashcard';
-  answer: string;
-  hints?: string[];
+  correct_answer: string;
 }
 
 // Mastery & Attempt types
@@ -180,7 +176,6 @@ export interface NextNodeRecommendationResponse {
 export interface ResourceAttachmentResponse {
   plan_id: string;
   resources: NodeResources[];
-  metadata: ArtifactMetadata;
 }
 
 export interface NodeResources {
@@ -195,7 +190,9 @@ export interface YouTubeResource {
   duration_seconds: number;
   thumbnail_url: string;
   relevance_score: number;
-  published_at: string;
+  url?: string;
+  type?: 'must_watch' | 'recommended';
+  rationale?: string;
 }
 
 // Error types

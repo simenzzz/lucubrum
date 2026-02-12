@@ -10,7 +10,7 @@ import { requireAuth } from '../middleware/auth.middleware';
 import {
   OAuthCallbackSchema,
 } from '../validation/schemas';
-import { UserRow } from '../db/queries/users';
+import type { UserRow } from '../db/queries/users';
 import {
   setAuthCookies,
   clearAuthCookies,
@@ -25,8 +25,28 @@ interface OAuthInitResponse {
   state: string;
 }
 
+interface UserResponse {
+  id: string;
+  email: string;
+  name?: string;
+  picture?: string;
+  roles: string[];
+  created_at: string;
+}
+
+function toUserResponse(row: UserRow): UserResponse {
+  return {
+    id: row.user_id,
+    email: row.email,
+    ...(row.name != null && { name: row.name }),
+    ...(row.picture_url != null && { picture: row.picture_url }),
+    roles: row.roles,
+    created_at: row.created_at.toISOString(),
+  };
+}
+
 interface OAuthCallbackResponse {
-  user: UserRow;
+  user: UserResponse;
   authenticated: boolean;
 }
 
@@ -118,7 +138,7 @@ router.post(
       setAuthCookies(res, result.tokens.access_token, result.tokens.refresh_token);
 
       return res.json({
-        user: result.user,
+        user: toUserResponse(result.user),
         authenticated: true,
       });
     } catch (error) {

@@ -22,17 +22,21 @@ interface ExerciseParams {
   nodeId: string;
 }
 
-interface ExerciseQuery {
-  force?: string;
+interface TransformedExercise {
+  id: string;
+  node_id: string;
+  type: string;
+  prompt: string;
+  choices: string[] | null;
+  correct_answer: unknown;
+  rubric: string;
+  difficulty: number;
 }
 
-interface GenerateExercisesResponse {
-  exercises: ExerciseRow[];
-  cached: boolean;
-}
-
-interface GetExercisesResponse {
-  exercises: ExerciseRow[];
+interface ExerciseResponse {
+  node_id: string;
+  exercises: TransformedExercise[];
+  cached?: boolean;
 }
 
 interface ErrorResponse {
@@ -40,6 +44,25 @@ interface ErrorResponse {
   message: string;
   details?: Record<string, unknown>;
   request_id: string;
+}
+
+/**
+ * Transform ExerciseRow (DB shape) to frontend-friendly shape:
+ * - exercise_id → id
+ * - include node_id on each exercise
+ * - strip plan_id and created_at
+ */
+function transformExercise(row: ExerciseRow): TransformedExercise {
+  return {
+    id: row.exercise_id,
+    node_id: row.node_id,
+    type: row.type,
+    prompt: row.prompt,
+    choices: row.choices,
+    correct_answer: row.correct_answer,
+    rubric: row.rubric,
+    difficulty: row.difficulty,
+  };
 }
 
 /**
@@ -51,11 +74,10 @@ interface ErrorResponse {
 router.post(
   '/:planId/nodes/:nodeId/exercises',
   async (
-    req: Request<ExerciseParams, unknown, unknown, ExerciseQuery>,
-    res: Response<GenerateExercisesResponse | ErrorResponse>
+    req: Request<ExerciseParams>,
+    res: Response<ExerciseResponse | ErrorResponse>
   ) => {
     const { planId, nodeId } = req.params;
-    const force = req.query.force === 'true';
     const requestId = (req.headers['x-request-id'] as string) || uuidv4();
 
     try {
@@ -91,7 +113,7 @@ router.post(
         });
       }
 
-      const { exercise_types, count, difficulty_target } = parseResult.data;
+      const { exercise_types, count, difficulty_target, force } = parseResult.data;
 
       logger.info(
         { planId, nodeId, requestId, force, exercise_types, count },
@@ -103,7 +125,7 @@ router.post(
         nodeId,
         { exercise_types, count, difficulty_target },
         requestId,
-        force
+        force ?? false
       );
 
       logger.info(
@@ -112,7 +134,8 @@ router.post(
       );
 
       return res.json({
-        exercises: result.exercises,
+        node_id: nodeId,
+        exercises: result.exercises.map(transformExercise),
         cached: result.cached,
       });
     } catch (error) {
@@ -147,7 +170,7 @@ router.get(
   '/:planId/nodes/:nodeId/exercises',
   async (
     req: Request<ExerciseParams>,
-    res: Response<GetExercisesResponse | ErrorResponse>
+    res: Response<ExerciseResponse | ErrorResponse>
   ) => {
     const { planId, nodeId } = req.params;
     const requestId = (req.headers['x-request-id'] as string) || uuidv4();
@@ -173,7 +196,10 @@ router.get(
 
       const exercises = await exerciseService.getExercises(planId, nodeId);
 
-      return res.json({ exercises });
+      return res.json({
+        node_id: nodeId,
+        exercises: exercises.map(transformExercise),
+      });
     } catch (error) {
       logger.error({ error, planId, nodeId, requestId }, 'Error retrieving exercises');
       return res.status(500).json({

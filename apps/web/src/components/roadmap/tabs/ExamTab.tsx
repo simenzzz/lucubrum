@@ -65,13 +65,12 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     setIsStarting(true);
     try {
       // TODO: Call actual exam start API
-      // For now, mock the exam start
       const mockExercises = Array.from({ length: 10 }, (_, i) => ({
         id: `exam-${i + 1}`,
         type: 'mcq' as const,
-        question: `Sample exam question ${i + 1} for ${node.title}`,
+        prompt: `Sample exam question ${i + 1} for ${node.title}`,
         difficulty: (Math.floor(mastery * 5) + 1) as 1 | 2 | 3 | 4 | 5,
-        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        choices: ['Option A', 'Option B', 'Option C', 'Option D'],
         correct_answer: 'Option A',
       }));
 
@@ -121,24 +120,24 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     return (
       <div className="space-y-6">
         <div className="text-center py-8">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gold/20 flex items-center justify-center">
-            <Trophy className="w-10 h-10 text-gold" />
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-amber/20 flex items-center justify-center">
+            <Trophy className="w-10 h-10 text-amber" />
           </div>
-          <h3 className="font-heading text-2xl font-semibold text-ink mb-2">Exam Complete!</h3>
-          <p className="text-ink/60">
+          <h3 className="font-heading text-2xl font-semibold text-warm-50 mb-2">Exam Complete!</h3>
+          <p className="text-warm-400">
             You answered {examState.answers.size} of {examState.exercises.length} questions
           </p>
         </div>
 
-        <div className="p-6 rounded-lg bg-parchment-dark/50 border border-gold/20">
+        <div className="p-6 rounded-xl bg-hearth-700/50 border border-border-moderate">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-ink/70">Your Score</span>
-            <span className="font-heading text-3xl font-bold text-gold">
+            <span className="text-warm-200">Your Score</span>
+            <span className="font-heading text-3xl font-bold text-amber">
               {Math.round(score * 100)}%
             </span>
           </div>
           <Progress value={score * 100} />
-          <p className="text-sm text-ink/50 mt-3">
+          <p className="text-sm text-warm-400 mt-3">
             Mastery update will be calculated when the backend exam API is implemented.
           </p>
         </div>
@@ -171,13 +170,13 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     return (
       <div className="space-y-4">
         {/* Exam header */}
-        <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-parchment-dark/50 border border-gold/20">
+        <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-hearth-700/50 border border-border-moderate">
           <div className="flex items-center gap-3">
             <Badge variant={isLowTime ? 'hard' : 'secondary'}>
               <Clock className="w-3 h-3 mr-1" />
               {timeRemaining !== null ? formatTime(timeRemaining) : '--:--'}
             </Badge>
-            <span className="text-sm text-ink/60">
+            <span className="text-sm text-warm-400">
               Question {examState.currentIndex + 1} of {examState.exercises.length}
             </span>
           </div>
@@ -195,12 +194,12 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
             <button
               key={index}
               onClick={() => goToExamQuestion(index)}
-              className={`w-7 h-7 rounded text-xs font-medium transition-all ${
+              className={`w-7 h-7 rounded-lg text-xs font-medium transition-all ${
                 index === examState.currentIndex
-                  ? 'bg-gold text-ink'
+                  ? 'bg-amber text-hearth-900'
                   : examState.answers.has(examState.exercises[index].id)
-                    ? 'bg-ocean/20 text-ocean border border-ocean/30'
-                    : 'bg-parchment-dark text-ink/50 hover:bg-gold/10'
+                    ? 'bg-lavender/20 text-lavender border border-lavender/30'
+                    : 'bg-hearth-700 text-warm-400 hover:bg-hearth-600'
               }`}
             >
               {index + 1}
@@ -255,44 +254,44 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   return (
     <div className="space-y-6">
       <div className="text-center py-6">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold/20 flex items-center justify-center">
-          <Clock className="w-8 h-8 text-gold" />
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber/20 flex items-center justify-center">
+          <Clock className="w-8 h-8 text-amber" />
         </div>
-        <h3 className="font-heading text-xl font-semibold text-ink mb-2">Ready for an Exam?</h3>
-        <p className="text-ink/60 max-w-md mx-auto">
+        <h3 className="font-heading text-xl font-semibold text-warm-50 mb-2">Ready for an Exam?</h3>
+        <p className="text-warm-400 max-w-md mx-auto">
           Test your knowledge with a timed exam. You'll have 30 minutes to answer 10 questions.
           Your mastery score will be updated based on your performance.
         </p>
       </div>
 
-      <div className="p-4 rounded-lg bg-gold/5 border border-gold/20">
-        <h4 className="font-medium text-ink mb-3">Exam Details</h4>
-        <ul className="space-y-2 text-sm text-ink/70">
+      <div className="p-4 rounded-xl bg-amber/5 border border-amber/20">
+        <h4 className="font-medium text-warm-50 mb-3">Exam Details</h4>
+        <ul className="space-y-2 text-sm text-warm-200">
           <li className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-gold" />
+            <Clock className="w-4 h-4 text-amber" />
             <span>Time limit: 30 minutes</span>
           </li>
           <li className="flex items-center gap-2">
-            <span className="w-4 h-4 flex items-center justify-center text-gold font-bold">10</span>
+            <span className="w-4 h-4 flex items-center justify-center text-amber font-bold">10</span>
             <span>Questions: 10</span>
           </li>
           <li className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-gold" />
+            <AlertTriangle className="w-4 h-4 text-amber" />
             <span>No feedback until you submit</span>
           </li>
         </ul>
       </div>
 
-      <div className="flex items-center justify-between p-4 rounded-lg bg-parchment-dark/50">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-hearth-700/50">
         <div>
-          <div className="text-sm text-ink/60">Current Mastery</div>
-          <div className="font-heading text-lg font-semibold text-ink">
+          <div className="text-sm text-warm-400">Current Mastery</div>
+          <div className="font-heading text-lg font-semibold text-warm-50">
             {Math.round(mastery * 100)}%
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm text-ink/60">Target Difficulty</div>
-          <div className="font-heading text-lg font-semibold text-gold">
+          <div className="text-sm text-warm-400">Target Difficulty</div>
+          <div className="font-heading text-lg font-semibold text-amber">
             {Math.round((mastery + 0.1) * 100)}%
           </div>
         </div>
@@ -311,7 +310,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         Start Exam
       </Button>
 
-      <p className="text-xs text-center text-ink/40">
+      <p className="text-xs text-center text-warm-400">
         Note: Full exam functionality requires the backend exam API to be implemented.
       </p>
     </div>

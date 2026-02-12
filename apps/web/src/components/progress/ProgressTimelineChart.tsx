@@ -30,7 +30,7 @@ export function ProgressTimelineChart({ data }: ProgressTimelineChartProps) {
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <div className="h-[250px] flex items-center justify-center text-ink/40">
+          <div className="h-[250px] flex items-center justify-center text-warm-600">
             No progress data yet. Complete some exercises to see your journey.
           </div>
         ) : (
@@ -41,28 +41,29 @@ export function ProgressTimelineChart({ data }: ProgressTimelineChartProps) {
             >
               <defs>
                 <linearGradient id="masteryGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#C4A052" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#C4A052" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#D4A55A" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#D4A55A" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(196, 160, 82, 0.1)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(212, 165, 90, 0.1)" />
               <XAxis
                 dataKey="date"
                 tickFormatter={formatDate}
-                tick={{ fill: '#3D3A33', fontSize: 12 }}
-                axisLine={{ stroke: 'rgba(196, 160, 82, 0.2)' }}
+                tick={{ fill: '#7D7268', fontSize: 12 }}
+                axisLine={{ stroke: 'rgba(212, 165, 90, 0.2)' }}
               />
               <YAxis
                 domain={[0, 100]}
                 tickFormatter={(value) => `${value}%`}
-                tick={{ fill: '#3D3A33', fontSize: 12 }}
-                axisLine={{ stroke: 'rgba(196, 160, 82, 0.2)' }}
+                tick={{ fill: '#7D7268', fontSize: 12 }}
+                axisLine={{ stroke: 'rgba(212, 165, 90, 0.2)' }}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#F7F3E8',
-                  border: '1px solid rgba(196, 160, 82, 0.3)',
-                  borderRadius: '8px',
+                  backgroundColor: '#231F1B',
+                  border: '1px solid rgba(212, 165, 90, 0.3)',
+                  borderRadius: '12px',
+                  color: '#F0EAE0',
                 }}
                 formatter={(value: number, name: string) => [
                   name === 'mastery' ? `${value.toFixed(1)}%` : value,
@@ -73,7 +74,7 @@ export function ProgressTimelineChart({ data }: ProgressTimelineChartProps) {
               <Area
                 type="monotone"
                 dataKey="mastery"
-                stroke="#C4A052"
+                stroke="#D4A55A"
                 strokeWidth={2}
                 fill="url(#masteryGradient)"
               />

@@ -65,27 +65,31 @@ export function AuthCallbackPage() {
   }, [searchParams, handleCallback, addToast, navigate]);
 
   return (
-    <div className="min-h-screen bg-parchment flex items-center justify-center">
+    <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
       <div className="text-center space-y-4">
         {status === 'processing' && (
           <>
             <div className="relative w-16 h-16 mx-auto">
-              <div className="absolute inset-0 rounded-full border-4 border-gold/20 border-t-gold animate-spin" />
+              <div className="absolute inset-0 rounded-full border-4 border-amber/20 border-t-amber animate-spin" />
             </div>
-            <p className="text-ink/70 font-heading">Signing you in...</p>
+            <p className="text-warm-200 font-heading">Signing you in...</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <div className="text-4xl">⚓</div>
-            <p className="text-ink font-heading">Welcome aboard!</p>
+            <div className="w-12 h-12 rounded-full bg-sage/20 flex items-center justify-center mx-auto">
+              <div className="w-4 h-4 rounded-full bg-sage" />
+            </div>
+            <p className="text-warm-50 font-heading">Welcome!</p>
           </>
         )}
         {status === 'error' && (
           <>
-            <div className="text-4xl">🏴‍☠️</div>
-            <p className="text-ink font-heading">Authentication failed</p>
-            <p className="text-sm text-ink/60">Redirecting you back...</p>
+            <div className="w-12 h-12 rounded-full bg-rose/20 flex items-center justify-center mx-auto">
+              <div className="w-4 h-4 rounded-full bg-rose" />
+            </div>
+            <p className="text-warm-50 font-heading">Authentication failed</p>
+            <p className="text-sm text-warm-400">Redirecting you back...</p>
           </>
         )}
       </div>

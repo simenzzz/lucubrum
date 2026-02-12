@@ -34,6 +34,19 @@ export function formatDuration(minutes: number): string {
 }
 
 /**
+ * Format a duration in seconds to a human-readable string
+ */
+export function formatSeconds(totalSeconds: number): string {
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+}
+
+/**
  * Format a mastery score (0-1) to a percentage
  */
 export function formatMastery(mastery: number): string {
@@ -114,9 +127,9 @@ export function truncate(text: string, maxLength: number): string {
  * Generate a color based on mastery score
  */
 export function getMasteryColor(mastery: number): string {
-  if (mastery >= 0.8) return 'text-ocean'; // mastered - blue
-  if (mastery >= 0.4) return 'text-gold'; // in progress - gold
-  return 'text-forest'; // available - green
+  if (mastery >= 0.8) return 'text-sage'; // mastered
+  if (mastery >= 0.4) return 'text-amber'; // in progress
+  return 'text-lavender'; // available
 }
 
 /**
@@ -125,26 +138,26 @@ export function getMasteryColor(mastery: number): string {
 export const LEVEL_BADGES = {
   beginner: {
     value: 'beginner' as const,
-    label: 'Novice',
-    icon: 'compass',
-    color: 'text-forest',
-    bgColor: 'bg-forest/10',
+    label: 'Beginner',
+    icon: 'seedling',
+    color: 'text-sage',
+    bgColor: 'bg-sage/10',
     description: 'New to this topic, starting with fundamentals',
   },
   intermediate: {
     value: 'intermediate' as const,
-    label: 'Journeyman',
-    icon: 'map',
-    color: 'text-ocean',
-    bgColor: 'bg-ocean/10',
+    label: 'Intermediate',
+    icon: 'layers',
+    color: 'text-lavender',
+    bgColor: 'bg-lavender/10',
     description: 'Some familiarity, ready to deepen knowledge',
   },
   advanced: {
     value: 'advanced' as const,
-    label: 'Master',
+    label: 'Advanced',
     icon: 'star',
-    color: 'text-gold',
-    bgColor: 'bg-gold/10',
+    color: 'text-amber',
+    bgColor: 'bg-amber/10',
     description: 'Experienced, seeking mastery and nuance',
   },
 } as const;
@@ -153,23 +166,23 @@ export const LEVEL_BADGES = {
  * Get size badge configuration
  */
 export const SIZE_BADGES = {
-  concise: {
-    value: 'concise' as const,
-    label: 'Quick Voyage',
+  basic: {
+    value: 'basic' as const,
+    label: 'Quick Path',
     icon: 'zap',
     description: 'Essentials only, 4-6 topics',
   },
-  standard: {
-    value: 'standard' as const,
-    label: 'Standard Journey',
-    icon: 'compass',
+  moderate: {
+    value: 'moderate' as const,
+    label: 'Standard Path',
+    icon: 'layers',
     description: 'Balanced depth, 8-12 topics',
   },
-  comprehensive: {
-    value: 'comprehensive' as const,
-    label: 'Grand Expedition',
+  large: {
+    value: 'large' as const,
+    label: 'Deep Dive',
     icon: 'mountain',
-    description: 'Deep dive, 15-25 topics',
+    description: 'Comprehensive coverage, 15-25 topics',
   },
 } as const;
 

@@ -15,15 +15,15 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
   const isPartiallyCorrect = !isCorrect && result.score > 0;
 
   const getResultColor = () => {
-    if (isCorrect) return 'forest';
-    if (isPartiallyCorrect) return 'gold';
-    return 'terracotta';
+    if (isCorrect) return 'sage';
+    if (isPartiallyCorrect) return 'amber';
+    return 'rose';
   };
 
   const getResultIcon = () => {
-    if (isCorrect) return <CheckCircle2 className="w-6 h-6 text-forest" />;
-    if (isPartiallyCorrect) return <AlertTriangle className="w-6 h-6 text-gold" />;
-    return <XCircle className="w-6 h-6 text-terracotta" />;
+    if (isCorrect) return <CheckCircle2 className="w-6 h-6 text-sage" />;
+    if (isPartiallyCorrect) return <AlertTriangle className="w-6 h-6 text-amber" />;
+    return <XCircle className="w-6 h-6 text-rose" />;
   };
 
   const getResultMessage = () => {
@@ -35,12 +35,12 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
   return (
     <div
       className={cn(
-        'p-4 rounded-lg border-2',
+        'p-4 rounded-xl border-2',
         isCorrect
-          ? 'bg-forest/5 border-forest/30'
+          ? 'bg-sage/5 border-sage/30'
           : isPartiallyCorrect
-            ? 'bg-gold/5 border-gold/30'
-            : 'bg-terracotta/5 border-terracotta/30'
+            ? 'bg-amber/5 border-amber/30'
+            : 'bg-rose/5 border-rose/30'
       )}
     >
       {/* Result header */}
@@ -51,7 +51,7 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
             <h4 className={cn('font-heading font-semibold', `text-${getResultColor()}`)}>
               {getResultMessage()}
             </h4>
-            <p className="text-sm text-ink/60">Score: {Math.round(result.score * 100)}%</p>
+            <p className="text-sm text-warm-400">Score: {Math.round(result.score * 100)}%</p>
           </div>
         </div>
         <Badge variant={isCorrect ? 'mastered' : isPartiallyCorrect ? 'inProgress' : 'locked'}>
@@ -62,26 +62,26 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
       {/* Feedback */}
       {result.feedback && (
         <div className="mb-4">
-          <p className="text-sm text-ink/80">{result.feedback}</p>
+          <p className="text-sm text-warm-200">{result.feedback}</p>
         </div>
       )}
 
       {/* Explanation */}
       {explanation && (
-        <div className="mb-4 p-3 rounded-md bg-parchment-dark/30">
-          <p className="text-xs text-ink/50 mb-1">Explanation</p>
-          <p className="text-sm text-ink/70">{explanation}</p>
+        <div className="mb-4 p-3 rounded-lg bg-hearth-700/30">
+          <p className="text-xs text-warm-400 mb-1">Explanation</p>
+          <p className="text-sm text-warm-200">{explanation}</p>
         </div>
       )}
 
       {/* Misconceptions */}
       {result.misconceptions && result.misconceptions.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs text-ink/50 mb-2">Areas to Review</p>
+          <p className="text-xs text-warm-400 mb-2">Areas to Review</p>
           <ul className="space-y-1">
             {result.misconceptions.map((misconception, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm text-ink/70">
-                <span className="text-terracotta mt-0.5">•</span>
+              <li key={index} className="flex items-start gap-2 text-sm text-warm-200">
+                <span className="text-rose mt-0.5">•</span>
                 {misconception}
               </li>
             ))}
@@ -90,19 +90,19 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
       )}
 
       {/* Mastery update */}
-      <div className="pt-3 border-t border-gold/20">
+      <div className="pt-3 border-t border-border-moderate">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-ink/50">Mastery Update</span>
+          <span className="text-xs text-warm-400">Mastery Update</span>
           <div className="flex items-center gap-1">
             {masteryDelta > 0 ? (
-              <TrendingUp className="w-4 h-4 text-forest" />
+              <TrendingUp className="w-4 h-4 text-sage" />
             ) : masteryDelta < 0 ? (
-              <TrendingDown className="w-4 h-4 text-terracotta" />
+              <TrendingDown className="w-4 h-4 text-rose" />
             ) : null}
             <span
               className={cn(
                 'text-sm font-mono font-medium',
-                masteryDelta > 0 ? 'text-forest' : masteryDelta < 0 ? 'text-terracotta' : 'text-ink/50'
+                masteryDelta > 0 ? 'text-sage' : masteryDelta < 0 ? 'text-rose' : 'text-warm-400'
               )}
             >
               {masteryDelta > 0 ? '+' : ''}
@@ -111,7 +111,7 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-ink/50 w-12">
+          <span className="text-xs text-warm-400 w-12">
             {Math.round(result.mastery_before * 100)}%
           </span>
           <div className="flex-1 relative">
@@ -121,11 +121,11 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
               className="h-1.5 absolute inset-0"
               indicatorClassName={cn(
                 'transition-all duration-1000',
-                result.mastery_after > result.mastery_before ? 'bg-forest' : 'bg-terracotta'
+                result.mastery_after > result.mastery_before ? 'bg-sage' : 'bg-rose'
               )}
             />
           </div>
-          <span className="text-xs font-medium text-ink w-12 text-right">
+          <span className="text-xs font-medium text-warm-50 w-12 text-right">
             {Math.round(result.mastery_after * 100)}%
           </span>
         </div>

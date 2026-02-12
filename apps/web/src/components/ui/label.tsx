@@ -8,8 +8,8 @@ const labelVariants = cva(
   {
     variants: {
       variant: {
-        default: 'text-ink',
-        muted: 'text-ink/70',
+        default: 'text-warm-50',
+        muted: 'text-warm-200',
       },
     },
     defaultVariants: {

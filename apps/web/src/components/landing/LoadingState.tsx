@@ -1,5 +1,5 @@
 /**
- * Compass spinning animation for plan creation loading state
+ * Organic loading animation for plan creation
  */
 import { motion } from 'framer-motion';
 
@@ -16,7 +16,7 @@ export function LoadingState({ message = 'Generating your personalized learning 
       transition={{ duration: 0.3 }}
       className="flex flex-col items-center justify-center py-20"
     >
-      {/* Animated compass */}
+      {/* Animated concentric rings */}
       <div className="relative w-32 h-32 mb-8">
         {/* Outer ring - rotating */}
         <motion.div
@@ -32,9 +32,9 @@ export function LoadingState({ message = 'Generating your personalized learning 
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              className="text-gold/30"
+              className="text-amber/30"
             />
-            {/* Degree markers */}
+            {/* Markers */}
             {Array.from({ length: 12 }).map((_, i) => {
               const angle = (i * 30) * (Math.PI / 180);
               const x1 = 64 + 56 * Math.cos(angle);
@@ -50,7 +50,7 @@ export function LoadingState({ message = 'Generating your personalized learning 
                   y2={y2}
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="text-gold/50"
+                  className="text-amber/50"
                 />
               );
             })}
@@ -71,7 +71,7 @@ export function LoadingState({ message = 'Generating your personalized learning 
               fill="none"
               stroke="currentColor"
               strokeWidth="1"
-              className="text-ocean/20"
+              className="text-lavender/20"
             />
             <circle
               cx="64"
@@ -80,37 +80,23 @@ export function LoadingState({ message = 'Generating your personalized learning 
               fill="none"
               stroke="currentColor"
               strokeWidth="1"
-              className="text-ocean/20"
+              className="text-lavender/20"
             />
           </svg>
         </motion.div>
 
-        {/* Compass needle - oscillating */}
+        {/* Center pulsing dot */}
         <motion.div
           className="absolute inset-0 flex items-center justify-center"
-          animate={{ rotate: [-15, 15, -15] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <svg viewBox="0 0 64 64" className="w-20 h-20">
-            {/* North needle */}
-            <polygon
-              points="32,8 28,32 32,56 36,32"
-              className="fill-ink/80"
-            />
-            {/* North highlight */}
-            <polygon
-              points="32,8 28,32 32,24"
-              className="fill-gold"
-            />
-            {/* Center pivot */}
-            <circle cx="32" cy="32" r="4" className="fill-ink" />
-            <circle cx="32" cy="32" r="2" className="fill-gold" />
-          </svg>
+          <div className="w-6 h-6 rounded-full bg-amber/60" />
         </motion.div>
 
         {/* Glow effect */}
         <motion.div
-          className="absolute inset-0 rounded-full bg-gold/20 blur-xl"
+          className="absolute inset-0 rounded-full bg-amber/20 blur-xl"
           animate={{
             scale: [1, 1.1, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -126,13 +112,13 @@ export function LoadingState({ message = 'Generating your personalized learning 
         transition={{ delay: 0.2 }}
         className="text-center space-y-2"
       >
-        <p className="text-lg font-heading text-ink">{message}</p>
+        <p className="text-lg font-heading text-warm-50">{message}</p>
         <motion.p
-          className="text-sm text-ink/50"
+          className="text-sm text-warm-400"
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          Consulting the maps...
+          Building your roadmap...
         </motion.p>
       </motion.div>
     </motion.div>

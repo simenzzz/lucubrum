@@ -2,7 +2,7 @@
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test_user:test_password@localhost:5433/learning_helper_test';
 process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6380';
-process.env.PYTHON_SERVICE_TOKEN = 'test-service-token';
+process.env.SERVICE_TOKEN = 'test-service-token';
 process.env.JWT_SECRET = 'test-secret-key-for-testing-only-38chars!!';
 process.env.JWT_ACCESS_EXPIRY = '15m';
 process.env.JWT_REFRESH_EXPIRY = '7d';

@@ -27,11 +27,11 @@ export function MCQExercise({
   return (
     <div className="space-y-4">
       {/* Question */}
-      <p className="text-ink font-medium">{exercise.question}</p>
+      <p className="text-warm-50 font-medium">{exercise.prompt}</p>
 
       {/* Options */}
       <div className="space-y-2">
-        {exercise.options.map((option, index) => {
+        {exercise.choices.map((option, index) => {
           const isSelected = selectedAnswer === option;
           const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
 
@@ -41,10 +41,10 @@ export function MCQExercise({
               onClick={() => !disabled && onAnswerChange(option)}
               disabled={disabled}
               className={cn(
-                'w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all',
+                'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all',
                 isSelected
-                  ? 'border-gold bg-gold/10'
-                  : 'border-parchment-dark hover:border-gold/50 hover:bg-parchment-dark/50',
+                  ? 'border-amber bg-amber/10'
+                  : 'border-border-moderate hover:border-amber/50 hover:bg-hearth-700/50',
                 disabled && 'cursor-not-allowed opacity-60'
               )}
             >
@@ -52,13 +52,13 @@ export function MCQExercise({
                 className={cn(
                   'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
                   isSelected
-                    ? 'bg-gold text-ink'
-                    : 'bg-parchment-dark text-ink/60'
+                    ? 'bg-amber text-hearth-900'
+                    : 'bg-hearth-700 text-warm-400'
                 )}
               >
                 {isSelected ? <CheckCircle2 className="w-4 h-4" /> : optionLabel}
               </span>
-              <span className="text-ink/80">{option}</span>
+              <span className="text-warm-200">{option}</span>
             </button>
           );
         })}

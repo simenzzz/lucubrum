@@ -8,7 +8,8 @@ import logger from '../utils/logger';
 import { isValidUUID } from '../utils/validation';
 import { youtubeService, SelectedResource, Node } from '../services/youtube.service';
 import { planService, PlanServiceError } from '../services/plan.service';
-import { curriculumClient, CurriculumServiceError, Plan } from '../services/curriculum-client';
+import { curriculumClient, CurriculumServiceError } from '../services/curriculum-client';
+import type { Plan } from '../services/curriculum-client';
 import { CreatePlanRequestSchema } from '../validation/schemas';
 import { getPlanWithNodes } from '../db/queries/plans';
 import redis from '../db/redis';
@@ -133,24 +134,7 @@ router.post(
 
       logger.info({ cacheKey, requestId }, 'Plan cache miss - generating new plan');
 
-      // Step 3: Generate plan via Python LLM service
-      let plan: Plan;
-      try {
-        plan = await curriculumClient.generatePlan({
-          topic: topic, // Pass original topic to LLM
-          user_level: user_level,
-          plan_size: plan_size,
-          request_id: requestId,
-        });
-      } catch (error) {
-        if (error instanceof CurriculumServiceError) {
-          logger.error({ error, requestId }, 'Python service error');
-          throw createError(error.message, error.errorCode, error.statusCode, error.details);
-        }
-        throw error;
-      }
-
-      // Step 4: Persist to database first to get plan_id (createPlan handles validation)
+      // Step 3: Generate, validate, and persist plan (single LLM call inside service)
       const result = await planService.createPlan(
         {
           topic,
@@ -161,7 +145,7 @@ router.post(
         requestId
       );
 
-      // Track user-plan relationship
+      // Step 4: Track user-plan relationship
       await upsertUserPlan(req.user!.user_id, result.plan_id);
 
       logger.info({ planId: result.plan_id, userId: req.user!.user_id, requestId }, 'Plan persisted to database');
@@ -182,8 +166,8 @@ router.post(
 
       // Step 6: Cache the plan with metadata (including plan_id for consistent tracking)
       const cacheData: CachedPlanWithMetadata = {
-        plan_id: result.plan_id, // Store the plan_id for consistent tracking
-        plan,
+        plan_id: result.plan_id,
+        plan: result.plan,
         topic_normalized: normalized.topic_normalized,
         domain_category: normalized.domain_category,
         staleness_policy: normalized.staleness_policy,
@@ -197,17 +181,27 @@ router.post(
 
       return res.status(201).json({
         plan_id: result.plan_id,
-        plan: plan, // Return the plan we generated (not from DB)
+        plan: result.plan,
       });
     } catch (error) {
-      // Handle service errors
-      if ((error as PlanServiceError).code) {
-        const serviceError = error as PlanServiceError;
-        logger.error({ error: serviceError, requestId }, 'Plan creation failed');
-        return res.status(serviceError.statusCode).json({
-          error: serviceError.code,
-          message: serviceError.message,
-          details: serviceError.details,
+      // Handle curriculum service errors (from normalizeTopic — generatePlan errors are wrapped as PlanServiceError by the service)
+      if (error instanceof CurriculumServiceError) {
+        logger.error({ error, requestId }, 'Curriculum service error during plan creation');
+        return res.status(error.statusCode).json({
+          error: error.errorCode,
+          message: error.message,
+          details: error.details,
+          request_id: requestId,
+        });
+      }
+
+      // Handle plan service errors (from createPlan)
+      if (error instanceof PlanServiceError) {
+        logger.error({ error, requestId }, 'Plan creation failed');
+        return res.status(error.statusCode).json({
+          error: error.code,
+          message: error.message,
+          details: error.details,
           request_id: requestId,
         });
       }
@@ -222,20 +216,6 @@ router.post(
     }
   }
 );
-
-// Helper function for creating errors
-function createError(
-  message: string,
-  code: string,
-  statusCode: number,
-  details?: Record<string, unknown>
-): PlanServiceError {
-  const error = new Error(message) as PlanServiceError;
-  error.code = code;
-  error.statusCode = statusCode;
-  error.details = details;
-  return error;
-}
 
 /**
  * GET /api/plan/:planId
@@ -410,7 +390,6 @@ router.post(
       return res.status(500).json({
         error: 'RESOURCE_ATTACHMENT_FAILED',
         message: 'Failed to attach resources to plan',
-        details: error instanceof Error ? { message: error.message } : undefined,
         request_id: requestId,
       });
     }

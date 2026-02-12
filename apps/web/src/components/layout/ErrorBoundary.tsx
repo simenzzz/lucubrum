@@ -1,5 +1,5 @@
 import React from 'react';
-import { Anchor, Home, RefreshCw } from 'lucide-react';
+import { AlertCircle, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getSafeErrorMessage } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ interface ErrorBoundaryProps {
 }
 
 /**
- * Shipwreck-themed error boundary
+ * Error boundary with warm dark styling
  */
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -36,50 +36,40 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
+        <div className="min-h-screen bg-hearth-900 flex items-center justify-center p-4">
           <div className="max-w-md w-full text-center space-y-6">
-            {/* Shipwreck illustration */}
+            {/* Error icon */}
             <div className="relative w-32 h-32 mx-auto">
-              <div className="absolute inset-0 bg-ocean/10 rounded-full blur-xl" />
-              <svg
-                viewBox="0 0 100 100"
-                className="w-full h-full text-ink drop-shadow-lg"
-                fill="currentColor"
-              >
-                {/* Broken mast */}
-                <path d="M50 20 L45 60 L40 60 L45 20 Z" />
-                <path d="M50 25 L55 65 L60 65 L55 25 Z" opacity="0.6" />
-                {/* Hull */}
-                <path d="M20 70 Q50 85 80 70 L75 80 Q50 90 25 80 Z" />
-                {/* Wave */}
-                <path
-                  d="M10 85 Q30 75 50 85 Q70 95 90 85"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="text-ocean/30"
-                />
-                {/* Anchor */}
-                <circle cx="50" cy="50" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
-                <line x1="50" y1="58" x2="50" y2="70" strokeWidth="2" />
-                <path d="M42 70 Q50 75 58 70" fill="none" strokeWidth="2" />
-              </svg>
+              <div className="absolute inset-0 bg-rose/10 rounded-full blur-xl" />
+              <div className="relative w-full h-full flex items-center justify-center">
+                <AlertCircle className="w-20 h-20 text-rose/60" />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-3xl font-heading font-bold text-ink">
-                Lost at Sea
+              <h1 className="text-3xl font-heading font-bold text-warm-50">
+                Something Went Wrong
               </h1>
-              <p className="text-ink/70">
-                Something went wrong on your voyage. The charts have been lost.
+              <p className="text-warm-200">
+                An unexpected error occurred. Please try again.
               </p>
             </div>
 
             {this.state.error && (
-              <div className="p-4 rounded-lg bg-terracotta/10 border border-terracotta/30 text-left">
-                <p className="text-sm font-mono text-ink/60 break-words">
+              <div className="p-4 rounded-xl bg-rose/5 border border-rose/30 text-left">
+                <p className="text-sm font-mono text-warm-400 break-words">
                   {getSafeErrorMessage(this.state.error, 'An unexpected error occurred.')}
                 </p>
+                {import.meta.env.DEV && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-warm-600 cursor-pointer">Technical details</summary>
+                    <pre className="text-xs font-mono text-warm-400 mt-1 whitespace-pre-wrap">
+                      {this.state.error.message}
+                      {'\n'}
+                      {this.state.error.stack}
+                    </pre>
+                  </details>
+                )}
               </div>
             )}
 
@@ -113,16 +103,16 @@ export function ErrorFallback({
   resetError: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-parchment flex items-center justify-center p-4">
+    <div className="min-h-screen bg-hearth-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-6">
         <div className="w-20 h-20 mx-auto">
-          <Anchor className="w-full h-full text-terracotta" />
+          <AlertCircle className="w-full h-full text-rose/60" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-heading font-bold text-ink">
-            Anchors Away!
+          <h1 className="text-2xl font-heading font-bold text-warm-50">
+            Something Went Wrong
           </h1>
-          <p className="text-ink/70">{getSafeErrorMessage(error, 'An unexpected error occurred.')}</p>
+          <p className="text-warm-200">{getSafeErrorMessage(error, 'An unexpected error occurred.')}</p>
         </div>
         <Button variant="primary" onClick={resetError}>
           <RefreshCw className="h-4 w-4 mr-2" />

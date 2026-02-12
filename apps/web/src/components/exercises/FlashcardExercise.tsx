@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { RotateCcw, Lightbulb } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { FlashcardExercise as FlashcardExerciseType } from '@/types/api.types';
 import { cn } from '@/lib/utils';
@@ -25,21 +25,12 @@ export function FlashcardExercise({
   examMode,
 }: FlashcardExerciseProps) {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-  const [currentHintIndex, setCurrentHintIndex] = useState(0);
   const selfAssessment = answer as string | undefined;
 
   const handleFlip = () => {
     if (!disabled) {
       setIsFlipped(!isFlipped);
     }
-  };
-
-  const handleShowNextHint = () => {
-    if (exercise.hints && currentHintIndex < exercise.hints.length - 1) {
-      setCurrentHintIndex((i) => i + 1);
-    }
-    setShowHint(true);
   };
 
   const handleSelfAssess = (assessment: 'correct' | 'partial' | 'incorrect') => {
@@ -60,21 +51,21 @@ export function FlashcardExercise({
           className="relative w-full h-full"
           initial={false}
           animate={{ rotateY: isFlipped ? 180 : 0 }}
-          transition={{ duration: 0.6, type: 'spring', stiffness: 100 }}
+          transition={{ duration: 0.6, type: 'spring', stiffness: 200, damping: 25 }}
           style={{ transformStyle: 'preserve-3d' }}
         >
           {/* Front (Question) */}
           <div
             className={cn(
-              'absolute inset-0 p-6 rounded-xl border-2 border-gold/30 bg-gradient-to-br from-parchment to-parchment-dark',
+              'absolute inset-0 p-6 rounded-2xl border-2 border-amber/30 bg-gradient-to-br from-hearth-800 to-hearth-700',
               'flex flex-col items-center justify-center text-center',
               'backface-hidden'
             )}
             style={{ backfaceVisibility: 'hidden' }}
           >
-            <span className="text-xs text-gold-muted uppercase tracking-wide mb-4">Question</span>
-            <p className="text-lg font-medium text-ink">{exercise.question}</p>
-            <span className="absolute bottom-4 text-xs text-ink/40">
+            <span className="text-xs text-amber/70 uppercase tracking-wide mb-4">Question</span>
+            <p className="text-lg font-medium text-warm-50">{exercise.prompt}</p>
+            <span className="absolute bottom-4 text-xs text-warm-600">
               Click to reveal answer
             </span>
           </div>
@@ -82,15 +73,15 @@ export function FlashcardExercise({
           {/* Back (Answer) */}
           <div
             className={cn(
-              'absolute inset-0 p-6 rounded-xl border-2 border-forest/30 bg-gradient-to-br from-forest/5 to-forest/10',
+              'absolute inset-0 p-6 rounded-2xl border-2 border-sage/30 bg-gradient-to-br from-sage/5 to-sage/10',
               'flex flex-col items-center justify-center text-center',
               'backface-hidden'
             )}
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
-            <span className="text-xs text-forest uppercase tracking-wide mb-4">Answer</span>
-            <p className="text-lg font-medium text-ink">{exercise.answer}</p>
-            <span className="absolute bottom-4 text-xs text-ink/40">
+            <span className="text-xs text-sage uppercase tracking-wide mb-4">Answer</span>
+            <p className="text-lg font-medium text-warm-50">{exercise.correct_answer}</p>
+            <span className="absolute bottom-4 text-xs text-warm-600">
               Click to flip back
             </span>
           </div>
@@ -108,37 +99,12 @@ export function FlashcardExercise({
           <RotateCcw className="w-4 h-4 mr-2" />
           Flip Card
         </Button>
-
-        {exercise.hints && exercise.hints.length > 0 && !isFlipped && (
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShowNextHint();
-            }}
-            variant="ghost"
-            size="sm"
-            disabled={disabled}
-          >
-            <Lightbulb className="w-4 h-4 mr-2" />
-            {showHint ? `Hint ${currentHintIndex + 1}/${exercise.hints.length}` : 'Show Hint'}
-          </Button>
-        )}
       </div>
-
-      {/* Hint display */}
-      {showHint && exercise.hints && !isFlipped && (
-        <div className="p-3 rounded-lg bg-gold/5 border border-gold/20">
-          <p className="text-sm text-ink/70">
-            <span className="font-medium text-gold">Hint:</span>{' '}
-            {exercise.hints[currentHintIndex]}
-          </p>
-        </div>
-      )}
 
       {/* Self-assessment (after flipping) */}
       {isFlipped && !examMode && (
         <div className="space-y-3">
-          <p className="text-sm text-center text-ink/60">How well did you know this?</p>
+          <p className="text-sm text-center text-warm-400">How well did you know this?</p>
           <div className="flex justify-center gap-2">
             <Button
               onClick={() => handleSelfAssess('incorrect')}
@@ -146,7 +112,7 @@ export function FlashcardExercise({
               size="sm"
               disabled={disabled || isSubmitting}
               className={cn(
-                selfAssessment === 'incorrect' && 'border-terracotta bg-terracotta/10'
+                selfAssessment === 'incorrect' && 'border-rose bg-rose/10'
               )}
             >
               Didn't Know
@@ -157,7 +123,7 @@ export function FlashcardExercise({
               size="sm"
               disabled={disabled || isSubmitting}
               className={cn(
-                selfAssessment === 'partial' && 'border-gold bg-gold/10'
+                selfAssessment === 'partial' && 'border-amber bg-amber/10'
               )}
             >
               Partially
@@ -168,7 +134,7 @@ export function FlashcardExercise({
               size="sm"
               disabled={disabled || isSubmitting}
               className={cn(
-                selfAssessment === 'correct' && 'border-forest bg-forest/10'
+                selfAssessment === 'correct' && 'border-sage bg-sage/10'
               )}
             >
               Knew It!

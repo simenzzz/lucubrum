@@ -257,11 +257,11 @@ export class CurriculumClient {
 
   constructor() {
     const baseURL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
-    const serviceToken = process.env.PYTHON_SERVICE_TOKEN;
+    const serviceToken = process.env.SERVICE_TOKEN;
 
     this.client = axios.create({
       baseURL,
-      timeout: 30000,
+      timeout: Number(process.env.LLM_TIMEOUT_SECONDS || 60) * 1000,
       headers: {
         'Content-Type': 'application/json',
         ...(serviceToken && { 'X-Service-Token': serviceToken }),

@@ -32,23 +32,23 @@ export interface CreatePlanResult {
   plan: Plan;
 }
 
-export interface PlanServiceError extends Error {
-  code: string;
-  statusCode: number;
-  details?: Record<string, unknown>;
-}
+export class PlanServiceError extends Error {
+  readonly code: string;
+  readonly statusCode: number;
+  readonly details?: Record<string, unknown>;
 
-function createError(
-  message: string,
-  code: string,
-  statusCode: number,
-  details?: Record<string, unknown>
-): PlanServiceError {
-  const error = new Error(message) as PlanServiceError;
-  error.code = code;
-  error.statusCode = statusCode;
-  error.details = details;
-  return error;
+  constructor(
+    message: string,
+    code: string,
+    statusCode: number,
+    details?: Record<string, unknown>
+  ) {
+    super(message);
+    this.name = 'PlanServiceError';
+    this.code = code;
+    this.statusCode = statusCode;
+    this.details = details;
+  }
 }
 
 class PlanService {
@@ -77,7 +77,7 @@ class PlanService {
     } catch (error) {
       if (error instanceof CurriculumServiceError) {
         logger.error({ error, requestId }, 'Python service error');
-        throw createError(error.message, error.errorCode, error.statusCode, error.details);
+        throw new PlanServiceError(error.message, error.errorCode, error.statusCode, error.details);
       }
       throw error;
     }
@@ -86,7 +86,7 @@ class PlanService {
     const schemaResult = schemaValidator.validate<Plan>('plan.v1', plan);
     if (!schemaResult.valid) {
       logger.error({ errors: schemaResult.errors, requestId }, 'Schema validation failed');
-      throw createError(
+      throw new PlanServiceError(
         'Plan failed schema validation',
         'SCHEMA_VALIDATION_FAILED',
         422,
@@ -103,7 +103,7 @@ class PlanService {
     const dagResult = validateDag(nodesForDag);
     if (!dagResult.valid) {
       logger.error({ errors: dagResult.errors, requestId }, 'DAG validation failed');
-      throw createError(
+      throw new PlanServiceError(
         'Plan has invalid prerequisite structure',
         'DAG_VALIDATION_FAILED',
         422,
@@ -129,7 +129,7 @@ class PlanService {
     const prereqResult = validatePrerequisiteOrder(nodesForPrereq, scheduleItems);
     if (!prereqResult.valid) {
       logger.error({ errors: prereqResult.errors, requestId }, 'Prerequisite order validation failed');
-      throw createError(
+      throw new PlanServiceError(
         'Plan schedule violates prerequisite order',
         'PREREQ_ORDER_VALIDATION_FAILED',
         422,

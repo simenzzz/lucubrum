@@ -15,14 +15,14 @@ export function Toaster() {
   const getIcon = (variant: string) => {
     switch (variant) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-forest" />;
+        return <CheckCircle className="h-5 w-5 text-sage" />;
       case 'error':
-        return <AlertCircle className="h-5 w-5 text-terracotta" />;
+        return <AlertCircle className="h-5 w-5 text-rose" />;
       case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-gold" />;
+        return <AlertTriangle className="h-5 w-5 text-amber" />;
       case 'info':
       default:
-        return <Info className="h-5 w-5 text-ocean" />;
+        return <Info className="h-5 w-5 text-lavender" />;
     }
   };
 

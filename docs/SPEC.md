@@ -510,7 +510,7 @@ LOG_LEVEL=info
 
 # Python LLM Service
 PYTHON_SERVICE_URL=http://localhost:8000
-PYTHON_SERVICE_TOKEN=<internal-token>
+SERVICE_TOKEN=<internal-token>
 
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/learning_helper

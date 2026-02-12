@@ -90,10 +90,10 @@ export function ProgressPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-parchment">
+      <div className="min-h-screen bg-hearth-900">
         <div className="container mx-auto px-4 py-8">
           <LoadingSkeleton />
-          <p className="text-center text-ink/60 mt-4">Loading your progress...</p>
+          <p className="text-center text-warm-400 mt-4">Loading your progress...</p>
         </div>
       </div>
     );
@@ -101,11 +101,11 @@ export function ProgressPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-parchment">
+      <div className="min-h-screen bg-hearth-900">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
-            <p className="text-terracotta mb-4">Failed to load progress data</p>
-            <p className="text-ink/60 text-sm">
+            <p className="text-rose mb-4">Failed to load progress data</p>
+            <p className="text-warm-400 text-sm">
               {error instanceof Error ? error.message : 'Unknown error'}
             </p>
           </div>
@@ -115,14 +115,14 @@ export function ProgressPage() {
   }
 
   return (
-    <div className="min-h-screen bg-parchment">
+    <div className="min-h-screen bg-hearth-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-ink mb-2">
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-warm-50 mb-2">
             Your Progress
           </h1>
-          <p className="text-ink/60">
+          <p className="text-warm-400">
             {user?.name
               ? `Track your learning journey, ${user.name.split(' ')[0]}`
               : 'Track your learning journey'}
@@ -135,20 +135,20 @@ export function ProgressPage() {
             label="Overall Mastery"
             value={`${Math.round(stats.overallMastery * 100)}%`}
             icon={<TrendingUp className="w-5 h-5" />}
-            color="gold"
+            color="amber"
           />
           <StatCard
             label="Nodes Completed"
             value={stats.completedNodes}
             subtext={`of ${stats.totalNodes}`}
             icon={<Target className="w-5 h-5" />}
-            color="forest"
+            color="sage"
           />
           <StatCard
             label="Active Roadmaps"
             value={stats.totalPlans}
             icon={<BookOpen className="w-5 h-5" />}
-            color="ocean"
+            color="lavender"
           />
           <StatCard
             label="Mastery Rate"
@@ -156,7 +156,7 @@ export function ProgressPage() {
               ? `${Math.round((stats.completedNodes / stats.totalNodes) * 100)}%`
               : '0%'}
             icon={<Trophy className="w-5 h-5" />}
-            color="terracotta"
+            color="rose"
           />
         </div>
 
@@ -189,7 +189,7 @@ export function ProgressPage() {
         )}
 
         {/* Note about mock data */}
-        <p className="text-xs text-center text-ink/40 mt-8">
+        <p className="text-xs text-center text-warm-600 mt-8">
           Note: Some analytics require historical data endpoints that are not yet implemented.
           Charts show estimated/mock data for demonstration.
         </p>
@@ -209,13 +209,13 @@ function StatCard({
   value: string | number;
   subtext?: string;
   icon: React.ReactNode;
-  color: 'gold' | 'forest' | 'ocean' | 'terracotta';
+  color: 'amber' | 'sage' | 'lavender' | 'rose';
 }) {
   const colorClasses = {
-    gold: 'bg-gold/10 text-gold',
-    forest: 'bg-forest/10 text-forest',
-    ocean: 'bg-ocean/10 text-ocean',
-    terracotta: 'bg-terracotta/10 text-terracotta',
+    amber: 'bg-amber/10 text-amber',
+    sage: 'bg-sage/10 text-sage',
+    lavender: 'bg-lavender/10 text-lavender',
+    rose: 'bg-rose/10 text-rose',
   };
 
   return (
@@ -227,10 +227,10 @@ function StatCard({
           </div>
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="font-heading text-2xl font-bold text-ink">{value}</span>
-              {subtext && <span className="text-xs text-ink/50">{subtext}</span>}
+              <span className="font-heading text-2xl font-bold text-warm-50">{value}</span>
+              {subtext && <span className="text-xs text-warm-400">{subtext}</span>}
             </div>
-            <p className="text-xs text-ink/60">{label}</p>
+            <p className="text-xs text-warm-400">{label}</p>
           </div>
         </div>
       </CardContent>

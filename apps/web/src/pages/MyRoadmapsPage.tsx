@@ -44,10 +44,10 @@ export function MyRoadmapsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-parchment">
+      <div className="min-h-screen bg-hearth-900">
         <div className="container mx-auto px-4 py-8">
           <LoadingSkeleton />
-          <p className="text-center text-ink/60 mt-4">Loading your roadmaps...</p>
+          <p className="text-center text-warm-400 mt-4">Loading your roadmaps...</p>
         </div>
       </div>
     );
@@ -55,11 +55,11 @@ export function MyRoadmapsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-parchment">
+      <div className="min-h-screen bg-hearth-900">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
-            <p className="text-terracotta mb-4">Failed to load your roadmaps</p>
-            <p className="text-ink/60 text-sm">
+            <p className="text-rose mb-4">Failed to load your roadmaps</p>
+            <p className="text-warm-400 text-sm">
               {error instanceof Error ? error.message : 'Unknown error'}
             </p>
           </div>
@@ -69,20 +69,20 @@ export function MyRoadmapsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-parchment">
+    <div className="min-h-screen bg-hearth-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center">
-              <Map className="w-6 h-6 text-gold" />
+            <div className="w-12 h-12 rounded-full bg-amber/20 flex items-center justify-center">
+              <Map className="w-6 h-6 text-amber" />
             </div>
             <div>
-              <h1 className="font-heading text-2xl sm:text-3xl font-bold text-ink">
+              <h1 className="font-heading text-2xl sm:text-3xl font-bold text-warm-50">
                 My Roadmaps
               </h1>
-              <p className="text-sm text-ink/60">
-                {user?.name ? `Welcome back, ${user.name.split(' ')[0]}` : 'Your learning journeys'}
+              <p className="text-sm text-warm-400">
+                {user?.name ? `Welcome back, ${user.name.split(' ')[0]}` : 'Your learning paths'}
               </p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export function MyRoadmapsPage() {
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink/40" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
                 <Input
                   type="text"
                   placeholder="Search roadmaps..."
@@ -114,7 +114,7 @@ export function MyRoadmapsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-ink/40" />
+                <SlidersHorizontal className="w-4 h-4 text-warm-400" />
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
                   <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Sort by" />
@@ -155,7 +155,7 @@ export function MyRoadmapsPage() {
             {/* Roadmap grid */}
             {filteredPlans.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-ink/60">No roadmaps match your search.</p>
+                <p className="text-warm-400">No roadmaps match your search.</p>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -181,12 +181,12 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="p-4 rounded-lg bg-parchment-dark/50 border border-gold/20">
+    <div className="p-4 rounded-xl bg-hearth-800 border border-border-moderate">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-gold/70">{icon}</span>
-        <span className="font-heading text-2xl font-bold text-ink">{value}</span>
+        <span className="text-amber/70">{icon}</span>
+        <span className="font-heading text-2xl font-bold text-warm-50">{value}</span>
       </div>
-      <span className="text-xs text-ink/50">{label}</span>
+      <span className="text-xs text-warm-400">{label}</span>
     </div>
   );
 }

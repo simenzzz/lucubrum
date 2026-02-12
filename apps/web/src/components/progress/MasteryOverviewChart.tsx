@@ -11,10 +11,10 @@ interface MasteryOverviewChartProps {
 }
 
 const COLORS = {
-  locked: '#8B8680',     // locked gray
-  available: '#C4A052',  // gold
-  inProgress: '#2D4A5E', // ocean
-  mastered: '#4A6741',   // forest
+  locked: '#5C5349',     // warm dim gray
+  available: '#D4A55A',  // amber
+  inProgress: '#9488B2', // lavender
+  mastered: '#8BA888',   // sage
 };
 
 const STATUS_LABELS = {
@@ -41,7 +41,7 @@ export function MasteryOverviewChart({ data }: MasteryOverviewChartProps) {
       </CardHeader>
       <CardContent>
         {total === 0 ? (
-          <div className="h-[250px] flex items-center justify-center text-ink/40">
+          <div className="h-[250px] flex items-center justify-center text-warm-600">
             No data available
           </div>
         ) : (
@@ -65,16 +65,17 @@ export function MasteryOverviewChart({ data }: MasteryOverviewChartProps) {
               <Tooltip
                 formatter={(value: number) => [`${value} nodes`, 'Count']}
                 contentStyle={{
-                  backgroundColor: '#F7F3E8',
-                  border: '1px solid rgba(196, 160, 82, 0.3)',
-                  borderRadius: '8px',
+                  backgroundColor: '#231F1B',
+                  border: '1px solid rgba(212, 165, 90, 0.3)',
+                  borderRadius: '12px',
+                  color: '#F0EAE0',
                 }}
               />
               <Legend
                 verticalAlign="bottom"
                 height={36}
                 formatter={(value) => (
-                  <span className="text-sm text-ink/70">{value}</span>
+                  <span className="text-sm text-warm-400">{value}</span>
                 )}
               />
             </PieChart>
@@ -82,15 +83,15 @@ export function MasteryOverviewChart({ data }: MasteryOverviewChartProps) {
         )}
 
         {/* Summary stats */}
-        <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-gold/20">
+        <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-border-moderate">
           {Object.entries(data).map(([key, value]) => (
             <div key={key} className="text-center">
               <div
                 className="w-3 h-3 rounded-full mx-auto mb-1"
                 style={{ backgroundColor: COLORS[key as keyof typeof COLORS] }}
               />
-              <div className="font-heading text-lg font-semibold text-ink">{value}</div>
-              <div className="text-xs text-ink/50 capitalize">
+              <div className="font-heading text-lg font-semibold text-warm-50">{value}</div>
+              <div className="text-xs text-warm-400 capitalize">
                 {STATUS_LABELS[key as keyof typeof STATUS_LABELS]}
               </div>
             </div>

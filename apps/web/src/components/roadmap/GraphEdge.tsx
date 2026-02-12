@@ -27,14 +27,14 @@ export function GraphEdge({ edge, fromStatus, toStatus }: GraphEdgeProps) {
   const isLocked = toStatus === 'locked';
 
   const getStrokeColor = () => {
-    if (isCompleted) return '#4A6741'; // forest
-    if (isActive) return '#C4A052'; // gold
-    if (isLocked) return '#8B8680'; // locked
-    return '#B8956A'; // gold-muted
+    if (isCompleted) return '#8BA888'; // sage
+    if (isActive) return '#D4A55A'; // amber
+    if (isLocked) return '#5C5349'; // locked
+    return '#A68B6B'; // clay
   };
 
   const getStrokeOpacity = () => {
-    if (isLocked) return 0.3;
+    if (isLocked) return 0.4;
     if (isActive || isCompleted) return 0.8;
     return 0.5;
   };
@@ -74,9 +74,9 @@ export function GraphEdge({ edge, fromStatus, toStatus }: GraphEdgeProps) {
         <motion.path
           d={pathD}
           fill="none"
-          stroke="#C4A052"
+          stroke="#D4A55A"
           strokeWidth={6}
-          strokeOpacity={0.15}
+          strokeOpacity={0.1}
           strokeLinecap="round"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}

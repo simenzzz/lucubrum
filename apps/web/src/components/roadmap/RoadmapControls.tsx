@@ -22,7 +22,7 @@ export function RoadmapControls({
   return (
     <div
       className={cn(
-        'flex flex-col gap-1 p-1.5 rounded-lg bg-parchment/90 backdrop-blur-sm border border-gold/30 shadow-md',
+        'flex flex-col gap-1 p-1.5 glass-panel',
         className
       )}
     >
@@ -37,7 +37,7 @@ export function RoadmapControls({
         <ZoomIn className="h-4 w-4" />
       </Button>
 
-      <div className="text-center text-xs font-mono text-ink/60 py-1">
+      <div className="text-center text-xs font-mono text-warm-400 py-1">
         {Math.round(zoom * 100)}%
       </div>
 
@@ -52,7 +52,7 @@ export function RoadmapControls({
         <ZoomOut className="h-4 w-4" />
       </Button>
 
-      <div className="h-px bg-gold/20 my-1" />
+      <div className="h-px bg-border-moderate my-1" />
 
       <Button
         variant="ghost"

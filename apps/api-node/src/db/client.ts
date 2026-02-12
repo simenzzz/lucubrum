@@ -30,13 +30,19 @@ class DatabaseClient {
   private isConnected: boolean = false;
 
   constructor(config?: DatabaseConfig) {
+    const databaseUrl = !config ? process.env.DATABASE_URL : undefined;
     const dbConfig = config || getConfig();
+
     this.pool = new Pool({
-      host: dbConfig.host,
-      port: dbConfig.port,
-      database: dbConfig.database,
-      user: dbConfig.user,
-      password: dbConfig.password,
+      ...(databaseUrl
+        ? { connectionString: databaseUrl }
+        : {
+            host: dbConfig.host,
+            port: dbConfig.port,
+            database: dbConfig.database,
+            user: dbConfig.user,
+            password: dbConfig.password,
+          }),
       max: dbConfig.max,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,

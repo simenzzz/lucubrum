@@ -60,16 +60,41 @@ interface RoadmapState {
 }
 
 /**
- * Custom storage adapter using superjson to handle Map and Date serialization
+ * Custom storage adapter using superjson to handle Map and Date serialization.
+ * zustand persist stores { state, version } wrappers — we serialize/deserialize
+ * only the `state` portion with superjson to preserve Map/Date types.
  */
 const superjsonStorage: StateStorage = {
   getItem: (name: string): string | null => {
     const str = localStorage.getItem(name);
     if (!str) return null;
-    return str;
+    try {
+      const wrapper = JSON.parse(str);
+      if (wrapper.state) {
+        wrapper.state = superjson.deserialize(wrapper.state);
+      }
+      return JSON.stringify(wrapper);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.warn('[RoadmapStore] Failed to deserialize state, clearing:', error);
+      }
+      localStorage.removeItem(name);
+      return null;
+    }
   },
   setItem: (name: string, value: string): void => {
-    localStorage.setItem(name, value);
+    try {
+      const wrapper = JSON.parse(value);
+      if (wrapper.state) {
+        wrapper.state = superjson.serialize(wrapper.state);
+      }
+      localStorage.setItem(name, JSON.stringify(wrapper));
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('[RoadmapStore] Failed to serialize state:', error);
+      }
+      localStorage.setItem(name, value);
+    }
   },
   removeItem: (name: string): void => {
     localStorage.removeItem(name);
@@ -248,10 +273,7 @@ export const useRoadmapStore = create<RoadmapState>()(
     }),
     {
       name: 'learning-helper-roadmap',
-      storage: createJSONStorage(() => superjsonStorage, {
-        replacer: (_key, value) => superjson.serialize(value),
-        reviver: (_key, value) => superjson.deserialize(value as Parameters<typeof superjson.deserialize>[0]),
-      }),
+      storage: createJSONStorage(() => superjsonStorage),
       // Only persist exam-related state
       partialize: (state) => ({
         examState: state.examState,

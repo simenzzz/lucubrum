@@ -13,6 +13,15 @@ interface FillBlankExerciseProps {
   examMode?: boolean;
 }
 
+/**
+ * Split prompt on `___` placeholders to create inline blanks.
+ * Returns text segments interleaved with blank indices.
+ */
+function parsePromptBlanks(prompt: string): { segments: string[]; blankCount: number } {
+  const segments = prompt.split('___');
+  return { segments, blankCount: segments.length - 1 };
+}
+
 export function FillBlankExercise({
   exercise,
   answer,
@@ -22,7 +31,9 @@ export function FillBlankExercise({
   disabled,
   examMode,
 }: FillBlankExerciseProps) {
-  const answers = (answer as string[]) || exercise.blanks.map(() => '');
+  const { segments, blankCount } = parsePromptBlanks(exercise.prompt);
+  const expectedCount = Math.max(blankCount, exercise.correct_answer.answers.length);
+  const answers = (answer as string[]) || Array.from({ length: expectedCount }, () => '');
 
   const handleBlankChange = (index: number, value: string) => {
     const newAnswers = [...answers];
@@ -30,58 +41,52 @@ export function FillBlankExercise({
     onAnswerChange(newAnswers);
   };
 
-  const isComplete = answers.every((a) => a.trim() !== '');
+  const isComplete = answers.length > 0 && answers.every((a) => a.trim() !== '');
 
   return (
     <div className="space-y-4">
-      {/* Question */}
-      <p className="text-ink font-medium">{exercise.question}</p>
-
-      {/* Fill in the blanks */}
-      <div className="space-y-3">
-        {exercise.blanks.map((blank, index) => (
-          <div key={index} className="flex items-center gap-2 flex-wrap">
-            {blank.before && (
-              <span className="text-ink/80">{blank.before}</span>
+      {/* Prompt with inline blanks */}
+      <div className="text-warm-50 font-medium leading-relaxed flex flex-wrap items-center gap-1">
+        {segments.map((segment, index) => (
+          <span key={index} className="contents">
+            {segment && <span>{segment}</span>}
+            {index < blankCount && (
+              <input
+                type="text"
+                value={answers[index] || ''}
+                onChange={(e) => handleBlankChange(index, e.target.value)}
+                disabled={disabled}
+                placeholder={`Blank ${index + 1}`}
+                className={cn(
+                  'inline-flex min-w-[120px] max-w-[200px] px-3 py-1.5 rounded-lg border-2 border-dashed',
+                  'bg-hearth-700/50 text-warm-50 placeholder:text-warm-600',
+                  'focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20',
+                  'disabled:opacity-60 disabled:cursor-not-allowed',
+                  'transition-colors'
+                )}
+              />
             )}
-            <input
-              type="text"
-              value={answers[index] || ''}
-              onChange={(e) => handleBlankChange(index, e.target.value)}
-              disabled={disabled}
-              placeholder={`Blank ${index + 1}`}
-              className={cn(
-                'inline-flex min-w-[120px] max-w-[200px] px-3 py-1.5 rounded-md border-2 border-dashed',
-                'bg-parchment-dark/30 text-ink placeholder:text-ink/40',
-                'focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20',
-                'disabled:opacity-60 disabled:cursor-not-allowed',
-                'transition-colors'
-              )}
-            />
-            {blank.after && (
-              <span className="text-ink/80">{blank.after}</span>
-            )}
-          </div>
+          </span>
         ))}
       </div>
 
       {/* Progress indicator */}
       <div className="flex items-center gap-2">
         <div className="flex gap-1">
-          {exercise.blanks.map((_, index) => (
+          {Array.from({ length: expectedCount }, (_, index) => (
             <div
               key={index}
               className={cn(
                 'w-2 h-2 rounded-full transition-colors',
                 answers[index]?.trim()
-                  ? 'bg-gold'
-                  : 'bg-parchment-dark'
+                  ? 'bg-amber'
+                  : 'bg-hearth-700'
               )}
             />
           ))}
         </div>
-        <span className="text-xs text-ink/50">
-          {answers.filter((a) => a.trim()).length}/{exercise.blanks.length} blanks filled
+        <span className="text-xs text-warm-400">
+          {answers.filter((a) => a.trim()).length}/{expectedCount} blanks filled
         </span>
       </div>
 

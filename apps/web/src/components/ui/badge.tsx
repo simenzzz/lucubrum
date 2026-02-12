@@ -3,28 +3,28 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2',
+  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-amber focus:ring-offset-2 focus:ring-offset-hearth-900',
   {
     variants: {
       variant: {
-        default: 'bg-ink text-parchment',
-        secondary: 'bg-parchment-dark text-ink border border-gold/30',
-        outline: 'border border-gold/50 text-ink bg-transparent',
+        default: 'bg-hearth-700 text-warm-50 border border-border-moderate',
+        secondary: 'bg-hearth-600 text-warm-200 border border-border-moderate',
+        outline: 'border border-border-strong text-warm-200 bg-transparent',
         // Mastery status variants
-        locked: 'bg-locked/20 text-locked border border-locked/30',
-        available: 'bg-gold/20 text-gold-muted border border-gold/30 shadow-glow',
-        inProgress: 'bg-ocean/20 text-ocean border border-ocean/30',
-        mastered: 'bg-forest/20 text-forest border border-forest/30',
+        locked: 'bg-locked/20 text-warm-400 border border-locked/30',
+        available: 'bg-amber/15 text-amber border border-amber/30',
+        inProgress: 'bg-lavender/15 text-lavender border border-lavender/30',
+        mastered: 'bg-sage/15 text-sage border border-sage/30',
         // Difficulty variants
-        easy: 'bg-forest/20 text-forest border border-forest/30',
-        medium: 'bg-gold/20 text-gold-muted border border-gold/30',
-        hard: 'bg-terracotta/20 text-terracotta border border-terracotta/30',
+        easy: 'bg-sage/15 text-sage border border-sage/30',
+        medium: 'bg-amber/15 text-amber border border-amber/30',
+        hard: 'bg-rose/15 text-rose border border-rose/30',
         // Exercise type variants
-        mcq: 'bg-ocean/20 text-ocean border border-ocean/30',
-        shortAnswer: 'bg-gold/20 text-gold-muted border border-gold/30',
-        fillBlank: 'bg-forest/20 text-forest border border-forest/30',
-        coding: 'bg-ink/10 text-ink border border-ink/30',
-        flashcard: 'bg-terracotta/20 text-terracotta border border-terracotta/30',
+        mcq: 'bg-lavender/15 text-lavender border border-lavender/30',
+        shortAnswer: 'bg-amber/15 text-amber border border-amber/30',
+        fillBlank: 'bg-sage/15 text-sage border border-sage/30',
+        coding: 'bg-warm-400/15 text-warm-200 border border-warm-400/30',
+        flashcard: 'bg-clay/15 text-clay border border-clay/30',
       },
       size: {
         default: 'px-2.5 py-0.5 text-xs',

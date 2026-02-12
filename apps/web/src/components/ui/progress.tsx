@@ -19,19 +19,19 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
         aria-valuemax={max}
         aria-valuenow={value}
         className={cn(
-          'relative h-2 w-full overflow-hidden rounded-full bg-parchment-dark',
+          'relative h-2 w-full overflow-hidden rounded-full bg-hearth-700',
           className
         )}
         {...props}
       >
         <div
           className={cn(
-            'h-full transition-all duration-300 ease-out',
+            'h-full rounded-full transition-all duration-300 ease-out',
             percentage < 30
-              ? 'bg-terracotta'
+              ? 'bg-rose'
               : percentage < 70
-                ? 'bg-gold'
-                : 'bg-forest',
+                ? 'bg-amber'
+                : 'bg-sage',
             indicatorClassName
           )}
           style={{ width: `${percentage}%` }}
@@ -69,9 +69,9 @@ const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps>(
     const offset = circumference - (percentage / 100) * circumference;
 
     const getColor = () => {
-      if (percentage < 30) return 'stroke-terracotta';
-      if (percentage < 70) return 'stroke-gold';
-      return 'stroke-forest';
+      if (percentage < 30) return 'stroke-rose';
+      if (percentage < 70) return 'stroke-amber';
+      return 'stroke-sage';
     };
 
     return (
@@ -90,7 +90,7 @@ const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps>(
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-parchment-dark"
+          className="text-hearth-700"
         />
         <circle
           cx={size / 2}
@@ -109,7 +109,7 @@ const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps>(
             y={size / 2}
             textAnchor="middle"
             dominantBaseline="central"
-            className="fill-ink text-sm font-medium rotate-90 origin-center"
+            className="fill-warm-50 text-sm font-medium rotate-90 origin-center"
             style={{ transform: `rotate(90deg)`, transformOrigin: `${size / 2}px ${size / 2}px` }}
           >
             {Math.round(percentage)}%

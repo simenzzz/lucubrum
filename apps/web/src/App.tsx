@@ -14,13 +14,13 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <div className="min-h-screen bg-parchment">
+        <div className="min-h-screen bg-hearth-900">
           <Navbar />
           <main className="min-h-[calc(100vh-64px)]">
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />
-              <Route path="/auth/callback" element={<AuthCallbackPage />} />
+              <Route path="/oauth/callback" element={<AuthCallbackPage />} />
 
               {/* Protected routes */}
               <Route

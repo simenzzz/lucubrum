@@ -29,6 +29,14 @@ const EXERCISE_TYPE_LABELS: Record<string, string> = {
   flashcard: 'Flashcard',
 };
 
+const EXERCISE_TYPE_TO_BADGE: Record<string, string> = {
+  mcq: 'mcq',
+  short_answer: 'shortAnswer',
+  fill_blank: 'fillBlank',
+  coding: 'coding',
+  flashcard: 'flashcard',
+};
+
 const DIFFICULTY_VARIANT: Record<number, 'easy' | 'medium' | 'hard'> = {
   1: 'easy',
   2: 'easy',
@@ -88,7 +96,7 @@ export function ExerciseCard({
           answer: typeof userAnswer === 'string' ? userAnswer : JSON.stringify(userAnswer),
           ...(exercise.type === 'coding' && {
             code: userAnswer as string,
-            language: (exercise as { language: string }).language,
+            language: exercise.correct_answer.language,
           }),
         },
       });
@@ -135,7 +143,7 @@ export function ExerciseCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <Badge variant={exercise.type as 'mcq' | 'shortAnswer' | 'fillBlank' | 'coding' | 'flashcard'}>
+            <Badge variant={(EXERCISE_TYPE_TO_BADGE[exercise.type] ?? exercise.type) as 'mcq' | 'shortAnswer' | 'fillBlank' | 'coding' | 'flashcard'}>
               {EXERCISE_TYPE_LABELS[exercise.type] || exercise.type}
             </Badge>
             <Badge variant={DIFFICULTY_VARIANT[exercise.difficulty]}>
@@ -152,7 +160,7 @@ export function ExerciseCard({
 
         {/* Show result after submission (practice mode only) */}
         {showResult && result && !examMode && (
-          <GradeResult result={result} explanation={exercise.explanation} />
+          <GradeResult result={result} explanation={exercise.rubric} />
         )}
       </CardContent>
     </Card>

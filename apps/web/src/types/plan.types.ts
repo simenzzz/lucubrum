@@ -60,7 +60,7 @@ export type ExerciseTab = 'learning' | 'practice' | 'exam';
 export interface PlanFormData {
   topic: string;
   userLevel: 'beginner' | 'intermediate' | 'advanced';
-  sizePreference: 'concise' | 'standard' | 'comprehensive';
+  sizePreference: 'basic' | 'moderate' | 'large';
 }
 
 // Level badge configuration

@@ -27,7 +27,7 @@ export function ShortAnswerExercise({
   return (
     <div className="space-y-4">
       {/* Question */}
-      <p className="text-ink font-medium">{exercise.question}</p>
+      <p className="text-warm-50 font-medium">{exercise.prompt}</p>
 
       {/* Answer textarea */}
       <div className="space-y-2">
@@ -36,26 +36,15 @@ export function ShortAnswerExercise({
           onChange={(e) => onAnswerChange(e.target.value)}
           disabled={disabled}
           placeholder="Type your answer here..."
-          className="w-full min-h-[120px] p-3 rounded-lg border-2 border-parchment-dark bg-parchment focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20 resize-y transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full min-h-[120px] p-3 rounded-xl border-2 border-border-moderate bg-hearth-700 text-warm-50 placeholder:text-warm-400 focus:border-amber focus:outline-none focus:ring-2 focus:ring-amber/20 resize-y transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           maxLength={maxLength}
         />
         <div className="flex justify-end">
-          <span className="text-xs text-ink/50">
+          <span className="text-xs text-warm-400">
             {textAnswer.length}/{maxLength}
           </span>
         </div>
       </div>
-
-      {/* Keywords hint (optional) */}
-      {exercise.keywords.length > 0 && !examMode && (
-        <div className="p-3 rounded-lg bg-gold/5 border border-gold/20">
-          <p className="text-xs text-ink/60">
-            <span className="font-medium">Hint:</span> Your answer should mention concepts like:{' '}
-            {exercise.keywords.slice(0, 3).join(', ')}
-            {exercise.keywords.length > 3 && '...'}
-          </p>
-        </div>
-      )}
 
       {/* Submit button */}
       {!examMode && (

@@ -63,6 +63,7 @@ export const CreateExercisesRequestSchema = z.object({
   exercise_types: z.array(ExerciseTypeSchema).optional(),
   count: z.number().int().min(1).max(20).default(5),
   difficulty_target: z.number().int().min(1).max(5).default(3),
+  force: z.boolean().optional(),
 });
 export type CreateExercisesRequest = z.infer<typeof CreateExercisesRequestSchema>;
 

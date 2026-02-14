@@ -155,7 +155,7 @@ router.delete(
       // Filter by topic if provided
       let keysToDelete = keys;
       if (topic) {
-        // Plan cache key format: lh:plan:{normalized_topic}:{user_level}
+        // Plan cache key format: lh:plan:{normalized_topic}:{user_level}:{plan_size}
         const topicLower = topic.toLowerCase();
         keysToDelete = keys.filter((key) => {
           // Extract topic from key (format: lh:plan:topic:level)
@@ -200,7 +200,7 @@ router.delete(
 /**
  * DELETE /admin/cache/plans/:cacheKey
  * Invalidate a specific plan cache entry by cache key.
- * The cache key should be the part after 'lh:' prefix (e.g., 'plan:machine_learning:beginner')
+ * The cache key should be the part after 'lh:' prefix (e.g., 'plan:machine_learning:beginner:moderate')
  */
 router.delete(
   '/cache/plans/:cacheKey',

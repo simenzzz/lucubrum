@@ -5,6 +5,12 @@ import { Button } from '@/components/ui/button';
 import { ExerciseCard } from '@/components/exercises/ExerciseCard';
 import type { PlanNode } from '@/types/api.types';
 
+/**
+ * Known limitation: mastery passed to ExerciseCard is from mount time.
+ * If multiple exercises are completed quickly, delta calculations may use
+ * stale data. Proper fix requires refetching mastery after each attempt.
+ */
+
 interface PracticeTabProps {
   node: PlanNode;
   planId: string;
@@ -136,11 +142,13 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
         </div>
       ) : currentExercise ? (
         <ExerciseCard
+          key={currentExercise.id}
           exercise={currentExercise}
           planId={planId}
           nodeId={node.node_id}
           onComplete={() => handleExerciseComplete(currentExercise.id)}
           isCompleted={completedExercises.has(currentExercise.id)}
+          currentMastery={mastery}
         />
       ) : null}
 

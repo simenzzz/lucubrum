@@ -135,12 +135,15 @@ export function useNextNode(planId: string, enabled = true) {
  * Get all plans for the current user
  */
 export function useUserPlans(params?: { limit?: number; offset?: number }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return useQuery({
-    queryKey: ['user-plans', params],
-    queryFn: ({ signal }) => userApi.getPlans(params, { signal }),
-    enabled: isAuthenticated,
+    queryKey: ['user-plans', user?.id, params],
+    queryFn: ({ signal }) => {
+      if (!user) throw new Error('User not authenticated');
+      return userApi.getPlans(user.id, params, { signal });
+    },
+    enabled: isAuthenticated && !!user,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

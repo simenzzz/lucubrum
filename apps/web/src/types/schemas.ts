@@ -57,7 +57,7 @@ export const PlanSchema = z.object({
   schema_version: z.string().optional(),
   topic: z.string(),
   user_level: z.string(),
-  plan_size: z.string().optional(),
+  plan_size: z.string(),
   nodes: z.array(PlanNodeSchema),
   schedule: z.array(ScheduleItemSchema),
   metadata: ArtifactMetadataSchema,
@@ -85,9 +85,9 @@ export const YouTubeResourceSchema = z.object({
   duration_seconds: z.number(),
   thumbnail_url: z.string(),
   relevance_score: z.number(),
-  url: z.string().optional(),
-  type: z.enum(['must_watch', 'recommended']).optional(),
-  rationale: z.string().optional(),
+  url: z.string(),
+  type: z.enum(['must_watch', 'recommended']),
+  rationale: z.string(),
 });
 
 export const NodeResourcesSchema = z.object({
@@ -115,14 +115,15 @@ export const BackendResourcesResponseSchema = z.object({
 // Exercise schemas — aligned with Python/DB field names (source of truth)
 const BaseExerciseSchema = z.object({
   id: z.string(),
+  node_id: z.string(),
   prompt: z.string(),
   difficulty: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
-  rubric: z.string().optional(),
+  rubric: z.string(),
+  choices: z.array(z.string()).nullable(),
 });
 
 export const MCQExerciseSchema = BaseExerciseSchema.extend({
   type: z.literal('mcq'),
-  choices: z.array(z.string()),
   correct_answer: z.string(),
 });
 
@@ -173,38 +174,41 @@ export const ExerciseSetResponseSchema = z.object({
   cached: z.boolean().optional(),
 });
 
-// Mastery schemas
+// Mastery schemas — match backend response structure exactly
 export const AttemptResponseSchema = z.object({
   attempt_id: z.string(),
-  exercise_id: z.string(),
-  is_correct: z.boolean(),
-  score: z.number(),
-  feedback: z.string(),
-  misconceptions: z.array(z.string()).optional(),
-  mastery_before: z.number(),
-  mastery_after: z.number(),
+  grade: z.object({
+    score: z.number(),
+    is_correct: z.boolean(),
+    feedback: z.string(),
+    misconceptions: z.array(z.string()).nullable().optional(),
+  }),
+  mastery: z.object({
+    score: z.number(),
+    level: z.string(),
+    total_attempts: z.number(),
+  }),
 });
 
 export const NodeMasteryResponseSchema = z.object({
-  node_id: z.string(),
-  mastery: z.number(),
-  attempt_count: z.number(),
-  last_attempt_at: z.string().optional(),
-  next_review_at: z.string().optional(),
+  mastery: z.object({
+    score: z.number(),
+    level: z.string(),
+    total_attempts: z.number(),
+    last_updated: z.string().nullable().optional(),
+  }),
 });
 
 export const PlanMasteryOverviewResponseSchema = z.object({
-  plan_id: z.string(),
-  node_masteries: z.array(
+  mastery_by_node: z.record(
+    z.string(),
     z.object({
-      node_id: z.string(),
-      mastery: z.number(),
-      status: z.enum(['locked', 'available', 'in_progress', 'mastered']),
+      score: z.number(),
+      level: z.string(),
+      total_attempts: z.number(),
+      last_updated: z.string().nullable().optional(),
     })
   ),
-  overall_mastery: z.number(),
-  completed_nodes: z.number(),
-  total_nodes: z.number(),
 });
 
 // User plans schemas
@@ -212,16 +216,16 @@ export const UserPlanSummarySchema = z.object({
   plan_id: z.string(),
   topic: z.string(),
   user_level: z.string(),
-  mastery: z.number(),
-  node_count: z.number(),
-  completed_nodes: z.number(),
+  plan_size: z.string(),
+  started_at: z.string(),
   last_accessed_at: z.string(),
-  created_at: z.string(),
 });
 
 export const UserPlansResponseSchema = z.object({
   plans: z.array(UserPlanSummarySchema),
   total: z.number(),
+  limit: z.number(),
+  offset: z.number(),
 });
 
 // Error schema
@@ -229,7 +233,7 @@ export const ApiErrorSchema = z.object({
   error: z.string(),
   message: z.string(),
   details: z.unknown().optional(),
-  timestamp: z.string(),
+  request_id: z.string(),
 });
 
 // Request validation schemas

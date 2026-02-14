@@ -40,6 +40,7 @@ export interface CreatePlanResponse {
   plan_id: string;
   topic: string;
   user_level: string;
+  plan_size: string;
   nodes: PlanNode[];
   schedule: ScheduleItem[];
   metadata: ArtifactMetadata;
@@ -86,15 +87,16 @@ export type Exercise = MCQExercise | ShortAnswerExercise | FillBlankExercise | C
 
 export interface BaseExercise {
   id: string;
+  node_id: string;
   type: 'mcq' | 'short_answer' | 'fill_blank' | 'coding' | 'flashcard';
   prompt: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
-  rubric?: string;
+  rubric: string;
+  choices: string[] | null;
 }
 
 export interface MCQExercise extends BaseExercise {
   type: 'mcq';
-  choices: string[];
   correct_answer: string;
 }
 
@@ -136,40 +138,46 @@ export interface SubmitAttemptRequest {
 
 export interface AttemptResponse {
   attempt_id: string;
-  exercise_id: string;
-  is_correct: boolean;
-  score: number;
-  feedback: string;
-  misconceptions?: string[];
-  mastery_before: number;
-  mastery_after: number;
+  grade: {
+    score: number;
+    is_correct: boolean;
+    feedback: string;
+    misconceptions?: string[] | null;
+  };
+  mastery: {
+    score: number;
+    level: string;
+    total_attempts: number;
+  };
 }
 
 export interface NodeMasteryResponse {
-  node_id: string;
-  mastery: number;
-  attempt_count: number;
-  last_attempt_at?: string;
-  next_review_at?: string;
+  mastery: {
+    score: number;
+    level: string;
+    total_attempts: number;
+    last_updated?: string | null;
+  };
 }
 
 export interface PlanMasteryOverviewResponse {
-  plan_id: string;
-  node_masteries: {
-    node_id: string;
-    mastery: number;
-    status: 'locked' | 'available' | 'in_progress' | 'mastered';
-  }[];
-  overall_mastery: number;
-  completed_nodes: number;
-  total_nodes: number;
+  mastery_by_node: Record<string, {
+    score: number;
+    level: string;
+    total_attempts: number;
+    last_updated?: string | null;
+  }>;
 }
 
 export interface NextNodeRecommendationResponse {
-  node_id: string;
-  title: string;
+  recommended_node_id: string | null;
   rationale: string;
-  current_mastery: number;
+  current_progress: {
+    nodes_completed: number;
+    total_nodes: number;
+    completion_percentage: number;
+  };
+  all_prerequisites_met: boolean;
 }
 
 // YouTube Resource types
@@ -190,9 +198,9 @@ export interface YouTubeResource {
   duration_seconds: number;
   thumbnail_url: string;
   relevance_score: number;
-  url?: string;
-  type?: 'must_watch' | 'recommended';
-  rationale?: string;
+  url: string;
+  type: 'must_watch' | 'recommended';
+  rationale: string;
 }
 
 // Error types
@@ -200,7 +208,7 @@ export interface ApiError {
   error: string;
   message: string;
   details?: unknown;
-  timestamp: string;
+  request_id: string;
 }
 
 // Query params for user plans
@@ -212,15 +220,15 @@ export interface GetUserPlansRequest {
 export interface UserPlansResponse {
   plans: UserPlanSummary[];
   total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface UserPlanSummary {
   plan_id: string;
   topic: string;
   user_level: string;
-  mastery: number;
-  node_count: number;
-  completed_nodes: number;
+  plan_size: string;
+  started_at: string;
   last_accessed_at: string;
-  created_at: string;
 }

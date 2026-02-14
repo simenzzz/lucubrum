@@ -359,12 +359,9 @@ List all plans for a user.
       "plan_id": "550e8400-e29b-41d4-a716-446655440000",
       "topic": "Binary Search Trees",
       "user_level": "intermediate",
-      "created_at": "2025-01-06T10:30:00Z",
-      "progress": {
-        "nodes_completed": 3,
-        "total_nodes": 12,
-        "completion_percentage": 25
-      }
+      "plan_size": "moderate",
+      "started_at": "2025-01-06T10:30:00Z",
+      "last_accessed_at": "2025-01-07T15:20:00Z"
     }
   ],
   "total": 1,

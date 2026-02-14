@@ -7,12 +7,16 @@ import { cn } from '@/lib/utils';
 interface GradeResultProps {
   result: AttemptResponse;
   explanation?: string;
+  previousMastery?: number;
 }
 
-export function GradeResult({ result, explanation }: GradeResultProps) {
-  const masteryDelta = result.mastery_after - result.mastery_before;
-  const isCorrect = result.is_correct;
-  const isPartiallyCorrect = !isCorrect && result.score > 0;
+export function GradeResult({ result, explanation, previousMastery }: GradeResultProps) {
+  // Access nested fields from new backend response structure
+  const isCorrect = result.grade.is_correct;
+  const score = result.grade.score;
+  const isPartiallyCorrect = !isCorrect && score > 0;
+  const masteryScore = result.mastery.score;
+  const masteryDelta = masteryScore - (previousMastery ?? masteryScore);
 
   const getResultColor = () => {
     if (isCorrect) return 'sage';
@@ -51,18 +55,27 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
             <h4 className={cn('font-heading font-semibold', `text-${getResultColor()}`)}>
               {getResultMessage()}
             </h4>
-            <p className="text-sm text-warm-400">Score: {Math.round(result.score * 100)}%</p>
+            <p className="text-sm text-warm-400">Score: {Math.round(score * 100)}%</p>
           </div>
         </div>
-        <Badge variant={isCorrect ? 'mastered' : isPartiallyCorrect ? 'inProgress' : 'locked'}>
-          {Math.round(result.score * 100)}%
-        </Badge>
+        <div className="flex items-center gap-2">
+          {previousMastery !== undefined && (
+            <div className={cn('flex items-center gap-1 text-xs font-medium', masteryDelta > 0 ? 'text-sage' : masteryDelta < 0 ? 'text-rose' : 'text-warm-400')}>
+              {masteryDelta > 0 && <TrendingUp className="w-3 h-3" />}
+              {masteryDelta < 0 && <TrendingDown className="w-3 h-3" />}
+              {masteryDelta > 0 ? '+' : ''}{Math.round(masteryDelta * 100)}%
+            </div>
+          )}
+          <Badge variant={isCorrect ? 'mastered' : isPartiallyCorrect ? 'inProgress' : 'locked'}>
+            {Math.round(score * 100)}%
+          </Badge>
+        </div>
       </div>
 
       {/* Feedback */}
-      {result.feedback && (
+      {result.grade.feedback && (
         <div className="mb-4">
-          <p className="text-sm text-warm-200">{result.feedback}</p>
+          <p className="text-sm text-warm-200">{result.grade.feedback}</p>
         </div>
       )}
 
@@ -75,11 +88,11 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
       )}
 
       {/* Misconceptions */}
-      {result.misconceptions && result.misconceptions.length > 0 && (
+      {result.grade.misconceptions && result.grade.misconceptions.length > 0 && (
         <div className="mb-4">
           <p className="text-xs text-warm-400 mb-2">Areas to Review</p>
           <ul className="space-y-1">
-            {result.misconceptions.map((misconception, index) => (
+            {result.grade.misconceptions.map((misconception, index) => (
               <li key={index} className="flex items-start gap-2 text-sm text-warm-200">
                 <span className="text-rose mt-0.5">•</span>
                 {misconception}
@@ -89,46 +102,28 @@ export function GradeResult({ result, explanation }: GradeResultProps) {
         </div>
       )}
 
-      {/* Mastery update */}
+      {/* Current mastery */}
       <div className="pt-3 border-t border-border-moderate">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-warm-400">Mastery Update</span>
-          <div className="flex items-center gap-1">
-            {masteryDelta > 0 ? (
-              <TrendingUp className="w-4 h-4 text-sage" />
-            ) : masteryDelta < 0 ? (
-              <TrendingDown className="w-4 h-4 text-rose" />
-            ) : null}
-            <span
-              className={cn(
-                'text-sm font-mono font-medium',
-                masteryDelta > 0 ? 'text-sage' : masteryDelta < 0 ? 'text-rose' : 'text-warm-400'
-              )}
-            >
-              {masteryDelta > 0 ? '+' : ''}
-              {Math.round(masteryDelta * 100)}%
-            </span>
-          </div>
+          <span className="text-xs text-warm-400">Current Mastery</span>
+          <span className="text-sm font-medium text-warm-50">
+            {Math.round(masteryScore * 100)}%
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-warm-400 w-12">
-            {Math.round(result.mastery_before * 100)}%
+            {result.mastery.level}
           </span>
           <div className="flex-1 relative">
-            <Progress value={result.mastery_before * 100} className="h-1.5" />
-            <Progress
-              value={result.mastery_after * 100}
-              className="h-1.5 absolute inset-0"
-              indicatorClassName={cn(
-                'transition-all duration-1000',
-                result.mastery_after > result.mastery_before ? 'bg-sage' : 'bg-rose'
-              )}
-            />
+            <Progress value={masteryScore * 100} className="h-1.5" />
           </div>
-          <span className="text-xs font-medium text-warm-50 w-12 text-right">
-            {Math.round(result.mastery_after * 100)}%
+          <span className="text-xs font-mono font-medium text-warm-50 w-12 text-right">
+            {Math.round(masteryScore * 100)}%
           </span>
         </div>
+        <p className="text-xs text-warm-400 mt-1">
+          Total attempts: {result.mastery.total_attempts}
+        </p>
       </div>
     </div>
   );

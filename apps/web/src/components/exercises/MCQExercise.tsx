@@ -29,40 +29,47 @@ export function MCQExercise({
       {/* Question */}
       <p className="text-warm-50 font-medium">{exercise.prompt}</p>
 
-      {/* Options */}
-      <div className="space-y-2">
-        {exercise.choices.map((option, index) => {
-          const isSelected = selectedAnswer === option;
-          const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
+      {/* Runtime guard for missing choices */}
+      {!exercise.choices || exercise.choices.length === 0 ? (
+        <div className="text-rose text-sm">
+          Error: No choices available for this question.
+        </div>
+      ) : (
+        /* Options */
+        <div className="space-y-2">
+          {exercise.choices.map((option, index) => {
+            const isSelected = selectedAnswer === option;
+            const optionLabel = String.fromCharCode(65 + index); // A, B, C, D
 
-          return (
-            <button
-              key={index}
-              onClick={() => !disabled && onAnswerChange(option)}
-              disabled={disabled}
-              className={cn(
-                'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all',
-                isSelected
-                  ? 'border-amber bg-amber/10'
-                  : 'border-border-moderate hover:border-amber/50 hover:bg-hearth-700/50',
-                disabled && 'cursor-not-allowed opacity-60'
-              )}
-            >
-              <span
+            return (
+              <button
+                key={index}
+                onClick={() => !disabled && onAnswerChange(option)}
+                disabled={disabled}
                 className={cn(
-                  'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
+                  'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all',
                   isSelected
-                    ? 'bg-amber text-hearth-900'
-                    : 'bg-hearth-700 text-warm-400'
+                    ? 'border-amber bg-amber/10'
+                    : 'border-border-moderate hover:border-amber/50 hover:bg-hearth-700/50',
+                  disabled && 'cursor-not-allowed opacity-60'
                 )}
               >
-                {isSelected ? <CheckCircle2 className="w-4 h-4" /> : optionLabel}
-              </span>
-              <span className="text-warm-200">{option}</span>
-            </button>
-          );
-        })}
-      </div>
+                <span
+                  className={cn(
+                    'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-medium text-sm',
+                    isSelected
+                      ? 'bg-amber text-hearth-900'
+                      : 'bg-hearth-700 text-warm-400'
+                  )}
+                >
+                  {isSelected ? <CheckCircle2 className="w-4 h-4" /> : optionLabel}
+                </span>
+                <span className="text-warm-200">{option}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Submit button */}
       {!examMode && (

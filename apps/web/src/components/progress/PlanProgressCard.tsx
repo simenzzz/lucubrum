@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import type { UserPlanSummary } from '@/types/api.types';
 import { timeAgo } from '@/lib/utils';
@@ -11,10 +10,6 @@ interface PlanProgressCardProps {
 }
 
 export function PlanProgressCard({ plan }: PlanProgressCardProps) {
-  const progress = plan.node_count > 0
-    ? (plan.completed_nodes / plan.node_count) * 100
-    : 0;
-
   return (
     <Link
       to={`/roadmap/${plan.plan_id}`}
@@ -43,21 +38,7 @@ export function PlanProgressCard({ plan }: PlanProgressCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="font-heading text-lg font-semibold text-amber">
-              {Math.round(plan.mastery * 100)}%
-            </div>
-            <div className="text-xs text-warm-400">
-              {plan.completed_nodes}/{plan.node_count}
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-warm-600 group-hover:text-amber group-hover:translate-x-1 transition-all" />
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Progress value={progress} className="h-1.5" />
+        <ChevronRight className="w-5 h-5 text-warm-600 group-hover:text-amber group-hover:translate-x-1 transition-all" />
       </div>
     </Link>
   );

@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { ArrowLeft, BookOpen, AlertCircle } from 'lucide-react';
 import { usePlan, usePlanMastery, usePlanResources } from '@/hooks/usePlan';
 import { useRoadmapStore } from '@/stores/roadmapStore';
@@ -7,6 +8,7 @@ import { NodePopup } from '@/components/roadmap/NodePopup';
 import { LoadingSkeleton } from '@/components/layout/LoadingSkeleton';
 import { Button } from '@/components/ui/button';
 import { getSafeErrorMessage } from '@/lib/utils';
+import { MASTERY_THRESHOLD, PREREQ_THRESHOLD } from '@/constants/mastery';
 import type { PlanNode } from '@/types/api.types';
 
 export function RoadmapPage() {
@@ -28,6 +30,40 @@ export function RoadmapPage() {
 
   // Fetch resources (trigger if not already cached)
   const { data: resources } = usePlanResources(planId || '');
+
+  // All hooks must be called before any conditional returns (React rules of hooks)
+  const overallMastery = useMemo(() => {
+    if (!mastery?.mastery_by_node) return 0;
+    const entries = Object.values(mastery.mastery_by_node);
+    if (entries.length === 0) return 0;
+    return entries.reduce((sum, m) => sum + (m?.score || 0), 0) / entries.length;
+  }, [mastery]);
+
+  const masteryData = useMemo(() => {
+    if (!plan) return [];
+    return plan.nodes.map((n) => {
+      const nodeMastery = mastery?.mastery_by_node?.[n.node_id];
+      const score = nodeMastery?.score ?? 0;
+
+      const prereqsMet = n.prerequisites.every((prereqId) => {
+        const prereqMastery = mastery?.mastery_by_node?.[prereqId];
+        return (prereqMastery?.score ?? 0) >= PREREQ_THRESHOLD;
+      });
+
+      let status: 'locked' | 'available' | 'in_progress' | 'mastered';
+      if (score >= MASTERY_THRESHOLD) status = 'mastered';
+      else if (score > 0) status = 'in_progress';
+      else if (n.prerequisites.length === 0 || prereqsMet) status = 'available';
+      else status = 'locked';
+
+      return { node_id: n.node_id, mastery: score, status };
+    });
+  }, [plan, mastery]);
+
+  const completedNodes = useMemo(
+    () => masteryData.filter(m => m.status === 'mastered').length,
+    [masteryData]
+  );
 
   if (!planId) {
     return (
@@ -72,17 +108,6 @@ export function RoadmapPage() {
     );
   }
 
-  // Transform mastery data for the graph
-  const masteryData = mastery?.node_masteries.map((nm) => ({
-    node_id: nm.node_id,
-    mastery: nm.mastery,
-    status: nm.status as 'locked' | 'available' | 'in_progress' | 'mastered',
-  })) || plan.nodes.map((n) => ({
-    node_id: n.node_id,
-    mastery: 0,
-    status: n.prerequisites.length === 0 ? 'available' as const : 'locked' as const,
-  }));
-
   // Get resources for selected node
   const selectedNodeResources = selectedNode
     ? resources?.resources.find((r) => r.node_id === selectedNode.node_id)?.resources || []
@@ -104,8 +129,8 @@ export function RoadmapPage() {
             <div>
               <h1 className="font-heading text-xl font-semibold text-warm-50">{plan.topic}</h1>
               <p className="text-sm text-warm-400">
-                {mastery
-                  ? `${mastery.completed_nodes}/${mastery.total_nodes} nodes completed`
+                {completedNodes > 0
+                  ? `${completedNodes}/${plan.nodes.length} nodes completed`
                   : `${plan.nodes.length} nodes`}
               </p>
             </div>
@@ -116,7 +141,7 @@ export function RoadmapPage() {
               <div className="text-right">
                 <div className="text-sm text-warm-400">Overall Mastery</div>
                 <div className="font-heading text-lg font-semibold text-amber">
-                  {Math.round(mastery.overall_mastery * 100)}%
+                  {Math.round(overallMastery * 100)}%
                 </div>
               </div>
               <div className="w-20 h-20 relative">
@@ -138,7 +163,7 @@ export function RoadmapPage() {
                     strokeWidth="6"
                     strokeLinecap="round"
                     strokeDasharray={226}
-                    strokeDashoffset={226 - (mastery.overall_mastery * 226)}
+                    strokeDashoffset={226 - (overallMastery * 226)}
                     className="text-amber transition-all duration-500"
                   />
                 </svg>

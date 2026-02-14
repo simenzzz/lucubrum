@@ -185,9 +185,18 @@ export const masteryApi = {
     options?: RequestOptions
   ): Promise<AttemptResponse> {
     try {
+      const requestBody = {
+        plan_id: planId,
+        node_id: nodeId,
+        exercise_id: request.exercise_id,
+        user_answer: request.answer,
+        ...(request.code !== undefined && { code: request.code }),
+        ...(request.language !== undefined && { language: request.language }),
+      };
+
       const response = await apiClient.post<AttemptResponse>(
-        `/api/plan/${planId}/nodes/${nodeId}/attempts`,
-        request,
+        '/api/attempts',
+        requestBody,
         { signal: options?.signal }
       );
       return safeParseWithLogging(AttemptResponseSchema, response.data, 'masteryApi.submitAttempt');
@@ -249,10 +258,11 @@ export const masteryApi = {
 export const userApi = {
   /**
    * Get plans for the current user
+   * Note: userId must be provided from auth store - backend expects /api/users/:userId/plans
    */
-  async getPlans(params?: GetUserPlansRequest, options?: RequestOptions): Promise<UserPlansResponse> {
+  async getPlans(userId: string, params?: GetUserPlansRequest, options?: RequestOptions): Promise<UserPlansResponse> {
     try {
-      const response = await apiClient.get<UserPlansResponse>('/api/users/me/plans', {
+      const response = await apiClient.get<UserPlansResponse>(`/api/users/${userId}/plans`, {
         params,
         signal: options?.signal,
       });

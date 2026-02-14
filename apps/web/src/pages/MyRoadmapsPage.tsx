@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type SortOption = 'recent' | 'progress' | 'name';
+type SortOption = 'recent' | 'name';
 
 export function MyRoadmapsPage() {
   const { user } = useAuthStore();
@@ -32,8 +32,6 @@ export function MyRoadmapsPage() {
     )
     .sort((a, b) => {
       switch (sortBy) {
-        case 'progress':
-          return b.mastery - a.mastery;
         case 'name':
           return a.topic.localeCompare(b.topic);
         case 'recent':
@@ -121,7 +119,6 @@ export function MyRoadmapsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="recent">Most Recent</SelectItem>
-                    <SelectItem value="progress">Highest Progress</SelectItem>
                     <SelectItem value="name">Alphabetical</SelectItem>
                   </SelectContent>
                 </Select>
@@ -129,27 +126,14 @@ export function MyRoadmapsPage() {
             </div>
 
             {/* Stats summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-              <StatCard
-                label="Total Roadmaps"
-                value={data?.total ?? 0}
-                icon={<Map className="w-5 h-5" />}
-              />
-              <StatCard
-                label="Nodes Completed"
-                value={data?.plans.reduce((sum, p) => sum + p.completed_nodes, 0) ?? 0}
-                icon={<span className="text-lg">✓</span>}
-              />
-              <StatCard
-                label="In Progress"
-                value={data?.plans.filter((p) => p.mastery > 0 && p.mastery < 1).length ?? 0}
-                icon={<span className="text-lg">⏳</span>}
-              />
-              <StatCard
-                label="Mastered"
-                value={data?.plans.filter((p) => p.mastery >= 0.9).length ?? 0}
-                icon={<span className="text-lg">🏆</span>}
-              />
+            <div className="mb-8">
+              <div className="p-4 rounded-xl bg-hearth-800 border border-border-moderate">
+                <div className="flex items-center gap-3">
+                  <span className="text-amber/70"><Map className="w-5 h-5" /></span>
+                  <span className="font-heading text-2xl font-bold text-warm-50">{data?.total ?? 0}</span>
+                </div>
+                <span className="text-xs text-warm-400">Total Roadmaps</span>
+              </div>
             </div>
 
             {/* Roadmap grid */}
@@ -167,26 +151,6 @@ export function MyRoadmapsPage() {
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="p-4 rounded-xl bg-hearth-800 border border-border-moderate">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-amber/70">{icon}</span>
-        <span className="font-heading text-2xl font-bold text-warm-50">{value}</span>
-      </div>
-      <span className="text-xs text-warm-400">{label}</span>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   getMaxCompletedDifficulty,
   AttemptRow,
 } from '../db/queries/mastery';
+import { MASTERY_THRESHOLD, PREREQ_THRESHOLD } from '../constants/mastery';
 import { getExerciseById, ExerciseRow } from '../db/queries/exercises';
 import { getPlanWithNodes } from '../db/queries/plans';
 
@@ -327,10 +328,7 @@ class MasteryService {
     // 2. Fetch mastery for all nodes
     const masteryByNode = await this.getPlanMastery(userId, planId);
 
-    // 3. Count completed nodes (mastery >= 0.8)
-    const MASTERY_THRESHOLD = 0.8;
-    const PREREQ_THRESHOLD = 0.6;
-
+    // 3. Count completed nodes (mastery >= MASTERY_THRESHOLD)
     const completedNodes = nodes.filter(
       (n) => (masteryByNode[n.node_id]?.score ?? 0) >= MASTERY_THRESHOLD
     ).length;
@@ -351,7 +349,7 @@ class MasteryService {
       };
     }
 
-    // 5. Filter to unlocked nodes (all prerequisites met with mastery >= 0.6)
+    // 5. Filter to unlocked nodes (all prerequisites met with mastery >= PREREQ_THRESHOLD)
     const unlockedNodes = nodes.filter((node) => {
       for (const prereq of node.prerequisites) {
         const prereqMastery = masteryByNode[prereq]?.score ?? 0;
@@ -404,7 +402,7 @@ class MasteryService {
       else if (mastery < 0.1) {
         score += 5;
       }
-      // Already mastered (>= 0.8) gets negative score
+      // Already mastered (>= MASTERY_THRESHOLD) gets negative score
       else if (mastery >= MASTERY_THRESHOLD) {
         score -= 10;
       }
@@ -497,8 +495,8 @@ class MasteryService {
    */
   masteryToLevel(score: number): MasteryLevel {
     if (score < 0.3) return 'novice';
-    if (score < 0.6) return 'intermediate';
-    if (score < 0.8) return 'competent';
+    if (score < PREREQ_THRESHOLD) return 'intermediate';
+    if (score < MASTERY_THRESHOLD) return 'competent';
     return 'expert';
   }
 }

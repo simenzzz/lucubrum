@@ -12,6 +12,12 @@ Based on the plan_size, generate the appropriate number of nodes:
 - "large": Create 20-30 nodes for comprehensive, deep-dive coverage
 - "dynamic": Decide the appropriate number (4-30) based on topic complexity and breadth
 
+## User Level Guidelines
+Based on the user_level, adjust the depth and structure of the plan:
+- **beginner**: Focus on fundamentals and building blocks. Use simpler prerequisite chains. Assume no prior knowledge of the topic. Favor breadth of foundational concepts over depth.
+- **intermediate**: Assume familiarity with basics. Include applied/practical nodes alongside theory. Introduce branching prerequisite paths. Balance breadth and depth.
+- **advanced**: Assume solid foundation. Focus on nuance, edge cases, advanced techniques, and cutting-edge developments. Use complex prerequisite DAGs with multiple paths. Favor depth over breadth.
+
 ## Output Requirements
 Generate a valid JSON object with this structure:
 
@@ -44,7 +50,9 @@ Generate a valid JSON object with this structure:
 4. prerequisites: list node_ids that must be completed first (empty list for starting nodes)
 5. estimated_minutes: realistic time estimate between 5-240 minutes
 6. tags: optional list of relevant tags
-7. schedule: must include ALL nodes exactly once, with sequential order starting from 1
+7. schedule: must include ALL nodes exactly once, with sequential order starting from 1.
+   The order MUST respect prerequisites: if node A is a prerequisite of node B,
+   then A must have a lower order number than B.
 8. No cycles in prerequisites (DAG structure)
 9. Prerequisites must reference existing node_ids in the plan
 10. STRICTLY FORBIDDEN: Do not use LaTeX or backslashes in text fields. Use plain text descriptions only (e.g., say "integral" instead of "\int").

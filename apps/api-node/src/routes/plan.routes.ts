@@ -116,8 +116,8 @@ router.post(
         'Topic normalized'
       );
 
-      // Step 2: Check cache using normalized topic
-      const cacheKey = `plan:${normalized.topic_normalized}:${user_level}`;
+      // Step 2: Check cache using normalized topic (include plan_size to avoid collisions)
+      const cacheKey = `plan:${normalized.topic_normalized}:${user_level}:${plan_size}`;
       const cachedPlan = await redis.getJSON<CachedPlanWithMetadata>(cacheKey);
 
       if (cachedPlan) {

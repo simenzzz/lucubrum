@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
-import { TrendingUp, Target, BookOpen, Trophy } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { useUserPlans } from '@/hooks/usePlan';
 import { useAuthStore } from '@/stores/authStore';
-import { MasteryOverviewChart } from '@/components/progress/MasteryOverviewChart';
-import { ProgressTimelineChart } from '@/components/progress/ProgressTimelineChart';
-import { ExerciseStatsChart } from '@/components/progress/ExerciseStatsChart';
 import { PlanProgressCard } from '@/components/progress/PlanProgressCard';
 import { LoadingSkeleton } from '@/components/layout/LoadingSkeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,76 +14,15 @@ export function ProgressPage() {
   const stats = useMemo(() => {
     if (!plansData?.plans) {
       return {
-        totalNodes: 0,
-        completedNodes: 0,
-        overallMastery: 0,
         totalPlans: 0,
-        statusDistribution: {
-          locked: 0,
-          available: 0,
-          inProgress: 0,
-          mastered: 0,
-        },
       };
     }
 
     const plans = plansData.plans;
-    const totalNodes = plans.reduce((sum, p) => sum + p.node_count, 0);
-    const completedNodes = plans.reduce((sum, p) => sum + p.completed_nodes, 0);
-    const overallMastery = plans.length > 0
-      ? plans.reduce((sum, p) => sum + p.mastery, 0) / plans.length
-      : 0;
-
-    // Estimate status distribution (since we don't have per-node data here)
-    // This is an approximation based on mastery levels
-    const statusDistribution = plans.reduce(
-      (acc, p) => {
-        const inProgressCount = Math.max(0, p.node_count - p.completed_nodes - Math.floor(p.node_count * (1 - p.mastery)));
-        acc.mastered += p.completed_nodes;
-        acc.inProgress += Math.min(3, inProgressCount); // Cap at 3 in-progress nodes
-        acc.available += Math.max(0, Math.floor((p.node_count - p.completed_nodes) * p.mastery));
-        acc.locked += Math.max(0, p.node_count - p.completed_nodes - acc.available - acc.inProgress);
-        return acc;
-      },
-      { locked: 0, available: 0, inProgress: 0, mastered: 0 }
-    );
-
     return {
-      totalNodes,
-      completedNodes,
-      overallMastery,
       totalPlans: plans.length,
-      statusDistribution,
     };
   }, [plansData]);
-
-  // Mock timeline data (would need historical API endpoint)
-  const timelineData = useMemo(() => {
-    // Generate last 7 days of mock data
-    const data = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      data.push({
-        date: date.toISOString().split('T')[0],
-        mastery: Math.max(0, (stats.overallMastery * 100) - (i * 2) + Math.random() * 5),
-        nodesCompleted: Math.max(0, stats.completedNodes - i * Math.floor(stats.completedNodes / 10)),
-      });
-    }
-    return data;
-  }, [stats]);
-
-  // Mock exercise stats (would need historical API endpoint)
-  const exerciseStats = useMemo(() => {
-    return {
-      mcq: { attempted: 45, correct: 38 },
-      shortAnswer: { attempted: 20, correct: 15 },
-      fillBlank: { attempted: 30, correct: 24 },
-      coding: { attempted: 12, correct: 8 },
-      flashcard: { attempted: 25, correct: 22 },
-    };
-  }, []);
 
   if (isLoading) {
     return (
@@ -130,52 +66,20 @@ export function ProgressPage() {
         </div>
 
         {/* Key stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="Overall Mastery"
-            value={`${Math.round(stats.overallMastery * 100)}%`}
-            icon={<TrendingUp className="w-5 h-5" />}
-            color="amber"
-          />
-          <StatCard
-            label="Nodes Completed"
-            value={stats.completedNodes}
-            subtext={`of ${stats.totalNodes}`}
-            icon={<Target className="w-5 h-5" />}
-            color="sage"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <StatCard
             label="Active Roadmaps"
             value={stats.totalPlans}
             icon={<BookOpen className="w-5 h-5" />}
-            color="lavender"
+            color="amber"
           />
-          <StatCard
-            label="Mastery Rate"
-            value={stats.totalNodes > 0
-              ? `${Math.round((stats.completedNodes / stats.totalNodes) * 100)}%`
-              : '0%'}
-            icon={<Trophy className="w-5 h-5" />}
-            color="rose"
-          />
-        </div>
-
-        {/* Charts grid */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <MasteryOverviewChart data={stats.statusDistribution} />
-          <ProgressTimelineChart data={timelineData} />
-        </div>
-
-        {/* Exercise stats */}
-        <div className="mb-8">
-          <ExerciseStatsChart data={exerciseStats} />
         </div>
 
         {/* Plan progress list */}
         {plansData && plansData.plans.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Roadmap Progress</CardTitle>
+              <CardTitle className="text-lg">Your Roadmaps</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {plansData.plans
@@ -187,12 +91,6 @@ export function ProgressPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Note about mock data */}
-        <p className="text-xs text-center text-warm-600 mt-8">
-          Note: Some analytics require historical data endpoints that are not yet implemented.
-          Charts show estimated/mock data for demonstration.
-        </p>
       </div>
     </div>
   );
@@ -201,13 +99,11 @@ export function ProgressPage() {
 function StatCard({
   label,
   value,
-  subtext,
   icon,
   color,
 }: {
   label: string;
   value: string | number;
-  subtext?: string;
   icon: React.ReactNode;
   color: 'amber' | 'sage' | 'lavender' | 'rose';
 }) {
@@ -228,7 +124,6 @@ function StatCard({
           <div>
             <div className="flex items-baseline gap-1">
               <span className="font-heading text-2xl font-bold text-warm-50">{value}</span>
-              {subtext && <span className="text-xs text-warm-400">{subtext}</span>}
             </div>
             <p className="text-xs text-warm-400">{label}</p>
           </div>

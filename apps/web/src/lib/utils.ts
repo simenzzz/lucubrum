@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { MASTERY_THRESHOLD } from '@/constants/mastery';
 
 /**
  * Merge Tailwind CSS classes with proper precedence
@@ -63,7 +64,7 @@ export function getMasteryStatus(
   if (!hasAttempted && mastery === 0) {
     return 'available';
   }
-  if (mastery >= 0.8) {
+  if (mastery >= MASTERY_THRESHOLD) {
     return 'mastered';
   }
   if (mastery > 0 || hasAttempted) {
@@ -127,7 +128,7 @@ export function truncate(text: string, maxLength: number): string {
  * Generate a color based on mastery score
  */
 export function getMasteryColor(mastery: number): string {
-  if (mastery >= 0.8) return 'text-sage'; // mastered
+  if (mastery >= MASTERY_THRESHOLD) return 'text-sage'; // mastered
   if (mastery >= 0.4) return 'text-amber'; // in progress
   return 'text-lavender'; // available
 }
@@ -170,19 +171,19 @@ export const SIZE_BADGES = {
     value: 'basic' as const,
     label: 'Quick Path',
     icon: 'zap',
-    description: 'Essentials only, 4-6 topics',
+    description: 'Essentials only, 4-12 topics',
   },
   moderate: {
     value: 'moderate' as const,
     label: 'Standard Path',
     icon: 'layers',
-    description: 'Balanced depth, 8-12 topics',
+    description: 'Balanced depth, 12-20 topics',
   },
   large: {
     value: 'large' as const,
     label: 'Deep Dive',
     icon: 'mountain',
-    description: 'Comprehensive coverage, 15-25 topics',
+    description: 'Comprehensive coverage, 20-30 topics',
   },
 } as const;
 

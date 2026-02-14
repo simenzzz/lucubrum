@@ -67,9 +67,11 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
       // TODO: Call actual exam start API
       const mockExercises = Array.from({ length: 10 }, (_, i) => ({
         id: `exam-${i + 1}`,
+        node_id: node.node_id,
         type: 'mcq' as const,
         prompt: `Sample exam question ${i + 1} for ${node.title}`,
         difficulty: (Math.floor(mastery * 5) + 1) as 1 | 2 | 3 | 4 | 5,
+        rubric: 'This is a sample rubric for the exam question.',
         choices: ['Option A', 'Option B', 'Option C', 'Option D'],
         correct_answer: 'Option A',
       }));

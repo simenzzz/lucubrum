@@ -5,7 +5,7 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
-import { isValidUUID } from '../utils/validation';
+import { isValidUserId } from '../utils/validation';
 import { requireAuth } from '../middleware/auth.middleware';
 import { getUserPlansWithDetails, PaginatedUserPlans } from '../db/queries/user-plans';
 
@@ -61,11 +61,11 @@ router.get(
     const requestId = (req.headers['x-request-id'] as string) || uuidv4();
 
     try {
-      // Validate UUID format
-      if (!isValidUUID(userId)) {
+      // Validate user ID format (alphanumeric, can be Google OAuth numeric ID)
+      if (!isValidUserId(userId)) {
         return res.status(400).json({
           error: 'INVALID_USER_ID',
-          message: 'User ID must be a valid UUID',
+          message: 'User ID must be a non-empty alphanumeric string',
           request_id: requestId,
         });
       }

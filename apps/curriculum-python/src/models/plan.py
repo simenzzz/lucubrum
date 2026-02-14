@@ -100,6 +100,55 @@ def _detect_cycle(node_ids: set[str], prereqs: dict[str, list[str]]) -> bool:
     return False
 
 
+def topological_sort(nodes: list[Node]) -> list[str]:
+    """Return node_ids in topological order using Kahn's algorithm.
+
+    When multiple nodes have zero in-degree, the original LLM order is used
+    as a tiebreaker to preserve pedagogical intent where constraints allow.
+
+    Args:
+        nodes: List of Node objects with node_id and prerequisites.
+
+    Returns:
+        List of node_ids in valid topological order (prerequisites before dependents).
+    """
+    import heapq
+
+    # Map each node_id to its original position (used as tiebreaker)
+    node_id_to_idx: dict[str, int] = {node.node_id: i for i, node in enumerate(nodes)}
+    in_degree: dict[str, int] = {node.node_id: 0 for node in nodes}
+    adj_list: dict[str, list[str]] = {node.node_id: [] for node in nodes}
+
+    for node in nodes:
+        for prereq in node.prerequisites:
+            if prereq in adj_list:
+                adj_list[prereq].append(node.node_id)
+                in_degree[node.node_id] += 1
+
+    # Min-heap keyed by original index — preserves LLM order as tiebreaker
+    heap: list[tuple[int, str]] = [
+        (node_id_to_idx[nid], nid)
+        for nid, deg in in_degree.items()
+        if deg == 0
+    ]
+    heapq.heapify(heap)
+
+    result: list[str] = []
+
+    while heap:
+        _, node_id = heapq.heappop(heap)
+        result.append(node_id)
+
+        for neighbor in adj_list[node_id]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                heapq.heappush(heap, (node_id_to_idx[neighbor], neighbor))
+
+    # Defensive assertion: fail fast if called with cyclic graph
+    assert len(result) == len(nodes), f"topological_sort received a cyclic graph: processed {len(result)}/{len(nodes)} nodes"
+    return result
+
+
 class Plan(BaseModel):
     """A complete learning plan with nodes and schedule."""
 

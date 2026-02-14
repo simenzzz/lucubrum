@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/client';
 import { redis } from '../db/redis';
 import logger from '../utils/logger';
+import { MASTERY_THRESHOLD } from '../constants/mastery';
 
 // Configuration from environment
 const ENABLED = process.env.QUALITY_SIGNALS_ENABLED === 'true';
@@ -62,14 +63,14 @@ async function calculatePlanMetrics(planId: string, normalizedTopic: string): Pr
         ) as rate
        FROM (
          SELECT up.user_id,
-                COUNT(DISTINCT um.node_id) FILTER (WHERE um.mastery_level >= 0.8) as completed_nodes,
+                COUNT(DISTINCT um.node_id) FILTER (WHERE um.mastery_level >= $2) as completed_nodes,
                 (SELECT COUNT(*) FROM plan_nodes WHERE plan_id = $1) as total_nodes
          FROM user_plans up
          LEFT JOIN user_mastery um ON um.user_id = up.user_id AND um.plan_id = $1
          WHERE up.plan_id = $1
          GROUP BY up.user_id
        ) sub`,
-      [planId]
+      [planId, MASTERY_THRESHOLD]
     );
     const completionRate = parseFloat(completionResult.rows[0]?.rate || '0');
 

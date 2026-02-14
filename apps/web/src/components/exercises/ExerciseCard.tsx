@@ -19,6 +19,7 @@ interface ExerciseCardProps {
   examMode?: boolean;
   savedAnswer?: unknown;
   onAnswerChange?: (answer: unknown) => void;
+  currentMastery?: number;
 }
 
 const EXERCISE_TYPE_LABELS: Record<string, string> = {
@@ -54,6 +55,7 @@ export function ExerciseCard({
   examMode = false,
   savedAnswer,
   onAnswerChange,
+  currentMastery,
 }: ExerciseCardProps) {
   const [userAnswer, setUserAnswer] = useState<unknown>(savedAnswer);
   const [result, setResult] = useState<AttemptResponse | null>(null);
@@ -160,7 +162,7 @@ export function ExerciseCard({
 
         {/* Show result after submission (practice mode only) */}
         {showResult && result && !examMode && (
-          <GradeResult result={result} explanation={exercise.rubric} />
+          <GradeResult result={result} explanation={exercise.rubric} previousMastery={currentMastery} />
         )}
       </CardContent>
     </Card>

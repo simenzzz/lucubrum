@@ -7,10 +7,10 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from ..models.metadata import ArtifactMetadata
-from ..models.plan import Node, Plan, PlanSize, ScheduleItem
+from ..models.plan import Node, Plan, PlanSize, ScheduleItem, PLAN_SIZE_RANGES, _detect_cycle
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.prompts import load_prompt
@@ -52,6 +52,66 @@ class RawPlanOutput(BaseModel):
     plan_size: PlanSize = Field(default=PlanSize.MODERATE)
     nodes: list[Node]
     schedule: list[ScheduleItem]
+
+    @model_validator(mode="after")
+    def validate_plan_integrity(self) -> "RawPlanOutput":
+        """Validate plan-wide constraints: DAG integrity, schedule coverage, node count.
+
+        This validator ensures the LLM receives specific error feedback for integrity
+        violations during the retry loop, enabling self-correction.
+        """
+        node_ids = {node.node_id for node in self.nodes}
+
+        # Check node count matches plan size
+        min_nodes, max_nodes = PLAN_SIZE_RANGES[self.plan_size]
+        if not (min_nodes <= len(self.nodes) <= max_nodes):
+            raise ValueError(
+                f"Plan size '{self.plan_size.value}' requires {min_nodes}-{max_nodes} nodes, "
+                f"got {len(self.nodes)}"
+            )
+
+        # Check schedule covers all nodes exactly once
+        schedule_node_ids = [item.node_id for item in self.schedule]
+        schedule_set = set(schedule_node_ids)
+
+        if len(schedule_node_ids) != len(schedule_set):
+            raise ValueError("Schedule contains duplicate node_ids")
+
+        if schedule_set != node_ids:
+            missing = node_ids - schedule_set
+            extra = schedule_set - node_ids
+            errors = []
+            if missing:
+                errors.append(f"Nodes not in schedule: {missing}")
+            if extra:
+                errors.append(f"Schedule references unknown nodes: {extra}")
+            raise ValueError("; ".join(errors))
+
+        # Check all prerequisites reference existing nodes and build prereq map
+        prereqs: dict[str, list[str]] = {}
+        for node in self.nodes:
+            prereqs[node.node_id] = node.prerequisites
+            for prereq in node.prerequisites:
+                if prereq not in node_ids:
+                    raise ValueError(
+                        f"Node '{node.node_id}' has unknown prerequisite '{prereq}'"
+                    )
+
+        # Check for cycles in prerequisite graph
+        if _detect_cycle(node_ids, prereqs):
+            raise ValueError("Prerequisite graph contains a cycle (not a valid DAG)")
+
+        # Reorder schedule using topological sort (post-validation fixup)
+        from ..models.plan import topological_sort
+        sorted_node_ids = topological_sort(self.nodes)
+
+        # Rebuild schedule with corrected order (immutable — new ScheduleItem objects)
+        self.schedule = [
+            ScheduleItem(order=new_order, node_id=node_id)
+            for new_order, node_id in enumerate(sorted_node_ids, start=1)
+        ]
+
+        return self
 
 
 @router.post("/plan", response_model=GeneratePlanResponse)

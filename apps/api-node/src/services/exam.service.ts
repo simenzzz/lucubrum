@@ -14,6 +14,7 @@ import {
 } from '../db/queries/exams';
 import { getMastery, upsertMastery } from '../db/queries/mastery';
 import { getPlanWithNodes, NodeRow } from '../db/queries/plans';
+import { MASTERY_THRESHOLD, PREREQ_THRESHOLD } from '../constants/mastery';
 
 // Default time limit in seconds (30 minutes)
 const DEFAULT_TIME_LIMIT_SECONDS = 1800;
@@ -93,8 +94,8 @@ export interface SubmitExamResult {
 function getMasteryLevel(score: number): MasteryUpdate['level'] {
   if (score < 0.2) return 'novice';
   if (score < 0.4) return 'beginner';
-  if (score < 0.6) return 'competent';
-  if (score < 0.8) return 'proficient';
+  if (score < PREREQ_THRESHOLD) return 'competent';
+  if (score < MASTERY_THRESHOLD) return 'proficient';
   return 'expert';
 }
 

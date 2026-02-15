@@ -8,13 +8,13 @@ import {
   insertAttempt,
   getRecentAttempts,
   getAllAttemptsForNode,
-  upsertMastery,
+  upsertMasteryIfHigher,
   getMastery,
   getMasteryForPlan,
   getMaxCompletedDifficulty,
   AttemptRow,
 } from '../db/queries/mastery';
-import { MASTERY_THRESHOLD, PREREQ_THRESHOLD } from '../constants/mastery';
+import { MASTERY_THRESHOLD, PREREQ_THRESHOLD, EXERCISE_MASTERY_CAP, MASTERY_VOLUME_TARGET } from '../constants/mastery';
 import { getExerciseById, ExerciseRow } from '../db/queries/exercises';
 import { getPlanWithNodes } from '../db/queries/plans';
 
@@ -59,6 +59,7 @@ export interface GetMasteryResult {
   level: MasteryLevel;
   total_attempts: number;
   last_updated: Date | null;
+  has_exam_attempt?: boolean;
 }
 
 // Result from next-node recommendation
@@ -168,6 +169,7 @@ class MasteryService {
         level: 'novice',
         total_attempts: allAttempts.length,
         last_updated: null,
+        has_exam_attempt: false,
       };
     }
 
@@ -176,6 +178,7 @@ class MasteryService {
       level: this.masteryToLevel(mastery.mastery_score),
       total_attempts: allAttempts.length,
       last_updated: mastery.last_updated,
+      has_exam_attempt: mastery.has_exam_attempt,
     };
   }
 
@@ -196,6 +199,7 @@ class MasteryService {
         level: this.masteryToLevel(row.mastery_score),
         total_attempts: allAttempts.length,
         last_updated: row.last_updated,
+        has_exam_attempt: row.has_exam_attempt,
       };
     }
 
@@ -277,14 +281,25 @@ class MasteryService {
     const allAttempts = await getAllAttemptsForNode(userId, planId, nodeId);
     const maxDifficulty = await getMaxCompletedDifficulty(userId, planId, nodeId);
 
-    const score = this.calculateMastery(recentAttempts, allAttempts, maxDifficulty);
-    const level = this.masteryToLevel(score);
+    // Calculate raw mastery score and cap at exercise limit
+    const rawScore = this.calculateMastery(recentAttempts, allAttempts, maxDifficulty);
+    const cappedScore = Math.min(rawScore, EXERCISE_MASTERY_CAP);
+    const level = this.masteryToLevel(cappedScore);
 
-    // Persist the new mastery score
-    await upsertMastery(userId, planId, nodeId, score);
+    // Atomically update mastery only if new score is higher (preserves exam-set mastery)
+    const didUpdate = await upsertMasteryIfHigher(userId, planId, nodeId, cappedScore);
+
+    if (!didUpdate) {
+      const currentMastery = await getMastery(userId, planId, nodeId);
+      return {
+        score: currentMastery?.mastery_score ?? cappedScore,
+        level: this.masteryToLevel(currentMastery?.mastery_score ?? cappedScore),
+        total_attempts: allAttempts.length,
+      };
+    }
 
     return {
-      score,
+      score: cappedScore,
       level,
       total_attempts: allAttempts.length,
     };
@@ -461,33 +476,51 @@ class MasteryService {
   }
 
   /**
-   * Calculate mastery score from attempts.
+   * Calculate mastery score from attempts using multiplicative formula.
+   *
+   * Formula: accuracy * volumeMultiplier * difficultyMultiplier
+   * - Accuracy: 60% recent + 40% historical (weighted average)
+   * - Volume: sqrt curve diminishing returns to MASTERY_VOLUME_TARGET
+   * - Difficulty: maxDifficulty / 5 (normalized to 0-1)
+   *
+   * This formula requires ALL three components to achieve high mastery,
+   * preventing the bug where a single correct answer jumps to the cap.
    */
   calculateMastery(
     recentAttempts: AttemptRow[],
     allAttempts: AttemptRow[],
     maxDifficulty: number
   ): number {
-    // Recent accuracy (60% weight)
+    // No attempts = no mastery
+    if (allAttempts.length === 0) {
+      return 0;
+    }
+
+    // Accuracy component (60% recent, 40% historical)
     const recentAccuracy =
       recentAttempts.length > 0
         ? recentAttempts.filter((a) => a.is_correct).length / recentAttempts.length
         : 0;
-
-    // Historical accuracy (30% weight)
     const historicalAccuracy =
       allAttempts.length > 0
         ? allAttempts.filter((a) => a.is_correct).length / allAttempts.length
         : 0;
+    const accuracy = recentAccuracy * 0.6 + historicalAccuracy * 0.4;
 
-    // Difficulty bonus (10% weight) - max 5, so divide by 5
-    const difficultyBonus = Math.min(maxDifficulty, 5) / 5;
+    // Volume component - sqrt curve for diminishing returns
+    const correctCount = allAttempts.filter((a) => a.is_correct).length;
+    const volumeMultiplier = Math.min(
+      Math.sqrt(correctCount) / Math.sqrt(MASTERY_VOLUME_TARGET),
+      1.0
+    );
 
-    const score =
-      recentAccuracy * 0.6 + historicalAccuracy * 0.3 + difficultyBonus * 0.1;
+    // Difficulty component
+    const difficultyMultiplier = Math.min(Math.max(maxDifficulty, 0), 5) / 5;
 
-    // Clamp to 0-1
-    return Math.max(0, Math.min(1, score));
+    // Combined (multiplicative - requires ALL three)
+    const raw = accuracy * volumeMultiplier * difficultyMultiplier;
+
+    return Math.max(0, Math.min(1, raw));
   }
 
   /**

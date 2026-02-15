@@ -166,6 +166,7 @@ export interface PlanMasteryOverviewResponse {
     level: string;
     total_attempts: number;
     last_updated?: string | null;
+    has_exam_attempt?: boolean;
   }>;
 }
 

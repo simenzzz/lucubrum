@@ -25,6 +25,7 @@ export interface MasteryRow {
   node_id: string;
   mastery_score: number;
   last_updated: Date;
+  has_exam_attempt: boolean;
 }
 
 // Input type for creating attempts
@@ -138,6 +139,36 @@ export async function upsertMastery(
 }
 
 /**
+ * Upsert mastery score only if the new value is higher than the existing value.
+ * Uses an atomic WHERE clause to prevent TOCTOU races.
+ * Returns true if the update was applied, false if the existing value was higher.
+ */
+export async function upsertMasteryIfHigher(
+  userId: string,
+  planId: string,
+  nodeId: string,
+  masteryScore: number
+): Promise<boolean> {
+  const result = await db.query(
+    `INSERT INTO user_mastery (user_id, plan_id, node_id, mastery_score, last_updated)
+     VALUES ($1, $2, $3, $4, NOW())
+     ON CONFLICT (user_id, plan_id, node_id)
+     DO UPDATE SET mastery_score = EXCLUDED.mastery_score, last_updated = NOW()
+     WHERE user_mastery.mastery_score <= EXCLUDED.mastery_score`,
+    [userId, planId, nodeId, masteryScore]
+  );
+
+  const didUpdate = (result.rowCount ?? 0) > 0;
+
+  logger.debug(
+    { userId, planId, nodeId, masteryScore, didUpdate },
+    'Mastery upsert-if-higher attempted'
+  );
+
+  return didUpdate;
+}
+
+/**
  * Get mastery for a specific node.
  */
 export async function getMastery(
@@ -146,9 +177,13 @@ export async function getMastery(
   nodeId: string
 ): Promise<MasteryRow | null> {
   const result = await db.query(
-    `SELECT user_id, plan_id, node_id, mastery_score, last_updated
-     FROM user_mastery
-     WHERE user_id = $1 AND plan_id = $2 AND node_id = $3`,
+    `SELECT um.user_id, um.plan_id, um.node_id, um.mastery_score, um.last_updated,
+            (EXISTS (
+              SELECT 1 FROM exam_attempts ea
+              WHERE ea.user_id = um.user_id AND ea.plan_id = um.plan_id AND ea.node_id = um.node_id
+            )) AS has_exam_attempt
+     FROM user_mastery um
+     WHERE um.user_id = $1 AND um.plan_id = $2 AND um.node_id = $3`,
     [userId, planId, nodeId]
   );
 
@@ -167,10 +202,14 @@ export async function getMasteryForPlan(
   planId: string
 ): Promise<MasteryRow[]> {
   const result = await db.query(
-    `SELECT user_id, plan_id, node_id, mastery_score, last_updated
-     FROM user_mastery
-     WHERE user_id = $1 AND plan_id = $2
-     ORDER BY node_id`,
+    `SELECT um.user_id, um.plan_id, um.node_id, um.mastery_score, um.last_updated,
+            (EXISTS (
+              SELECT 1 FROM exam_attempts ea
+              WHERE ea.user_id = um.user_id AND ea.plan_id = um.plan_id AND ea.node_id = um.node_id
+            )) AS has_exam_attempt
+     FROM user_mastery um
+     WHERE um.user_id = $1 AND um.plan_id = $2
+     ORDER BY um.node_id`,
     [userId, planId]
   );
 

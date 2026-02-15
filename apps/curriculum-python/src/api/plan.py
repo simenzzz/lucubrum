@@ -20,6 +20,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/llm", tags=["plan"])
 
+# Max tokens mapping by plan size
+_PLAN_MAX_TOKENS: dict[PlanSize, int] = {
+    PlanSize.BASIC: 4096,
+    PlanSize.MODERATE: 8192,
+    PlanSize.LARGE: 16384,
+    PlanSize.DYNAMIC: 16384,
+}
+
 
 class GeneratePlanRequest(BaseModel):
     """Request body for plan generation."""
@@ -143,13 +151,17 @@ async def generate_plan(request: GeneratePlanRequest) -> GeneratePlanResponse:
         # Define generation function
         async def generate_fn(prompt: str) -> str:
             temperature = float(os.getenv("LLM_TEMPERATURE_PLAN", 0.7))
-            
-            raw_response = await provider.generate(prompt, temperature=temperature, max_tokens=8192)
-            
-            import re
-            clean_response = re.sub(r"```(json)?", "", raw_response, flags=re.IGNORECASE).strip()
-            
-            return clean_response
+            max_tokens_override = os.getenv("LLM_MAX_TOKENS_PLAN")
+            if max_tokens_override:
+                try:
+                    max_tokens = int(max_tokens_override)
+                except ValueError:
+                    logger.warning(f"Invalid LLM_MAX_TOKENS_PLAN value: {max_tokens_override!r}, using default")
+                    max_tokens = _PLAN_MAX_TOKENS.get(request.plan_size, 8192)
+            else:
+                max_tokens = _PLAN_MAX_TOKENS.get(request.plan_size, 8192)
+
+            return await provider.generate(prompt, temperature=temperature, max_tokens=max_tokens)
 
         # Prepare prompt kwargs
         prompt_kwargs = {

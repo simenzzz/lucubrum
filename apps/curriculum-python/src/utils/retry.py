@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Generic, TypeVar
 
@@ -49,18 +50,46 @@ class RetryResult(Generic[T]):
 
 
 def _extract_json_from_response(raw_output: str) -> str:
-    """Extract JSON from LLM response, handling markdown code blocks."""
+    """Extract JSON from LLM response, handling various output artifacts.
+
+    Strategies applied in order:
+    1. Strip <thinking>...</thinking> blocks (Gemini extended thinking)
+    2. Extract content from markdown code fences
+    3. Find outermost JSON object/array by brace matching
+    4. Return stripped text as-is (let json.loads produce a descriptive error)
+    """
     text = raw_output.strip()
 
-    # Handle markdown code blocks
-    if text.startswith("```json"):
-        text = text[7:]
-    elif text.startswith("```"):
-        text = text[3:]
+    # 1. Strip thinking blocks
+    text = re.sub(r"<thinking>.*?</thinking>", "", text, flags=re.DOTALL).strip()
 
-    if text.endswith("```"):
-        text = text[:-3]
+    # 2. Prefer explicitly JSON-tagged fences first
+    json_fence = re.compile(r"```json\s*\n?(.*?)```", re.DOTALL)
+    json_matches = json_fence.findall(text)
+    if json_matches:
+        candidate = max(json_matches, key=len).strip()
+        if candidate and candidate[0] in "{[":
+            return candidate
 
+    # Fall back to untagged fences
+    any_fence = re.compile(r"```\s*\n?(.*?)```", re.DOTALL)
+    any_matches = any_fence.findall(text)
+    if any_matches:
+        candidate = max(any_matches, key=len).strip()
+        if candidate and candidate[0] in "{[":
+            return candidate
+
+    # 3. Try parsing JSON from the first { or [ using raw_decode
+    decoder = json.JSONDecoder()
+    for i, ch in enumerate(text):
+        if ch in "{[":
+            try:
+                obj, _ = decoder.raw_decode(text, i)
+                return json.dumps(obj)
+            except json.JSONDecodeError:
+                continue
+
+    # 4. Fallback
     return text.strip()
 
 

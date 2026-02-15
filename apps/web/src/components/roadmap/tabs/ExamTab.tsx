@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Clock, AlertTriangle, Trophy, Loader2 } from 'lucide-react';
+import { Clock, AlertTriangle, Trophy, Loader2, Lightbulb } from 'lucide-react';
 import { useRoadmapStore } from '@/stores/roadmapStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExerciseCard } from '@/components/exercises/ExerciseCard';
+import { EXERCISE_MASTERY_CAP, MASTERY_THRESHOLD } from '@/constants/mastery';
 import type { PlanNode } from '@/types/api.types';
 
 interface ExamTabProps {
@@ -255,6 +257,16 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   // Show exam start screen
   return (
     <div className="space-y-6">
+      {/* Exam nudge alert when mastery is at cap */}
+      {mastery >= EXERCISE_MASTERY_CAP && mastery < MASTERY_THRESHOLD && (
+        <Alert className="mb-4 border-amber/30 bg-amber/5">
+          <Lightbulb className="h-4 w-4 text-amber" />
+          <AlertDescription className="text-warm-200">
+            You've practiced enough — take the exam to level up mastery beyond {EXERCISE_MASTERY_CAP * 100}%.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="text-center py-6">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber/20 flex items-center justify-center">
           <Clock className="w-8 h-8 text-amber" />

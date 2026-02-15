@@ -48,12 +48,6 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
 
   const handleExerciseComplete = (exerciseId: string) => {
     setCompletedExercises((prev) => new Set(prev).add(exerciseId));
-    // Auto-advance to next exercise after a short delay
-    setTimeout(() => {
-      if (currentExerciseIndex < exercises.length - 1) {
-        setCurrentExerciseIndex((i) => i + 1);
-      }
-    }, 1500);
   };
 
   const isLoading = exercisesLoading || generateMutation.isPending;

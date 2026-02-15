@@ -11,6 +11,7 @@ interface NodeMasteryInfo {
   node_id: string;
   mastery: number;
   status: NodeStatus;
+  hasExamAttempt: boolean;
 }
 
 interface RoadmapGraphProps {
@@ -267,6 +268,7 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
               mastery={masteryInfo?.mastery || 0}
               isSelected={selectedNodeId === layoutNode.id}
               onClick={() => onNodeSelect(layoutNode.node)}
+              hasExamAttempt={masteryInfo?.hasExamAttempt || false}
             />
           );
         })}

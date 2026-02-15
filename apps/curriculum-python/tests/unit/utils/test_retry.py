@@ -40,7 +40,8 @@ VALID_BUT_FAILS_VALIDATION = json.dumps({"name": "", "value": -1})
 
 class TestExtractJsonFromResponse:
     def test_plain_json(self):
-        assert _extract_json_from_response('{"key": "val"}') == '{"key": "val"}'
+        result = _extract_json_from_response('{"key": "val"}')
+        assert json.loads(result) == {"key": "val"}
 
     def test_json_code_block(self):
         raw = '```json\n{"key": "val"}\n```'
@@ -52,11 +53,66 @@ class TestExtractJsonFromResponse:
 
     def test_strips_whitespace(self):
         raw = '  \n {"key": "val"} \n  '
-        assert _extract_json_from_response(raw) == '{"key": "val"}'
+        result = _extract_json_from_response(raw)
+        assert json.loads(result) == {"key": "val"}
 
     def test_no_code_block_passthrough(self):
         raw = '{"a":1}'
-        assert _extract_json_from_response(raw) == '{"a":1}'
+        result = _extract_json_from_response(raw)
+        assert json.loads(result) == {"a": 1}
+
+
+class TestExtractJsonFromResponseEdgeCases:
+    @pytest.mark.parametrize("raw,expected_parsed", [
+        # Plain JSON (existing behavior)
+        ('{"key": "value"}', {"key": "value"}),
+
+        # Thinking tokens wrapping JSON
+        ('<thinking>\nLet me think...\n</thinking>\n{"key": "value"}', {"key": "value"}),
+
+        # Prose before and after JSON
+        ('Here is the plan:\n{"key": "value"}\nHope this helps!', {"key": "value"}),
+
+        # Markdown fence with surrounding prose
+        ('Sure! Here it is:\n```json\n{"key": "value"}\n```\nLet me know.', {"key": "value"}),
+
+        # Array-style JSON
+        ('[{"id": 1}, {"id": 2}]', [{"id": 1}, {"id": 2}]),
+
+        # Array with prose wrapping
+        ('The items are:\n[{"id": 1}]\nDone.', [{"id": 1}]),
+    ])
+    def test_extract_various_formats(self, raw, expected_parsed):
+        result = _extract_json_from_response(raw)
+        # Verify it parses as valid JSON matching expected structure
+        assert json.loads(result) == expected_parsed
+
+    def test_trailing_brace_in_prose_does_not_corrupt(self):
+        """raw_decode correctly stops at end of JSON object, ignoring trailing braces."""
+        raw = '{"topic": "Python"} Hope this helps!}'
+        result = _extract_json_from_response(raw)
+        assert json.loads(result) == {"topic": "Python"}
+
+    def test_json_fence_preferred_over_untagged(self):
+        """JSON-tagged fences are preferred over untagged fences."""
+        raw = '```python\n{"wrong": true}\n```\n```json\n{"right": true}\n```'
+        result = _extract_json_from_response(raw)
+        assert json.loads(result) == {"right": True}
+
+    def test_multiple_fences_chooses_longest(self):
+        raw = '''Example:
+```json
+{"small": true}
+```
+Actual:
+```json
+{"key": "value", "data": [1,2,3]}
+```
+'''
+        result = _extract_json_from_response(raw)
+        import json
+        parsed = json.loads(result)
+        assert "data" in parsed  # Should extract the longer match
 
 
 # ============================================================

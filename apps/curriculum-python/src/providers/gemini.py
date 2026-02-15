@@ -44,6 +44,7 @@ class GeminiProvider(LLMProvider):
         config = types.GenerateContentConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
+            response_mime_type='application/json',
         )
 
         response = await self._client.aio.models.generate_content(

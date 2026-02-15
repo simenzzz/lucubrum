@@ -15,6 +15,8 @@ const badgeVariants = cva(
         available: 'bg-amber/15 text-amber border border-amber/30',
         inProgress: 'bg-lavender/15 text-lavender border border-lavender/30',
         mastered: 'bg-sage/15 text-sage border border-sage/30',
+        // Exam variant
+        examReady: 'bg-amber/20 text-amber border border-amber/40 shadow-glow-amber',
         // Difficulty variants
         easy: 'bg-sage/15 text-sage border border-sage/30',
         medium: 'bg-amber/15 text-amber border border-amber/30',

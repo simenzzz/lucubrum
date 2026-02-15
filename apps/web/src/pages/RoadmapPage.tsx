@@ -1,12 +1,13 @@
 import { useParams, Link } from 'react-router-dom';
 import { useMemo } from 'react';
-import { ArrowLeft, BookOpen, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { usePlan, usePlanMastery, usePlanResources } from '@/hooks/usePlan';
 import { useRoadmapStore } from '@/stores/roadmapStore';
 import { RoadmapGraph } from '@/components/roadmap/RoadmapGraph';
 import { NodePopup } from '@/components/roadmap/NodePopup';
 import { LoadingSkeleton } from '@/components/layout/LoadingSkeleton';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { getSafeErrorMessage } from '@/lib/utils';
 import { MASTERY_THRESHOLD, PREREQ_THRESHOLD } from '@/constants/mastery';
 import type { PlanNode } from '@/types/api.types';
@@ -32,12 +33,15 @@ export function RoadmapPage() {
   const { data: resources } = usePlanResources(planId || '');
 
   // All hooks must be called before any conditional returns (React rules of hooks)
-  const overallMastery = useMemo(() => {
+  const masteredCount = useMemo(() => {
     if (!mastery?.mastery_by_node) return 0;
-    const entries = Object.values(mastery.mastery_by_node);
-    if (entries.length === 0) return 0;
-    return entries.reduce((sum, m) => sum + (m?.score || 0), 0) / entries.length;
+    return Object.values(mastery.mastery_by_node).filter(
+      m => m && m.score >= MASTERY_THRESHOLD
+    ).length;
   }, [mastery]);
+
+  const totalNodes = plan?.nodes.length ?? 0;
+  const masteredPercent = totalNodes > 0 ? Math.round((masteredCount / totalNodes) * 100) : 0;
 
   const masteryData = useMemo(() => {
     if (!plan) return [];
@@ -56,7 +60,12 @@ export function RoadmapPage() {
       else if (n.prerequisites.length === 0 || prereqsMet) status = 'available';
       else status = 'locked';
 
-      return { node_id: n.node_id, mastery: score, status };
+      return {
+        node_id: n.node_id,
+        mastery: score,
+        status,
+        hasExamAttempt: nodeMastery?.has_exam_attempt ?? false,
+      };
     });
   }, [plan, mastery]);
 
@@ -139,35 +148,20 @@ export function RoadmapPage() {
           {mastery && (
             <div className="hidden sm:flex items-center gap-3">
               <div className="text-right">
-                <div className="text-sm text-warm-400">Overall Mastery</div>
+                <div className="text-sm text-warm-400">Nodes Mastered</div>
                 <div className="font-heading text-lg font-semibold text-amber">
-                  {Math.round(overallMastery * 100)}%
+                  {masteredCount} / {totalNodes}
                 </div>
               </div>
-              <div className="w-20 h-20 relative">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="6"
-                    className="text-hearth-700"
-                  />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
-                    fill="none"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={226}
-                    strokeDashoffset={226 - (overallMastery * 226)}
-                    className="text-amber transition-all duration-500"
-                  />
-                </svg>
-                <BookOpen className="absolute inset-0 m-auto w-6 h-6 text-amber" />
+              <div className="w-48 flex flex-col gap-1">
+                <Progress
+                  value={masteredPercent}
+                  max={100}
+                  className="h-3"
+                />
+                <span className="text-xs text-warm-400 text-right">
+                  {masteredPercent}%
+                </span>
               </div>
             </div>
           )}

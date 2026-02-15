@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { Lock, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LayoutNode } from '@/lib/dagLayout';
+import { EXERCISE_MASTERY_CAP, MASTERY_THRESHOLD } from '@/constants/mastery';
+import { Badge } from '@/components/ui/badge';
 
 export type NodeStatus = 'locked' | 'available' | 'in_progress' | 'mastered';
 
@@ -11,6 +13,7 @@ interface GraphNodeProps {
   mastery: number;
   isSelected: boolean;
   onClick: () => void;
+  hasExamAttempt?: boolean;
 }
 
 const STATUS_CONFIG: Record<NodeStatus, {
@@ -51,6 +54,7 @@ export function GraphNode({
   mastery,
   isSelected,
   onClick,
+  hasExamAttempt = false,
 }: GraphNodeProps) {
   const { node } = layoutNode;
   const config = STATUS_CONFIG[status];
@@ -106,6 +110,15 @@ export function GraphNode({
         )}>
           {config.icon}
         </div>
+
+        {/* "Ready for Exam" nudge badge */}
+        {mastery >= EXERCISE_MASTERY_CAP &&
+         mastery < MASTERY_THRESHOLD &&
+         !hasExamAttempt && (
+          <div className="absolute -bottom-2 left-3 animate-pulse">
+            <Badge variant="examReady" className="text-[10px] px-1.5 py-0.5">Exam ready</Badge>
+          </div>
+        )}
 
         {/* Title */}
         <h3 className="font-heading text-sm font-semibold text-warm-50 leading-snug line-clamp-2 pr-6 mb-3">

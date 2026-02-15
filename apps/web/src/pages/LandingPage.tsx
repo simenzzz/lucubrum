@@ -9,6 +9,7 @@ import { Hero } from '@/components/landing/Hero';
 import { TopicInput } from '@/components/landing/TopicInput';
 import { PlanConfigForm } from '@/components/landing/PlanConfigForm';
 import { LoadingState } from '@/components/landing/LoadingState';
+import { ErrorState } from '@/components/landing/ErrorState';
 import { LandingSchema } from '@/components/landing/LandingSchema';
 import { useCreatePlan } from '@/hooks/usePlan';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +25,7 @@ export function LandingPage() {
   const [topic, setTopic] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const createPlanMutation = useCreatePlan();
 
@@ -86,11 +88,9 @@ export function LandingPage() {
       // Navigate to roadmap
       navigate(`/roadmap/${response.plan_id}`);
     } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Failed to create plan',
-        message: error instanceof Error ? error.message : 'Please try again.',
-      });
+      setErrorMessage(
+        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
+      );
       setIsCreating(false);
     }
   };
@@ -105,11 +105,11 @@ export function LandingPage() {
 
       <div className="min-h-screen bg-hearth-900">
         {/* Hero Section */}
-        {!showConfig && !isCreating && <Hero />}
+        {!showConfig && !isCreating && !errorMessage && <Hero />}
 
         {/* Main Content */}
         <AnimatePresence mode="wait">
-          {!showConfig && !isCreating && (
+          {!showConfig && !isCreating && !errorMessage && (
             <motion.div
               key="input"
               initial={{ opacity: 0 }}
@@ -142,7 +142,7 @@ export function LandingPage() {
             </motion.div>
           )}
 
-          {showConfig && !isCreating && (
+          {showConfig && !isCreating && !errorMessage && (
             <motion.div
               key="config"
               initial={{ opacity: 0, y: 20 }}
@@ -177,10 +177,28 @@ export function LandingPage() {
               <LoadingState message="Generating your personalized learning roadmap..." />
             </motion.div>
           )}
+
+          {errorMessage && !isCreating && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ErrorState
+                message={errorMessage}
+                onRetry={() => setErrorMessage(null)}
+                onChangeTopic={() => {
+                  setErrorMessage(null);
+                  setShowConfig(false);
+                }}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Features Section */}
-        {!showConfig && !isCreating && (
+        {!showConfig && !isCreating && !errorMessage && (
           <motion.section
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}

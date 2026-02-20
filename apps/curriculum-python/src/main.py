@@ -14,6 +14,7 @@ from .api.exercises import router as exercises_router
 from .api.grade import router as grade_router
 from .api.plan import router as plan_router
 from .api.queries import router as queries_router
+from .api.reading_material import router as reading_material_router
 from .api.staleness import router as staleness_router
 from .api.validate_video import router as validate_video_router
 from .api.transcript import router as transcript_router
@@ -106,6 +107,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 # Register routers
 app.include_router(plan_router)
 app.include_router(queries_router)
+app.include_router(reading_material_router)
 app.include_router(exercises_router)
 app.include_router(grade_router)
 app.include_router(staleness_router)

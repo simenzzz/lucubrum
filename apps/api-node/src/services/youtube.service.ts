@@ -4,20 +4,34 @@
  * Handles:
  * - YouTube Data API integration for video search
  * - Redis caching for quota optimization
- * - Transcript validation via Python service
- * - Video ranking and selection
+ * - Description-based validation via Python service
+ * - Deterministic video ranking with instructor trust
+ * - Video selection (must_watch / recommended)
  */
 
 import axios from 'axios';
 import crypto from 'crypto';
+import PQueue from 'p-queue';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
 import { redis } from '../db/redis';
-import {
-  curriculumClient,
-  Transcript,
-  TranscriptNotAvailableError,
-} from './curriculum-client';
+import { curriculumClient } from './curriculum-client';
+import { getInstructorsByChannelNames } from '../db/queries/trusted-instructors';
+
+/**
+ * Sanitize axios errors before logging to prevent leaking sensitive data.
+ */
+function sanitizeAxiosError(error: unknown): unknown {
+  if (axios.isAxiosError(error)) {
+    const { config, ...rest } = error;
+    const sanitizedConfig = config ? {
+      ...config,
+      params: config.params ? { ...config.params, key: '[REDACTED]' } : undefined
+    } : undefined;
+    return { ...rest, config: sanitizedConfig };
+  }
+  return error;
+}
 
 // YouTube API types
 export interface YouTubeVideo {
@@ -38,13 +52,13 @@ export interface VideoCandidate extends YouTubeVideo {
 export interface ValidatedVideo extends VideoCandidate {
   relevanceScore: number;
   matchedObjectives: string[];
-  transcript: string;
 }
 
 export interface SelectedResource {
   videoId: string;
   title: string;
   channelTitle: string;
+  description?: string;
   url: string;
   durationSeconds: number;
   rankScore: number;
@@ -65,7 +79,7 @@ export interface ResourceAttachmentOptions {
   minRelevanceScore?: number;
   mustWatchCount?: number;
   recommendedCount?: number;
-  validateTranscripts?: boolean;
+  validateVideos?: boolean;
 }
 
 // Cache types
@@ -87,7 +101,7 @@ const DEFAULT_OPTIONS: Required<ResourceAttachmentOptions> = {
   minRelevanceScore: 0.6,
   mustWatchCount: 1,
   recommendedCount: 2,
-  validateTranscripts: true,
+  validateVideos: true,
 };
 
 /**
@@ -116,19 +130,18 @@ class YouTubeService {
 
   /**
    * Generate cache key for a search query.
-   * Uses SHA-256 hash of query (first 16 chars) for key.
+   * Uses SHA-256 hash of query (first 32 chars) for key.
    */
   private getCacheKey(query: string): string {
-    const hash = crypto.createHash('sha256').update(query).digest('hex').slice(0, 16);
+    const hash = crypto.createHash('sha256').update(query).digest('hex').slice(0, 32);
     return `${this.cacheKeyPrefix}${hash}`;
   }
 
   /**
    * Search YouTube for videos matching queries.
-   * Uses Redis caching to reduce API quota usage.
+   * Runs all queries in parallel with concurrency cap. Uses Redis caching to reduce API quota usage.
    */
   async searchVideos(queries: string[], maxResultsPerQuery = 5): Promise<VideoCandidate[]> {
-    const allCandidates: VideoCandidate[] = [];
     const stats: SearchQuotaStats = {
       totalQueries: queries.length,
       cacheHits: 0,
@@ -136,41 +149,27 @@ class YouTubeService {
       estimatedQuotaUsed: 0,
     };
 
-    for (const query of queries) {
-      try {
-        // Check cache first
-        const cacheKey = this.getCacheKey(query);
-        const cached = await redis.getJSON<CachedSearchResult>(cacheKey);
+    // Use concurrency cap to prevent burst quota exhaustion
+    const searchQueue = new PQueue({ concurrency: 5 });
 
-        if (cached) {
-          // Cache hit
-          stats.cacheHits++;
-          logger.debug({ query, cacheKey }, 'YouTube search cache hit');
-          allCandidates.push(...cached.results);
-          continue;
-        }
+    const settledResults = await Promise.allSettled(
+      queries.map((query) =>
+        searchQueue.add(() => this.fetchSingleQuery(query, maxResultsPerQuery))
+      )
+    );
 
-        // Cache miss - call YouTube API
-        const results = await this.searchYouTubeApi(query, maxResultsPerQuery);
-        stats.apiCalls++;
-        // Quota: 100 for search + 1 for videos (per query)
-        stats.estimatedQuotaUsed += this.SEARCH_QUOTA_COST + this.VIDEOS_QUOTA_COST;
-
-        if (results.length > 0) {
-          // Cache the results
-          const cacheEntry: CachedSearchResult = {
-            query,
-            results,
-            cachedAt: new Date().toISOString(),
-            apiQuotaCost: this.SEARCH_QUOTA_COST + this.VIDEOS_QUOTA_COST,
-          };
-          await redis.setJSON(cacheKey, cacheEntry, this.cacheTtlSeconds);
-          logger.debug({ query, cacheKey, resultCount: results.length }, 'YouTube search cached');
-        }
-
-        allCandidates.push(...results);
-      } catch (error) {
-        logger.error({ error, query }, 'YouTube search failed for query');
+    const allCandidates: VideoCandidate[] = [];
+    for (let i = 0; i < settledResults.length; i++) {
+      const result = settledResults[i];
+      if (result.status === 'fulfilled') {
+        stats.cacheHits += result.value.cacheHit ? 1 : 0;
+        stats.apiCalls += result.value.cacheHit ? 0 : 1;
+        stats.estimatedQuotaUsed += result.value.cacheHit
+          ? 0
+          : this.SEARCH_QUOTA_COST + this.VIDEOS_QUOTA_COST;
+        allCandidates.push(...result.value.results);
+      } else {
+        logger.error({ error: sanitizeAxiosError(result.reason), query: queries[i] }, 'YouTube search failed for query');
       }
     }
 
@@ -192,6 +191,38 @@ class YouTubeService {
       seen.add(video.videoId);
       return true;
     });
+  }
+
+  /**
+   * Fetch results for a single query, checking cache first.
+   */
+  private async fetchSingleQuery(
+    query: string,
+    maxResultsPerQuery: number
+  ): Promise<{ results: VideoCandidate[]; cacheHit: boolean }> {
+    const cacheKey = this.getCacheKey(query);
+    const cached = await redis.getJSON<CachedSearchResult>(cacheKey);
+
+    if (cached) {
+      logger.debug({ query, cacheKey }, 'YouTube search cache hit');
+      return { results: cached.results, cacheHit: true };
+    }
+
+    // Cache miss - call YouTube API
+    const results = await this.searchYouTubeApi(query, maxResultsPerQuery);
+
+    if (results.length > 0) {
+      const cacheEntry: CachedSearchResult = {
+        query,
+        results,
+        cachedAt: new Date().toISOString(),
+        apiQuotaCost: this.SEARCH_QUOTA_COST + this.VIDEOS_QUOTA_COST,
+      };
+      await redis.setJSON(cacheKey, cacheEntry, this.cacheTtlSeconds);
+      logger.debug({ query, cacheKey, resultCount: results.length }, 'YouTube search cached');
+    }
+
+    return { results, cacheHit: false };
   }
 
   /**
@@ -250,53 +281,47 @@ class YouTubeService {
   }
 
   /**
-   * Validate and filter videos using transcript analysis.
+   * Validate and filter videos using description analysis.
+   * Runs validations in parallel with a configurable concurrency cap.
    */
   async validateAndFilterVideos(
     candidates: VideoCandidate[],
     node: Node,
     planId: string,
     requestId: string,
-    minRelevanceScore = 0.6
+    minRelevanceScore = 0.5
   ): Promise<ValidatedVideo[]> {
-    const validated: ValidatedVideo[] = [];
+    const concurrency = parseInt(process.env.VIDEO_VALIDATION_CONCURRENCY ?? '5', 10);
+    const queue = new PQueue({ concurrency });
 
-    for (const video of candidates) {
-      try {
-        // 1. Fetch transcript via Python service
-        let transcript: Transcript;
+    type ValidationResult = { video: VideoCandidate; validated: ValidatedVideo | null };
+
+    const results = await queue.addAll(
+      candidates.map((video) => async (): Promise<ValidationResult> => {
         try {
-          transcript = await curriculumClient.fetchTranscript({
+          const validation = await curriculumClient.validateVideo({
             video_id: video.videoId,
+            plan_id: planId,
+            node_id: node.node_id,
+            node_title: node.title,
+            node_objectives: node.objectives,
+            content_text: video.description || `${video.title} by ${video.channelTitle}`,
+            video_title: video.title,
+            channel_name: video.channelTitle,
+            request_id: requestId,
           });
-        } catch (error) {
-          if (error instanceof TranscriptNotAvailableError) {
-            logger.debug({ videoId: video.videoId }, 'No transcript available, skipping');
-            continue;
+
+          if (validation.is_relevant && validation.relevance_score >= minRelevanceScore) {
+            return {
+              video,
+              validated: {
+                ...video,
+                relevanceScore: validation.relevance_score,
+                matchedObjectives: validation.matched_objectives,
+              },
+            };
           }
-          throw error;
-        }
 
-        // 2. Validate against node objectives
-        const validation = await curriculumClient.validateVideo({
-          video_id: video.videoId,
-          plan_id: planId,
-          node_id: node.node_id,
-          node_title: node.title,
-          node_objectives: node.objectives,
-          transcript_text: transcript.full_text,
-          request_id: requestId,
-        });
-
-        // 3. Include only relevant videos
-        if (validation.is_relevant && validation.relevance_score >= minRelevanceScore) {
-          validated.push({
-            ...video,
-            relevanceScore: validation.relevance_score,
-            matchedObjectives: validation.matched_objectives,
-            transcript: transcript.full_text,
-          });
-        } else {
           logger.debug(
             {
               videoId: video.videoId,
@@ -305,55 +330,66 @@ class YouTubeService {
             },
             'Video rejected due to low relevance'
           );
+          return { video, validated: null };
+        } catch (error) {
+          // Log but continue - some videos may fail validation
+          logger.warn({ videoId: video.videoId, error }, 'Video validation failed');
+          return { video, validated: null };
         }
-      } catch (error) {
-        // Log but continue - some videos may fail validation
-        logger.warn({ videoId: video.videoId, error }, 'Transcript validation failed');
-      }
-    }
+      })
+    );
 
-    return validated;
+    return results
+      .filter((r): r is { video: VideoCandidate; validated: ValidatedVideo } => r.validated !== null)
+      .map((r) => r.validated);
   }
 
   /**
-   * Rank validated videos using deterministic scoring.
+   * Rank validated videos using deterministic scoring with instructor trust.
    */
-  rankVideos(videos: ValidatedVideo[], node: Node): ValidatedVideo[] {
+  async rankVideos(videos: ValidatedVideo[], node: Node): Promise<ValidatedVideo[]> {
+    // Pre-fetch all instructor scores in batch
+    const channelNames = [...new Set(videos.map((v) => v.channelTitle).filter(Boolean))];
+    const instructorMap = await getInstructorsByChannelNames(channelNames);
+
     return videos
       .map((video) => {
-        // Calculate composite score
-        let score = video.relevanceScore * 0.4; // 40% relevance
+        let score = video.relevanceScore * 0.35; // 35% relevance
 
-        // Engagement score (normalized)
+        // Engagement score
         const engagementRatio = video.likeCount / Math.max(video.viewCount, 1);
-        score += Math.min(engagementRatio * 10, 0.2); // Up to 20% for engagement
+        score += Math.min(engagementRatio * 10, 0.15); // 15% for engagement
 
-        // Duration appropriateness (prefer videos within 2x estimated time)
+        // Duration
         const idealDuration = node.estimated_minutes * 60;
         const durationRatio = video.durationSeconds / idealDuration;
         if (durationRatio >= 0.5 && durationRatio <= 2.0) {
-          score += 0.15; // 15% for good duration
+          score += 0.10; // 10% for good duration
         } else if (durationRatio >= 0.25 && durationRatio <= 3.0) {
-          score += 0.08; // 8% for acceptable duration
+          score += 0.05;
         }
 
-        // Objective coverage bonus
+        // Objective coverage
         const coverageRatio = video.matchedObjectives.length / node.objectives.length;
-        score += coverageRatio * 0.15; // Up to 15% for coverage
+        score += coverageRatio * 0.15; // 15% for coverage
 
-        // Recency bonus (videos from last 2 years)
-        const videoAge =
-          (Date.now() - new Date(video.publishedAt).getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+        // Recency
+        const videoAge = (Date.now() - new Date(video.publishedAt).getTime()) / (365.25 * 24 * 60 * 60 * 1000);
         if (videoAge <= 2) {
-          score += 0.1; // 10% for recent videos
+          score += 0.10; // 10% for recent
         } else if (videoAge <= 5) {
-          score += 0.05; // 5% for moderately recent
+          score += 0.05;
         }
 
-        return {
-          ...video,
-          relevanceScore: Math.min(score, 1.0), // Cap at 1.0
-        };
+        // Instructor trust (NEW)
+        const instructor = instructorMap.get(video.channelTitle?.toLowerCase());
+        if (instructor) {
+          score += instructor.reliability_score * 0.15; // Up to 15% for trusted instructors
+        } else {
+          score += 0.5 * 0.15; // Neutral baseline for unknown channels
+        }
+
+        return { ...video, relevanceScore: Math.min(score, 1.0) };
       })
       .sort((a, b) => b.relevanceScore - a.relevanceScore);
   }
@@ -376,6 +412,7 @@ class YouTubeService {
         videoId: video.videoId,
         title: video.title,
         channelTitle: video.channelTitle,
+        description: video.description,
         url: `https://www.youtube.com/watch?v=${video.videoId}`,
         durationSeconds: video.durationSeconds,
         rankScore: video.relevanceScore,
@@ -410,9 +447,9 @@ class YouTubeService {
       return [];
     }
 
-    // 2. Validate transcripts (if enabled)
+    // 2. Validate videos (if enabled)
     let validatedVideos: ValidatedVideo[];
-    if (opts.validateTranscripts) {
+    if (opts.validateVideos) {
       validatedVideos = await this.validateAndFilterVideos(
         candidates,
         node,
@@ -422,7 +459,7 @@ class YouTubeService {
       );
       logger.debug(
         { nodeId: node.node_id, validatedCount: validatedVideos.length },
-        'Transcript validation complete'
+        'Video validation complete'
       );
     } else {
       // Skip validation, treat all candidates as validated
@@ -430,17 +467,16 @@ class YouTubeService {
         ...c,
         relevanceScore: 0.5, // Default score
         matchedObjectives: [],
-        transcript: '',
       }));
     }
 
     if (validatedVideos.length === 0) {
-      logger.warn({ nodeId: node.node_id }, 'No videos passed transcript validation');
+      logger.warn({ nodeId: node.node_id }, 'No videos passed validation');
       return [];
     }
 
-    // 3. Rank videos
-    const rankedVideos = this.rankVideos(validatedVideos, node);
+    // 3. Rank videos (async for instructor trust lookup)
+    const rankedVideos = await this.rankVideos(validatedVideos, node);
 
     // 4. Select top videos
     const selected = this.selectTopVideos(rankedVideos, opts.mustWatchCount, opts.recommendedCount);

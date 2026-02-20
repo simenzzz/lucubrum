@@ -38,6 +38,7 @@ export interface ResourceInput {
 
 /**
  * Insert resources for a node in a single transaction.
+ * Uses ON CONFLICT to prevent duplicate inserts (race condition safe).
  *
  * @returns The generated resource_ids
  */
@@ -55,11 +56,12 @@ export async function insertResourcesForNode(
 
     for (const resource of resources) {
       const resourceId = uuidv4();
-      resourceIds.push(resourceId);
 
-      await client.query(
+      const result = await client.query(
         `INSERT INTO resources (resource_id, plan_id, node_id, video_id, title, channel_title, url, duration_seconds, rank_score, type, rationale)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (plan_id, node_id, video_id) DO NOTHING
+         RETURNING resource_id`,
         [
           resourceId,
           planId,
@@ -74,10 +76,15 @@ export async function insertResourcesForNode(
           resource.rationale || null,
         ]
       );
+
+      // Only add to resourceIds if insert actually happened
+      if (result.rows.length > 0) {
+        resourceIds.push(result.rows[0].resource_id);
+      }
     }
 
     logger.info(
-      { planId, nodeId, resourceCount: resources.length },
+      { planId, nodeId, resourceCount: resources.length, insertedCount: resourceIds.length },
       'Resources inserted for node'
     );
 
@@ -166,6 +173,32 @@ export async function hasResourcesForNode(
     [planId, nodeId]
   );
   return result.rows[0]?.exists ?? false;
+}
+
+export interface NodeResourceStatusRow {
+  node_id: string;
+  has_resources: boolean;
+  has_reading: boolean;
+  [key: string]: unknown; // Index signature for db.query generic compatibility
+}
+
+/**
+ * Get resource + reading material status for all nodes in a plan in a single query.
+ * Used by the resource-status polling endpoint to avoid N*2 individual queries.
+ */
+export async function getNodeResourceStatusBatch(
+  planId: string
+): Promise<NodeResourceStatusRow[]> {
+  const result = await db.query<NodeResourceStatusRow>(
+    `SELECT
+       n.node_id,
+       EXISTS(SELECT 1 FROM resources r WHERE r.plan_id = $1 AND r.node_id = n.node_id) AS has_resources,
+       EXISTS(SELECT 1 FROM reading_materials rm WHERE rm.plan_id = $1 AND rm.node_id = n.node_id) AS has_reading
+     FROM nodes n
+     WHERE n.plan_id = $1`,
+    [planId]
+  );
+  return result.rows;
 }
 
 /**

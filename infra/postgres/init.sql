@@ -42,7 +42,8 @@ CREATE TABLE resources (
   type VARCHAR(50) NOT NULL,
   rationale VARCHAR(240),
   created_at TIMESTAMP DEFAULT NOW(),
-  FOREIGN KEY (plan_id, node_id) REFERENCES nodes(plan_id, node_id) ON DELETE CASCADE
+  FOREIGN KEY (plan_id, node_id) REFERENCES nodes(plan_id, node_id) ON DELETE CASCADE,
+  UNIQUE(plan_id, node_id, video_id) -- Prevent duplicate videos per node
 );
 CREATE INDEX idx_resources_node ON resources(plan_id, node_id);
 CREATE INDEX idx_resources_plan_node_score ON resources(plan_id, node_id, rank_score DESC);
@@ -146,6 +147,18 @@ CREATE TABLE user_plans (
 CREATE INDEX idx_user_plans_user ON user_plans(user_id);
 CREATE INDEX idx_user_plans_plan ON user_plans(plan_id);
 
+-- Reading Materials (LLM-generated from video descriptions)
+CREATE TABLE reading_materials (
+  plan_id UUID NOT NULL,
+  node_id VARCHAR(255) NOT NULL,
+  sections JSONB NOT NULL,       -- Array of { heading: string, content: string }
+  metadata JSONB NOT NULL,       -- ArtifactMetadata (provider, model, prompt_version, etc.)
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (plan_id, node_id),
+  FOREIGN KEY (plan_id, node_id) REFERENCES nodes(plan_id, node_id) ON DELETE CASCADE
+);
+CREATE INDEX idx_reading_materials_plan ON reading_materials(plan_id);
+
 -- Staleness Policies (configurable cache invalidation rules by domain)
 CREATE TABLE staleness_policies (
   id SERIAL PRIMARY KEY,
@@ -207,8 +220,8 @@ CREATE TABLE exam_attempts (
   user_id VARCHAR(255) NOT NULL,
   plan_id UUID NOT NULL,
   node_id VARCHAR(255) NOT NULL,
-  mastery_level_old DECIMAL(3,2) NOT NULL,
-  mastery_level_new DECIMAL(3,2) NOT NULL,
+  mastery_level_old DECIMAL(3,2) NOT NULL CHECK (mastery_level_old BETWEEN 0.0 AND 1.0),
+  mastery_level_new DECIMAL(3,2) NOT NULL CHECK (mastery_level_new BETWEEN 0.0 AND 1.0),
   exam_difficulty DECIMAL(3,2) NOT NULL,
   score DECIMAL(3,2) NOT NULL,
   exercises_count INTEGER NOT NULL DEFAULT 10,
@@ -223,3 +236,27 @@ CREATE TABLE exam_attempts (
 );
 CREATE INDEX idx_exam_attempts_user ON exam_attempts(user_id);
 CREATE INDEX idx_exam_attempts_plan_node ON exam_attempts(plan_id, node_id);
+
+-- Trusted Instructors (channel reliability scores for ranking)
+CREATE TABLE trusted_instructors (
+  channel_id VARCHAR(255) PRIMARY KEY,
+  channel_name VARCHAR(255) NOT NULL,
+  reliability_score FLOAT NOT NULL CHECK (reliability_score BETWEEN 0 AND 1),
+  source VARCHAR(50) NOT NULL DEFAULT 'manual',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_trusted_channel_name ON trusted_instructors(LOWER(channel_name));
+
+-- Seed with well-known educational channels
+INSERT INTO trusted_instructors (channel_id, channel_name, reliability_score, source, notes) VALUES
+  ('UCYO_jab_esuFRV4b17AJtAw', '3Blue1Brown', 0.95, 'manual', 'Exceptional math visualization'),
+  ('UCEBb1b_L6zDS3xTUrIALZOw', 'MIT OpenCourseWare', 0.95, 'manual', 'University-level lectures'),
+  ('UC4a-Gbdw7vOaccHmFo40b9g', 'Khan Academy', 0.90, 'manual', 'Comprehensive educational content'),
+  ('UC8butISFwT-Wl7EV0hUK0BQ', 'freeCodeCamp.org', 0.90, 'manual', 'Quality coding tutorials'),
+  ('UC9-y-6csu5WGm29I7JiwpnA', 'Computerphile', 0.85, 'manual', 'CS concepts explained well'),
+  ('UCvjgXvBlbQiydffZU7m1_aw', 'The Coding Train', 0.85, 'manual', 'Creative coding education'),
+  ('UCsBjURrPoezykLs9EqgamOA', 'Fireship', 0.80, 'manual', 'Tech quick guides'),
+  ('UCxX9wt5FWQUAAz4UrysqK9A', 'CS Dojo', 0.80, 'manual', 'Clear explanations')
+ON CONFLICT (channel_id) DO NOTHING;

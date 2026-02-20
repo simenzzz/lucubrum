@@ -8,10 +8,10 @@ import { CodingExercise } from './CodingExercise';
 import { FlashcardExercise } from './FlashcardExercise';
 import { GradeResult } from './GradeResult';
 import { useSubmitAttempt } from '@/hooks/useMastery';
-import type { Exercise, AttemptResponse } from '@/types/api.types';
+import type { Exercise, ExamExercise, AttemptResponse } from '@/types/api.types';
 
 interface ExerciseCardProps {
-  exercise: Exercise;
+  exercise: Exercise | ExamExercise;
   planId: string;
   nodeId: string;
   onComplete?: () => void;
@@ -90,15 +90,16 @@ export function ExerciseCard({
 
     // Normal practice mode - submit for grading
     try {
+      const fullEx = exercise as Exercise;
       const response = await submitMutation.mutateAsync({
         planId,
         nodeId,
         request: {
-          exercise_id: exercise.id,
+          exercise_id: fullEx.id,
           answer: typeof userAnswer === 'string' ? userAnswer : JSON.stringify(userAnswer),
-          ...(exercise.type === 'coding' && {
+          ...(fullEx.type === 'coding' && {
             code: userAnswer as string,
-            language: exercise.correct_answer.language,
+            language: fullEx.correct_answer.language,
           }),
         },
       });
@@ -124,17 +125,21 @@ export function ExerciseCard({
       examMode,
     };
 
-    switch (exercise.type) {
+    // In exam mode, correct_answer/rubric are stripped by the backend.
+    // Sub-components only access those fields in practice-mode submit paths,
+    // so casting to Exercise here is safe.
+    const fullExercise = exercise as Exercise;
+    switch (fullExercise.type) {
       case 'mcq':
-        return <MCQExercise exercise={exercise} {...commonProps} />;
+        return <MCQExercise exercise={fullExercise} {...commonProps} />;
       case 'short_answer':
-        return <ShortAnswerExercise exercise={exercise} {...commonProps} />;
+        return <ShortAnswerExercise exercise={fullExercise} {...commonProps} />;
       case 'fill_blank':
-        return <FillBlankExercise exercise={exercise} {...commonProps} />;
+        return <FillBlankExercise exercise={fullExercise} {...commonProps} />;
       case 'coding':
-        return <CodingExercise exercise={exercise} {...commonProps} />;
+        return <CodingExercise exercise={fullExercise} {...commonProps} />;
       case 'flashcard':
-        return <FlashcardExercise exercise={exercise} {...commonProps} />;
+        return <FlashcardExercise exercise={fullExercise} {...commonProps} />;
       default:
         return <div>Unknown exercise type</div>;
     }
@@ -162,7 +167,7 @@ export function ExerciseCard({
 
         {/* Show result after submission (practice mode only) */}
         {showResult && result && !examMode && (
-          <GradeResult result={result} explanation={exercise.rubric} previousMastery={currentMastery} />
+          <GradeResult result={result} explanation={(exercise as Exercise).rubric} previousMastery={currentMastery} />
         )}
       </CardContent>
     </Card>

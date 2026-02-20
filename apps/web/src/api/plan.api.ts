@@ -8,6 +8,10 @@ import {
   NodeMasteryResponseSchema,
   PlanMasteryOverviewResponseSchema,
   UserPlansResponseSchema,
+  NodeLearnContentResponseSchema,
+  NodeResourceStatusMapSchema,
+  StartExamResultSchema,
+  SubmitExamResultSchema,
   safeParseWithLogging,
 } from '@/types/schemas';
 import type {
@@ -23,6 +27,11 @@ import type {
   NextNodeRecommendationResponse,
   UserPlansResponse,
   GetUserPlansRequest,
+  NodeLearnContent,
+  NodeResourceStatusMap,
+  StartExamResult,
+  ExamAnswer,
+  SubmitExamResult,
 } from '@/types/api.types';
 
 import type { z } from 'zod';
@@ -32,6 +41,7 @@ interface RequestOptions {
 }
 
 type BackendResourcesResponse = z.infer<typeof BackendResourcesResponseSchema>;
+type NodeLearnContentResponse = z.infer<typeof NodeLearnContentResponseSchema>;
 
 function transformResourcesResponse(
   data: BackendResourcesResponse,
@@ -53,6 +63,26 @@ function transformResourcesResponse(
         rationale: r.rationale,
       })),
     })),
+  };
+}
+
+function transformLearnContentResponse(
+  data: NodeLearnContentResponse,
+): NodeLearnContent {
+  return {
+    resources: data.resources.map((r) => ({
+      video_id: r.videoId,
+      title: r.title,
+      channel: r.channelTitle,
+      duration_seconds: r.durationSeconds,
+      thumbnail_url: `https://img.youtube.com/vi/${r.videoId}/mqdefault.jpg`,
+      relevance_score: r.rankScore,
+      url: r.url,
+      type: r.type,
+      rationale: r.rationale,
+    })),
+    reading_material: data.reading_material,
+    cached: data.cached,
   };
 }
 
@@ -121,6 +151,53 @@ export const planApi = {
       );
       const validated = safeParseWithLogging(BackendResourcesResponseSchema, response.data, 'planApi.getResources');
       return transformResourcesResponse(validated, planId);
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  /**
+   * Get learn content for a specific node (on-demand with caching)
+   */
+  async getNodeLearnContent(
+    planId: string,
+    nodeId: string,
+    options?: RequestOptions
+  ): Promise<NodeLearnContent> {
+    try {
+      const response = await apiClient.get(
+        `/api/plan/${planId}/nodes/${nodeId}/learn`,
+        { signal: options?.signal }
+      );
+      const validated = safeParseWithLogging(
+        NodeLearnContentResponseSchema,
+        response.data,
+        'planApi.getNodeLearnContent'
+      );
+      return transformLearnContentResponse(validated);
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  /**
+   * Get resource loading status for all nodes in a plan
+   */
+  async getNodeResourceStatuses(
+    planId: string,
+    options?: RequestOptions
+  ): Promise<NodeResourceStatusMap> {
+    try {
+      const response = await apiClient.get<NodeResourceStatusMap>(
+        `/api/plan/${planId}/resource-status`,
+        { signal: options?.signal }
+      );
+      const validated = safeParseWithLogging(
+        NodeResourceStatusMapSchema,
+        response.data,
+        'planApi.getNodeResourceStatuses'
+      );
+      return validated;
     } catch (error) {
       throw new Error(getApiError(error));
     }
@@ -246,6 +323,47 @@ export const masteryApi = {
       );
       // Note: NextNodeRecommendationResponse doesn't have a schema yet, using raw response
       return response.data;
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+};
+
+/**
+ * Exam API endpoints
+ */
+export const examApi = {
+  async start(
+    planId: string,
+    nodeId: string,
+    body?: { time_limit_seconds?: number },
+    options?: RequestOptions
+  ): Promise<StartExamResult> {
+    try {
+      const response = await apiClient.post(
+        `/api/plan/${planId}/nodes/${nodeId}/exam/start`,
+        body ?? {},
+        { signal: options?.signal }
+      );
+      return safeParseWithLogging(StartExamResultSchema, response.data, 'examApi.start');
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  async submit(
+    planId: string,
+    nodeId: string,
+    body: { session_id: string; answers: ExamAnswer[] },
+    options?: RequestOptions
+  ): Promise<SubmitExamResult> {
+    try {
+      const response = await apiClient.post(
+        `/api/plan/${planId}/nodes/${nodeId}/exam/submit`,
+        body,
+        { signal: options?.signal }
+      );
+      return safeParseWithLogging(SubmitExamResultSchema, response.data, 'examApi.submit');
     } catch (error) {
       throw new Error(getApiError(error));
     }

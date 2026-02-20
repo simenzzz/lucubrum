@@ -128,6 +128,52 @@ export interface FlashcardExercise extends BaseExercise {
   correct_answer: string;
 }
 
+// Exam exercise returned from start (answers stripped for security)
+export interface ExamExercise {
+  id: string;
+  type: 'mcq' | 'short_answer' | 'fill_blank' | 'coding' | 'flashcard';
+  prompt: string;
+  difficulty: number;
+  choices?: string[] | null;
+}
+
+export interface StartExamResult {
+  session_id: string;
+  exercises: ExamExercise[];
+  exam_difficulty: number;
+  time_limit_seconds: number;
+  started_at: string;
+  expires_at: string;
+}
+
+export interface ExamAnswer {
+  exercise_id: string;
+  user_answer: string | Record<string, unknown>;
+}
+
+export interface ExerciseGradeResult {
+  exercise_id: string;
+  score: number;
+  is_correct: boolean;
+  feedback: string;
+  misconceptions: string[];
+}
+
+export interface MasteryUpdate {
+  old: number;
+  new: number;
+  delta: number;
+  level: 'novice' | 'beginner' | 'competent' | 'proficient' | 'expert';
+}
+
+export interface SubmitExamResult {
+  exam_attempt_id: string;
+  score: number;
+  correct_count: number;
+  results: ExerciseGradeResult[];
+  mastery_update: MasteryUpdate;
+}
+
 // Mastery & Attempt types
 export interface SubmitAttemptRequest {
   exercise_id: string;
@@ -202,6 +248,25 @@ export interface YouTubeResource {
   url: string;
   type: 'must_watch' | 'recommended';
   rationale: string;
+}
+
+// Reading Material types
+export interface ReadingMaterialSection {
+  heading: string;
+  content: string;
+}
+
+// Resource status types
+export type NodeResourceStatus = 'ready' | 'pending';
+export type NodeResourceStatusMap = Record<string, NodeResourceStatus>;
+
+export interface NodeLearnContent {
+  resources: YouTubeResource[];
+  reading_material: {
+    sections: ReadingMaterialSection[];
+  } | null;
+  cached: boolean;
+  reading_material_error?: string;
 }
 
 // Error types

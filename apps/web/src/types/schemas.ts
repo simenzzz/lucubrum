@@ -112,6 +112,25 @@ export const BackendResourcesResponseSchema = z.object({
   skipped_nodes: z.array(z.string()).optional(),
 });
 
+// Node Learn Content schema (GET /api/plan/:planId/nodes/:nodeId/learn)
+export const ReadingMaterialSectionSchema = z.object({
+  heading: z.string(),
+  content: z.string(),
+});
+
+export const NodeLearnContentResponseSchema = z.object({
+  resources: z.array(BackendSelectedResourceSchema),
+  reading_material: z.object({
+    sections: z.array(ReadingMaterialSectionSchema),
+  }).nullable(),
+  cached: z.boolean(),
+});
+
+// Resource status schema
+export const NodeResourceStatusMapSchema = z.record(
+  z.enum(['ready', 'pending'])
+);
+
 // Exercise schemas — aligned with Python/DB field names (source of truth)
 const BaseExerciseSchema = z.object({
   id: z.string(),
@@ -211,6 +230,41 @@ export const PlanMasteryOverviewResponseSchema = z.object({
   ),
 });
 
+// Exam schemas
+export const StartExamResultSchema = z.object({
+  session_id: z.string().uuid(),
+  exercises: z.array(z.object({
+    id: z.string(),
+    type: z.enum(['mcq', 'short_answer', 'fill_blank', 'coding', 'flashcard']),
+    prompt: z.string(),
+    difficulty: z.number(),
+    choices: z.array(z.string()).nullish(),
+  })),
+  exam_difficulty: z.number(),
+  time_limit_seconds: z.number().positive(),
+  started_at: z.string(),
+  expires_at: z.string(),
+});
+
+export const SubmitExamResultSchema = z.object({
+  exam_attempt_id: z.string().uuid(),
+  score: z.number(),
+  correct_count: z.number(),
+  results: z.array(z.object({
+    exercise_id: z.string(),
+    score: z.number(),
+    is_correct: z.boolean(),
+    feedback: z.string(),
+    misconceptions: z.array(z.string()),
+  })),
+  mastery_update: z.object({
+    old: z.number(),
+    new: z.number(),
+    delta: z.number(),
+    level: z.enum(['novice', 'beginner', 'competent', 'proficient', 'expert']),
+  }),
+});
+
 // User plans schemas
 export const UserPlanSummarySchema = z.object({
   plan_id: z.string(),
@@ -256,7 +310,10 @@ export function safeParseWithLogging<T>(
 ): T {
   const result = schema.safeParse(data);
   if (!result.success) {
-    console.error(`[API Validation Error] ${context}:`, result.error.format());
+    console.warn(`[API Validation] ${context}: response did not match schema`);
+    if (import.meta.env.DEV) {
+      console.error(`[API Validation Error] ${context}:`, result.error.format());
+    }
     throw new Error(`Invalid API response for ${context}`);
   }
   return result.data;

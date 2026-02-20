@@ -15,6 +15,7 @@ import {
 import { getMastery, upsertMastery } from '../db/queries/mastery';
 import { getPlanWithNodes, NodeRow } from '../db/queries/plans';
 import { MASTERY_THRESHOLD, PREREQ_THRESHOLD } from '../constants/mastery';
+import { triggerMasteryUnlockPreload } from './mastery.service';
 
 // Default time limit in seconds (30 minutes)
 const DEFAULT_TIME_LIMIT_SECONDS = 1800;
@@ -323,6 +324,11 @@ class ExamService {
 
     // 10. Update mastery
     await upsertMastery(userId, planId, nodeId, newMastery);
+
+    // Fire and forget - trigger preloading for newly-unlocked nodes
+    triggerMasteryUnlockPreload(userId, planId).catch(error => {
+      logger.warn({ userId, planId, error }, 'Background exam mastery preload failed');
+    });
 
     // 11. Mark session as completed
     await completeExamSession(sessionId);

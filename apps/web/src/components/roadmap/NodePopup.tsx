@@ -14,15 +14,15 @@ import { Progress } from '@/components/ui/progress';
 import { LearningTab } from './tabs/LearningTab';
 import { PracticeTab } from './tabs/PracticeTab';
 import { ExamTab } from './tabs/ExamTab';
-import type { PlanNode, YouTubeResource } from '@/types/api.types';
+import type { PlanNode, NodeResourceStatus } from '@/types/api.types';
 
 interface NodePopupProps {
   node: PlanNode;
   planId: string;
   isOpen: boolean;
   onClose: () => void;
-  resources: YouTubeResource[];
   mastery: number;
+  nodeStatus?: NodeResourceStatus;
 }
 
 const TAB_CONFIG: { value: NodeTab; label: string; icon: React.ReactNode }[] = [
@@ -36,8 +36,8 @@ export function NodePopup({
   planId,
   isOpen,
   onClose,
-  resources,
   mastery,
+  nodeStatus,
 }: NodePopupProps) {
   const { activeTab, setActiveTab, isExamInProgress } = useRoadmapStore();
 
@@ -104,7 +104,7 @@ export function NodePopup({
             </TabsList>
 
             <TabsContent value="learn" className="mt-0">
-              <LearningTab node={node} resources={resources} />
+              <LearningTab node={node} planId={planId} nodeStatus={nodeStatus} />
             </TabsContent>
 
             <TabsContent value="practice" className="mt-0">

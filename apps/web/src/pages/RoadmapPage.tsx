@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { usePlan, usePlanMastery, usePlanResources } from '@/hooks/usePlan';
+import { usePlan, usePlanMastery, useNodeResourceStatuses } from '@/hooks/usePlan';
 import { useRoadmapStore } from '@/stores/roadmapStore';
 import { RoadmapGraph } from '@/components/roadmap/RoadmapGraph';
 import { NodePopup } from '@/components/roadmap/NodePopup';
@@ -29,8 +29,10 @@ export function RoadmapPage() {
     isLoading: masteryLoading,
   } = usePlanMastery(planId || '');
 
-  // Fetch resources (trigger if not already cached)
-  const { data: resources } = usePlanResources(planId || '');
+  // Fetch resource status for all nodes
+  const {
+    data: resourceStatuses,
+  } = useNodeResourceStatuses(planId || '');
 
   // All hooks must be called before any conditional returns (React rules of hooks)
   const masteredCount = useMemo(() => {
@@ -117,11 +119,6 @@ export function RoadmapPage() {
     );
   }
 
-  // Get resources for selected node
-  const selectedNodeResources = selectedNode
-    ? resources?.resources.find((r) => r.node_id === selectedNode.node_id)?.resources || []
-    : [];
-
   const handleNodeSelect = (node: PlanNode) => {
     selectNode(node);
   };
@@ -184,8 +181,8 @@ export function RoadmapPage() {
           planId={planId}
           isOpen={isNodePopupOpen}
           onClose={closeNodePopup}
-          resources={selectedNodeResources}
           mastery={masteryData.find((m) => m.node_id === selectedNode.node_id)?.mastery || 0}
+          nodeStatus={resourceStatuses?.[selectedNode.node_id]}
         />
       )}
     </div>

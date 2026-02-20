@@ -1,19 +1,20 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import superjson from 'superjson';
-import type { Exercise, PlanNode } from '@/types/api.types';
+import type { ExamExercise, PlanNode, SubmitExamResult } from '@/types/api.types';
 
 export type NodeTab = 'learn' | 'practice' | 'exam';
 
 export interface ExamState {
   sessionId: string;
-  exercises: Exercise[];
+  exercises: ExamExercise[];
   examDifficulty: number;
   currentIndex: number;
   answers: Map<string, unknown>;
   startedAt: Date;
   timeLimitSeconds: number;
   isComplete: boolean;
+  submitResult: SubmitExamResult | null;
 }
 
 interface RoadmapState {
@@ -46,7 +47,7 @@ interface RoadmapState {
   // Actions - Exam
   startExam: (params: {
     sessionId: string;
-    exercises: Exercise[];
+    exercises: ExamExercise[];
     examDifficulty: number;
     timeLimitSeconds: number;
   }) => void;
@@ -54,7 +55,7 @@ interface RoadmapState {
   nextExamQuestion: () => void;
   prevExamQuestion: () => void;
   goToExamQuestion: (index: number) => void;
-  completeExam: () => void;
+  completeExam: (result?: SubmitExamResult) => void;
   cancelExam: () => void;
   getUnansweredCount: () => number;
 }
@@ -183,6 +184,7 @@ export const useRoadmapStore = create<RoadmapState>()(
             startedAt: new Date(),
             timeLimitSeconds,
             isComplete: false,
+            submitResult: null,
           },
           isExamInProgress: true,
           activeTab: 'exam',
@@ -243,7 +245,7 @@ export const useRoadmapStore = create<RoadmapState>()(
         });
       },
 
-      completeExam: () => {
+      completeExam: (result?: SubmitExamResult) => {
         const examState = get().examState;
         if (!examState) return;
 
@@ -251,6 +253,7 @@ export const useRoadmapStore = create<RoadmapState>()(
           examState: {
             ...examState,
             isComplete: true,
+            submitResult: result ?? null,
           },
           isExamInProgress: false,
         });
@@ -287,6 +290,11 @@ export const useRoadmapStore = create<RoadmapState>()(
         if (state.examState && !state.examState.isComplete && isExamExpired(state.examState)) {
           // Auto-complete expired exam
           state.completeExam();
+        }
+
+        // Migrate: submitResult was added after initial release
+        if (state.examState && state.examState.submitResult === undefined) {
+          state.examState.submitResult = null;
         }
       },
     }

@@ -160,7 +160,9 @@ export interface ValidateVideoRequest {
   node_id: string;
   node_title: string;
   node_objectives: string[];
-  transcript_text: string;
+  content_text: string;
+  video_title?: string;
+  channel_name?: string;
   request_id: string;
 }
 
@@ -201,6 +203,53 @@ export interface GetFactsRequest {
 export interface GetFactsResponse {
   facts: string[];
   sources: string[];
+}
+
+// Query generation types
+export interface GenerateQueriesRequest {
+  plan_id: string;
+  node_id: string;
+  node_title: string;
+  node_objectives: string[];
+  node_tags?: string[];
+  request_id: string;
+}
+
+export interface QuerySuggestions {
+  schema_version: string;
+  plan_id: string;
+  node_id: string;
+  queries: string[];
+  metadata: ArtifactMetadata;
+}
+
+// Reading material types
+export interface TranscriptInput {
+  video_id: string;
+  title: string;
+  content_text: string;
+}
+
+export interface ReadingMaterialSection {
+  heading: string;
+  content: string;
+}
+
+export interface ReadingMaterial {
+  schema_version: string;
+  plan_id: string;
+  node_id: string;
+  sections: ReadingMaterialSection[];
+  metadata: ArtifactMetadata;
+}
+
+export interface GenerateReadingMaterialRequest {
+  plan_id: string;
+  node_id: string;
+  node_title: string;
+  node_objectives: string[];
+  transcripts: TranscriptInput[];
+  request_id: string;
 }
 
 // Exam types
@@ -529,6 +578,54 @@ export class CurriculumClient {
           (data?.message as string) || error.message,
           error.response?.status || 500,
           (data?.error as string) || 'EXAM_GENERATION_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generate YouTube search queries for a learning node.
+   */
+  async generateQueries(request: GenerateQueriesRequest): Promise<QuerySuggestions> {
+    try {
+      const response = await this.client.post<{ suggestions: QuerySuggestions }>(
+        '/llm/queries',
+        request
+      );
+      return response.data.suggestions;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'QUERY_GENERATION_FAILED',
+          data
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Generate reading material from video transcripts.
+   */
+  async generateReadingMaterial(request: GenerateReadingMaterialRequest): Promise<ReadingMaterial> {
+    try {
+      const response = await this.client.post<{ reading_material: ReadingMaterial }>(
+        '/llm/reading-material',
+        request
+      );
+      return response.data.reading_material;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data as Record<string, unknown> | undefined;
+        throw new CurriculumServiceError(
+          (data?.message as string) || error.message,
+          error.response?.status || 500,
+          (data?.error as string) || 'READING_MATERIAL_FAILED',
           data
         );
       }

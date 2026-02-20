@@ -17,12 +17,43 @@ import {
   insertResourcesForNode,
   hasResourcesForNode,
   getResourcesForPlan,
+  getNodeResourceStatusBatch,
   ResourceInput,
 } from '../db/queries/resources';
 import { requireAuth } from '../middleware/auth.middleware';
 import { upsertUserPlan } from '../db/queries/user-plans';
+import { getNodeLearnContent, getInitiallyUnlockedNodeIds, getDepth1NeighborIds, preloadNodeResources, nodeRowsToLearningNodes } from '../services/learn.service';
 
 const router = Router();
+
+// Type for cached plan with fact snapshot
+interface CachedPlanWithMetadata {
+  plan_id: string;
+  plan: Plan;
+  topic_normalized: string;
+  domain_category: string;
+  staleness_policy: string;
+  factSnapshot: string[];
+  created_at: string;
+}
+
+/**
+ * Trigger background preload of unlocked nodes and their depth-1 neighbors.
+ * Fire-and-forget: errors are logged but don't block the response.
+ */
+function triggerPlanPreload(
+  planId: string,
+  planNodes: Array<{ node_id: string; title: string; objectives: string[]; prerequisites: string[]; estimated_minutes: number; tags?: string[] | null }>
+): void {
+  const allNodes = nodeRowsToLearningNodes(planNodes);
+  const unlockedIds = new Set(getInitiallyUnlockedNodeIds(allNodes));
+  const depth1Ids = getDepth1NeighborIds(unlockedIds, allNodes);
+  const toPreload = [...unlockedIds, ...depth1Ids];
+
+  preloadNodeResources(planId, toPreload, allNodes).catch(error => {
+    logger.warn({ planId, error }, 'Background preload failed (non-fatal)');
+  });
+}
 
 // Apply requireAuth middleware to all routes
 router.use(requireAuth);
@@ -59,17 +90,6 @@ interface ErrorResponse {
   message: string;
   details?: Record<string, unknown>;
   request_id: string;
-}
-
-// Type for cached plan with fact snapshot
-interface CachedPlanWithMetadata {
-  plan_id: string;
-  plan: Plan;
-  topic_normalized: string;
-  domain_category: string;
-  staleness_policy: string;
-  factSnapshot: string[];
-  created_at: string;
 }
 
 /**
@@ -126,6 +146,9 @@ router.post(
         // Track user-plan relationship for cached plan
         await upsertUserPlan(req.user!.user_id, cachedPlan.plan_id);
 
+        // Trigger preloading for cached plans (fire and forget)
+        triggerPlanPreload(cachedPlan.plan_id, cachedPlan.plan.nodes);
+
         return res.status(201).json({
           plan_id: cachedPlan.plan_id, // Return the original plan_id from cache
           plan: cachedPlan.plan,
@@ -149,6 +172,9 @@ router.post(
       await upsertUserPlan(req.user!.user_id, result.plan_id);
 
       logger.info({ planId: result.plan_id, userId: req.user!.user_id, requestId }, 'Plan persisted to database');
+
+      // Step 4.5: Preload initially-unlocked nodes and depth-1 neighbors (fire and forget)
+      triggerPlanPreload(result.plan_id, result.plan.nodes);
 
       // Step 5: Get MCP facts for staleness tracking
       let factSnapshot: string[] = [];
@@ -270,7 +296,7 @@ router.get(
  * POST /api/plan/:planId/resources
  *
  * Attach YouTube resources to all nodes in a plan.
- * Uses transcript validation to filter irrelevant videos.
+ * Uses description-based validation to filter irrelevant videos.
  *
  * Query params:
  * - force: If 'true', re-attach resources even if they already exist.
@@ -337,13 +363,13 @@ router.post(
         // Generate search queries based on node
         const searchQueries = generateSearchQueries(node);
 
-        // Attach resources with transcript validation
+        // Attach resources with video validation
         const resources = await youtubeService.attachResourcesForNode(
           node,
           planId,
           searchQueries,
           {
-            validateTranscripts: isTranscriptValidationEnabled(),
+            validateVideos: isVideoValidationEnabled(),
             minRelevanceScore: getMinRelevanceScore(),
           }
         );
@@ -390,6 +416,102 @@ router.post(
       return res.status(500).json({
         error: 'RESOURCE_ATTACHMENT_FAILED',
         message: 'Failed to attach resources to plan',
+        request_id: requestId,
+      });
+    }
+  }
+);
+
+interface GetNodeLearnParams {
+  planId: string;
+  nodeId: string;
+}
+
+/**
+ * GET /api/plan/:planId/nodes/:nodeId/learn
+ *
+ * Get learn content (videos + reading material) for a specific node.
+ * On first request: generates content via LLM + YouTube API, caches in DB.
+ * On subsequent requests: returns from DB cache.
+ */
+router.get(
+  '/:planId/nodes/:nodeId/learn',
+  async (
+    req: Request<GetNodeLearnParams>,
+    res: Response
+  ) => {
+    const { planId, nodeId } = req.params;
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+    try {
+      // Validate UUID format
+      if (!isValidUUID(planId)) {
+        return res.status(400).json({
+          error: 'INVALID_PLAN_ID',
+          message: 'Plan ID must be a valid UUID',
+          request_id: requestId,
+        });
+      }
+
+      // Validate nodeId format
+      if (!nodeId || nodeId.length > 255) {
+        return res.status(400).json({
+          error: 'INVALID_NODE_ID',
+          message: 'Node ID is required and must be 255 characters or fewer',
+          request_id: requestId,
+        });
+      }
+
+      // Check if plan exists and get node
+      const planData = await getPlanWithNodes(planId);
+      if (!planData) {
+        return res.status(404).json({
+          error: 'PLAN_NOT_FOUND',
+          message: `Plan ${planId} not found`,
+          request_id: requestId,
+        });
+      }
+
+      const nodeRow = planData.nodes.find(n => n.node_id === nodeId);
+      if (!nodeRow) {
+        return res.status(404).json({
+          error: 'NODE_NOT_FOUND',
+          message: `Node ${nodeId} not found in plan`,
+          request_id: requestId,
+        });
+      }
+
+      // Convert NodeRow → Node (tags: null → undefined)
+      const nodeForLearn: Node = {
+        node_id: nodeRow.node_id,
+        title: nodeRow.title,
+        objectives: nodeRow.objectives,
+        prerequisites: nodeRow.prerequisites,
+        estimated_minutes: nodeRow.estimated_minutes,
+        tags: nodeRow.tags ?? undefined,
+      };
+
+      // Get learn content (videos + reading material)
+      const result = await getNodeLearnContent(planId, nodeForLearn, requestId);
+
+      if (!result.success || !result.content) {
+        return res.status(500).json({
+          error: 'LEARN_CONTENT_FAILED',
+          message: result.error || 'Failed to get learn content',
+          request_id: requestId,
+        });
+      }
+
+      return res.json({
+        resources: result.content.resources,
+        reading_material: result.content.reading_material,
+        cached: result.content.cached,
+      });
+    } catch (error) {
+      logger.error({ error, planId, nodeId, requestId }, 'Error retrieving learn content');
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
         request_id: requestId,
       });
     }
@@ -460,6 +582,69 @@ router.get(
   }
 );
 
+interface GetResourceStatusParams {
+  planId: string;
+}
+
+interface GetResourceStatusResponse {
+  [nodeId: string]: 'ready' | 'pending';
+}
+
+/**
+ * GET /api/plan/:planId/resource-status
+ *
+ * Returns per-node resource loading status for all nodes in a plan.
+ * No caching - must reflect live state for polling.
+ */
+// Note: no user-plan ownership check here — plans are shared content (consistent
+// with GET /:planId which also allows any authenticated user to access by ID).
+router.get(
+  '/:planId/resource-status',
+  async (
+    req: Request<GetResourceStatusParams>,
+    res: Response<GetResourceStatusResponse | ErrorResponse>
+  ) => {
+    const { planId } = req.params;
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+    try {
+      if (!isValidUUID(planId)) {
+        return res.status(400).json({
+          error: 'INVALID_PLAN_ID',
+          message: 'Plan ID must be a valid UUID',
+          request_id: requestId,
+        });
+      }
+
+      const planData = await getPlanWithNodes(planId);
+      if (!planData) {
+        return res.status(404).json({
+          error: 'PLAN_NOT_FOUND',
+          message: `Plan ${planId} not found`,
+          request_id: requestId,
+        });
+      }
+
+      // Single batch query instead of N*2 individual queries
+      const statusRows = await getNodeResourceStatusBatch(planId);
+      const statusMap = Object.fromEntries(
+        statusRows.map(row => [
+          row.node_id,
+          (row.has_resources && row.has_reading) ? 'ready' : 'pending',
+        ])
+      ) as GetResourceStatusResponse;
+      return res.json(statusMap);
+    } catch (error) {
+      logger.error({ error, planId, requestId }, 'Error getting resource status');
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        request_id: requestId,
+      });
+    }
+  }
+);
+
 // Helper functions
 
 /**
@@ -485,17 +670,23 @@ function generateSearchQueries(node: Node): string[] {
 }
 
 /**
- * Check if transcript validation is enabled.
+ * Check if video validation is enabled.
  */
-function isTranscriptValidationEnabled(): boolean {
-  return process.env.TRANSCRIPT_VALIDATION_ENABLED !== 'false';
+function isVideoValidationEnabled(): boolean {
+  return process.env.VIDEO_VALIDATION_ENABLED !== 'false';
 }
 
 /**
  * Get minimum relevance score from config.
+ * Validates that the value is a valid number between 0 and 1.
  */
 function getMinRelevanceScore(): number {
-  return parseFloat(process.env.TRANSCRIPT_MIN_RELEVANCE_SCORE || '0.6');
+  const value = parseFloat(process.env.VIDEO_MIN_RELEVANCE_SCORE || '0.6');
+  if (isNaN(value) || value < 0 || value > 1) {
+    logger.warn('Invalid VIDEO_MIN_RELEVANCE_SCORE, using default 0.6');
+    return 0.6;
+  }
+  return value;
 }
 
 export default router;

@@ -10,6 +10,10 @@ import { EXERCISE_MASTERY_CAP, MASTERY_VOLUME_TARGET } from '../../../src/consta
 const mockGetExerciseById = jest.fn() as jest.MockedFunction<(exerciseId: string) => Promise<any>>;
 const mockGetPlanWithNodes = jest.fn() as jest.MockedFunction<(planId: string) => Promise<any>>;
 const mockGetAllAttemptsForNode2 = jest.fn() as jest.MockedFunction<(userId: string, planId: string, nodeId: string) => Promise<any>>;
+const mockGetNodeResourceStatusBatch = jest.fn() as jest.MockedFunction<(planId: string) => Promise<any>>;
+const mockPreloadNodeResources = jest.fn() as jest.MockedFunction<(planId: string, nodeIds: string[], allNodes: any[]) => Promise<void>>;
+const mockGetDepth1NeighborIds = jest.fn().mockReturnValue([]);
+const mockNodeRowsToLearningNodes = jest.fn().mockReturnValue([]);
 
 jest.mock('../../../src/db/queries/exercises', () => ({
   getExerciseById: mockGetExerciseById,
@@ -34,6 +38,16 @@ jest.mock('../../../src/db/queries/mastery', () => ({
 }));
 
 jest.mock('../../../src/utils/logger');
+jest.mock('../../../src/services/learn.service', () => ({
+  preloadNodeResources: mockPreloadNodeResources,
+  getDepth1NeighborIds: mockGetDepth1NeighborIds,
+  nodeRowsToLearningNodes: mockNodeRowsToLearningNodes,
+  __esModule: true,
+}));
+jest.mock('../../../src/db/queries/resources', () => ({
+  getNodeResourceStatusBatch: mockGetNodeResourceStatusBatch,
+  __esModule: true,
+}));
 jest.mock('../../../src/services/curriculum-client', () => ({
   __esModule: true,
   curriculumClient: {
@@ -83,7 +97,6 @@ import {
   upsertMastery,
   upsertMasteryIfHigher,
 } from '../../../src/db/queries/mastery';
-
 // Type assertions for mocked functions
 const mockedCurriculumClient = curriculumClient as jest.Mocked<typeof curriculumClient>;
 const mockedInsertAttempt = insertAttempt as jest.MockedFunction<typeof insertAttempt>;
@@ -1037,6 +1050,66 @@ describe('MasteryService', () => {
         expect.closeTo(0.003, 3)
       );
       expect(result.mastery.score).toBeCloseTo(0.003, 3);
+    });
+  });
+
+  describe('triggerMasteryUnlockPreload', () => {
+    // Import the function after mocks are set up
+    const { triggerMasteryUnlockPreload } = require('../../../src/services/mastery.service');
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // Set up default mock behavior
+      mockNodeRowsToLearningNodes.mockImplementation((nodes: any) => nodes);
+      mockGetDepth1NeighborIds.mockReturnValue(['node1_depth1', 'node2_depth1']);
+    });
+
+    it('returns early when plan not found', async () => {
+      mockGetPlanWithNodes.mockResolvedValue(null);
+      await triggerMasteryUnlockPreload('user1', 'plan1');
+      expect(mockPreloadNodeResources).not.toHaveBeenCalled();
+    });
+
+    it('calls preloadNodeResources with unlocked + depth-1 nodes', async () => {
+      const mockPlan = {
+        nodes: [
+          { node_id: 'node1', prerequisites: [] },
+          { node_id: 'node2', prerequisites: ['node1'] },
+        ],
+      };
+      mockGetPlanWithNodes.mockResolvedValue(mockPlan);
+      mockedGetMasteryForPlan.mockResolvedValue([{ user_id: 'user1', plan_id: 'plan1', node_id: 'node1', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false }]);
+      mockGetNodeResourceStatusBatch.mockResolvedValue([]);
+
+      await triggerMasteryUnlockPreload('user1', 'plan1');
+
+      expect(mockPreloadNodeResources).toHaveBeenCalledWith(
+        'plan1',
+        expect.arrayContaining(['node1']),
+        expect.any(Array)
+      );
+    });
+
+    it('filters out nodes with existing resources and reading material', async () => {
+      const mockPlan = {
+        nodes: [{ node_id: 'node1', prerequisites: [] }],
+      };
+      mockGetPlanWithNodes.mockResolvedValue(mockPlan);
+      mockedGetMasteryForPlan.mockResolvedValue([{ user_id: 'user1', plan_id: 'plan1', node_id: 'node1', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false }]);
+      // Mock empty depth-1 neighbors (no neighbors to preload)
+      mockGetDepth1NeighborIds.mockReturnValue([]);
+      mockGetNodeResourceStatusBatch.mockResolvedValue([
+        { node_id: 'node1', has_resources: true, has_reading: true },
+      ]);
+
+      await triggerMasteryUnlockPreload('user1', 'plan1');
+
+      expect(mockPreloadNodeResources).not.toHaveBeenCalled();
+    });
+
+    it('handles errors gracefully', async () => {
+      mockGetPlanWithNodes.mockRejectedValue(new Error('DB error'));
+      await expect(triggerMasteryUnlockPreload('user1', 'plan1')).resolves.not.toThrow();
     });
   });
 });

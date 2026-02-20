@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
+# Maximum text length to prevent ReDoS attacks
+MAX_TEXT_LENGTH = 100_000  # 100KB limit
+
 
 @dataclass
 class RetryConfig:
@@ -53,12 +56,20 @@ def _extract_json_from_response(raw_output: str) -> str:
     """Extract JSON from LLM response, handling various output artifacts.
 
     Strategies applied in order:
-    1. Strip <thinking>...</thinking> blocks (Gemini extended thinking)
-    2. Extract content from markdown code fences
-    3. Find outermost JSON object/array by brace matching
-    4. Return stripped text as-is (let json.loads produce a descriptive error)
+    1. Enforce MAX_TEXT_LENGTH to prevent ReDoS attacks
+    2. Strip <thinking>...</thinking> blocks (Gemini extended thinking)
+    3. Extract content from markdown code fences
+    4. Find outermost JSON object/array by brace matching
+    5. Return stripped text as-is (let json.loads produce a descriptive error)
     """
     text = raw_output.strip()
+
+    # 0. Enforce text length limit to prevent ReDoS attacks
+    if len(text) > MAX_TEXT_LENGTH:
+        logger.warning(
+            f"Input text exceeds MAX_TEXT_LENGTH ({MAX_TEXT_LENGTH}), truncating"
+        )
+        text = text[:MAX_TEXT_LENGTH]
 
     # 1. Strip thinking blocks
     text = re.sub(r"<thinking>.*?</thinking>", "", text, flags=re.DOTALL).strip()

@@ -1,0 +1,103 @@
+# VIDEO VALIDATION PROMPT v2
+# Provider: any
+# Temperature: 0.3
+# Created: 2025-02-18
+# Purpose: Determine if a YouTube video matches a learning node (using description instead of transcript)
+
+You are an educational content validator. Your task is to determine if a YouTube video is relevant to a specific learning objective based on its title, channel, and description.
+
+## Input
+- Node Title: {node_title}
+- Node Objectives:
+{node_objectives}
+- Video Title: {video_title}
+- Channel Name: {channel_name}
+- Video Description:
+{description_text}
+
+## Task
+Analyze the video metadata and determine:
+1. Is this video likely to be relevant to the learning node? (true/false)
+2. Relevance score (0.0 to 1.0)
+3. Which specific objectives does this video likely cover?
+4. If not relevant, explain why
+
+**Note**: Descriptions are summaries, so weigh ALL three signals (title + channel + description) together. A strong title from a trusted educational channel can compensate for a brief description.
+
+## Output Requirements
+- Return ONLY valid JSON (no markdown, no code fences)
+- Follow the exact schema below
+
+## Schema
+{{
+  "is_relevant": boolean,
+  "relevance_score": number (0.0-1.0),
+  "matched_objectives": ["objective 1", "objective 2"],
+  "rejection_reason": string | null
+}}
+
+## Quality Criteria
+
+RELEVANT (score >= 0.5):
+- Video title directly addresses concepts from objectives
+- Channel name indicates educational content (e.g., "Academy", "Education", "Tutorials", or known educator)
+- Description mentions relevant topics, keywords, or learning outcomes
+- Content appears to be instructional, not entertainment
+
+NOT RELEVANT (score < 0.5):
+- Video title is tangentially related but doesn't teach the objectives
+- Description indicates different content than expected
+- Video is entertainment, music, or non-educational
+- Video appears outdated (description mentions old versions/technologies)
+- Video is primarily promotional or sells a product/service
+- Language mismatch (non-English content for English objectives)
+
+## Examples
+
+### Example 1: Relevant
+Node: "Introduction to Binary Search Trees"
+Objectives: ["Understand BST properties", "Compare BST with arrays and linked lists"]
+Video Title: "Binary Search Trees Explained"
+Channel Name: "3Blue1Brown"
+Description: "In this video, we explore binary search trees, a fundamental data structure where each node has at most two children. We'll cover insertion, search, and the key property that makes BSTs useful for sorting."
+
+Output:
+{{
+  "is_relevant": true,
+  "relevance_score": 0.90,
+  "matched_objectives": ["Understand BST properties"],
+  "rejection_reason": null
+}}
+
+### Example 2: Not Relevant
+Node: "Introduction to Binary Search Trees"
+Objectives: ["Understand BST properties", "Compare BST with arrays and linked lists"]
+Video Title: "Java TreeSet Tutorial"
+Channel Name: "Code With John"
+Description: "Learn how to use the TreeSet class in Java with practical examples. We'll cover add(), remove(), contains() and more."
+
+Output:
+{{
+  "is_relevant": false,
+  "relevance_score": 0.35,
+  "matched_objectives": [],
+  "rejection_reason": "Video focuses on Java API usage rather than teaching BST concepts and properties"
+}}
+
+### Example 3: Relevant with Brief Description
+Node: "React Hooks Basics"
+Objectives: ["Understand useState", "Learn useEffect"]
+Video Title: "React Hooks Tutorial for Beginners"
+Channel Name: "Traversy Media"
+Description: "Learn React hooks from scratch. Covered: useState, useEffect, useContext."
+
+Output:
+{{
+  "is_relevant": true,
+  "relevance_score": 0.85,
+  "matched_objectives": ["Understand useState", "Learn useEffect"],
+  "rejection_reason": null
+}}
+
+{validation_errors}
+Now analyze the provided video metadata and return your assessment as JSON:

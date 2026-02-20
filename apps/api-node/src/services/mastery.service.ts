@@ -17,6 +17,8 @@ import {
 import { MASTERY_THRESHOLD, PREREQ_THRESHOLD, EXERCISE_MASTERY_CAP, MASTERY_VOLUME_TARGET } from '../constants/mastery';
 import { getExerciseById, ExerciseRow } from '../db/queries/exercises';
 import { getPlanWithNodes } from '../db/queries/plans';
+import { getNodeResourceStatusBatch } from '../db/queries/resources';
+import { preloadNodeResources, getDepth1NeighborIds, nodeRowsToLearningNodes, type Node } from './learn.service';
 
 // Custom error class
 export class MasteryServiceError extends Error {
@@ -298,6 +300,11 @@ class MasteryService {
       };
     }
 
+    // Fire and forget - trigger preloading for newly-unlocked nodes
+    triggerMasteryUnlockPreload(userId, planId).catch(error => {
+      logger.warn({ userId, planId, error }, 'Background mastery preload failed');
+    });
+
     return {
       score: cappedScore,
       level,
@@ -531,6 +538,56 @@ class MasteryService {
     if (score < PREREQ_THRESHOLD) return 'intermediate';
     if (score < MASTERY_THRESHOLD) return 'competent';
     return 'expert';
+  }
+}
+
+/**
+ * Trigger preloading for nodes that become newly unlocked after a mastery update.
+ * Fire-and-forget: logs errors but does not block the main flow.
+ */
+export async function triggerMasteryUnlockPreload(
+  userId: string,
+  planId: string
+): Promise<void> {
+  try {
+    // Fetch plan nodes
+    const planData = await getPlanWithNodes(planId);
+    if (!planData) return;
+
+    const allNodes: Node[] = nodeRowsToLearningNodes(planData.nodes);
+
+    // Fetch current mastery for the plan
+    const masteryRows = await getMasteryForPlan(userId, planId);
+    const masteryByNode = new Map(masteryRows.map(r => [r.node_id, r.mastery_score]));
+
+    // Find unlocked nodes (all prerequisites met with mastery >= PREREQ_THRESHOLD)
+    const unlockedIds = new Set(
+      allNodes
+        .filter(node => node.prerequisites.every(p => (masteryByNode.get(p) ?? 0) >= PREREQ_THRESHOLD))
+        .map(n => n.node_id)
+    );
+
+    // Compute depth-1 neighbors
+    const depth1Ids = getDepth1NeighborIds(unlockedIds, allNodes);
+    const toPreload = [...unlockedIds, ...depth1Ids];
+
+    if (toPreload.length === 0) return;
+
+    // Filter out nodes that already have resources and reading material
+    // Single batch query instead of N individual checks
+    const statusRows = await getNodeResourceStatusBatch(planId);
+    const statusByNode = new Map(statusRows.map(r => [r.node_id, r]));
+
+    const needsPreload = toPreload.filter(nodeId => {
+      const s = statusByNode.get(nodeId);
+      return !s || !s.has_resources || !s.has_reading;
+    });
+
+    if (needsPreload.length > 0) {
+      await preloadNodeResources(planId, needsPreload, allNodes);
+    }
+  } catch (error) {
+    logger.warn({ userId, planId, error }, 'Mastery unlock preload failed (non-fatal)');
   }
 }
 

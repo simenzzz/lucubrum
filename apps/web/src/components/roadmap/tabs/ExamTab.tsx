@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Clock, AlertTriangle, Trophy, Loader2, Lightbulb } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Clock, AlertTriangle, Trophy, Loader2, Lightbulb, CheckCircle, XCircle } from 'lucide-react';
 import { useRoadmapStore } from '@/stores/roadmapStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ExerciseCard } from '@/components/exercises/ExerciseCard';
 import { EXERCISE_MASTERY_CAP, MASTERY_THRESHOLD } from '@/constants/mastery';
-import type { PlanNode } from '@/types/api.types';
+import { useStartExam, useSubmitExam } from '@/hooks/usePlan';
+import type { PlanNode, ExamAnswer } from '@/types/api.types';
 
 interface ExamTabProps {
   node: PlanNode;
@@ -33,8 +34,21 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Timer effect
+  const startExamMutation = useStartExam();
+  const submitExamMutation = useSubmitExam();
+
+  // Stable ref to always-current handleSubmit, to avoid stale closures in the timer
+  const handleSubmitRef = useRef<() => Promise<void>>(async () => {});
+
+  // Keep ref pointing to the latest handleSubmit on every render
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  });
+
+  // Timer effect — deps narrowed to exam identity fields, not full examState object
   useEffect(() => {
     if (!examState || examState.isComplete) return;
 
@@ -42,61 +56,70 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     const remaining = examState.timeLimitSeconds - elapsed;
 
     if (remaining <= 0) {
-      handleSubmit();
+      handleSubmitRef.current();
       return;
     }
+
+    const startedAt = examState.startedAt;
+    const timeLimitSeconds = examState.timeLimitSeconds;
 
     setTimeRemaining(Math.floor(remaining));
 
     const interval = setInterval(() => {
-      const newElapsed = (Date.now() - examState.startedAt.getTime()) / 1000;
-      const newRemaining = examState.timeLimitSeconds - newElapsed;
+      const newElapsed = (Date.now() - startedAt.getTime()) / 1000;
+      const newRemaining = timeLimitSeconds - newElapsed;
 
       if (newRemaining <= 0) {
         clearInterval(interval);
-        handleSubmit();
+        handleSubmitRef.current();
       } else {
         setTimeRemaining(Math.floor(newRemaining));
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [examState]);
+  }, [examState?.sessionId, examState?.isComplete, examState?.timeLimitSeconds]);
 
   const handleStartExam = async () => {
     setIsStarting(true);
+    setStartError(null);
     try {
-      // TODO: Call actual exam start API
-      const mockExercises = Array.from({ length: 10 }, (_, i) => ({
-        id: `exam-${i + 1}`,
-        node_id: node.node_id,
-        type: 'mcq' as const,
-        prompt: `Sample exam question ${i + 1} for ${node.title}`,
-        difficulty: (Math.floor(mastery * 5) + 1) as 1 | 2 | 3 | 4 | 5,
-        rubric: 'This is a sample rubric for the exam question.',
-        choices: ['Option A', 'Option B', 'Option C', 'Option D'],
-        correct_answer: 'Option A',
-      }));
-
+      const result = await startExamMutation.mutateAsync({ planId, nodeId: node.node_id });
       startExam({
-        sessionId: `exam-session-${Date.now()}`,
-        exercises: mockExercises,
-        examDifficulty: mastery + 0.1,
-        timeLimitSeconds: 1800, // 30 minutes
+        sessionId: result.session_id,
+        exercises: result.exercises,
+        examDifficulty: result.exam_difficulty,
+        timeLimitSeconds: result.time_limit_seconds,
       });
+    } catch (err) {
+      setStartError(err instanceof Error ? err.message : 'Failed to start exam. Please try again.');
     } finally {
       setIsStarting(false);
     }
   };
 
   const handleSubmit = async () => {
-    if (!examState) return;
+    if (!examState || isSubmitting) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
-      // TODO: Call actual exam submit API
-      completeExam();
+      const answers: ExamAnswer[] = Array.from(examState.answers.entries()).map(
+        ([exercise_id, user_answer]) => ({
+          exercise_id,
+          user_answer: user_answer as string | Record<string, unknown>,
+        })
+      );
+      const result = await submitExamMutation.mutateAsync({
+        planId,
+        nodeId: node.node_id,
+        sessionId: examState.sessionId,
+        answers,
+      });
+      completeExam(result);
       setShowResults(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to submit exam. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,9 +140,10 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
 
   // Show results screen
   if (showResults && examState?.isComplete) {
-    const score = examState.exercises.length > 0
-      ? examState.answers.size / examState.exercises.length
-      : 0;
+    const submitResult = examState.submitResult;
+    const score = submitResult ? submitResult.score : 0;
+    const correctCount = submitResult ? submitResult.correct_count : 0;
+    const totalCount = examState.exercises.length;
 
     return (
       <div className="space-y-6">
@@ -129,22 +153,64 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
           </div>
           <h3 className="font-heading text-2xl font-semibold text-warm-50 mb-2">Exam Complete!</h3>
           <p className="text-warm-400">
-            You answered {examState.answers.size} of {examState.exercises.length} questions
+            You answered {correctCount} of {totalCount} questions correctly
           </p>
         </div>
 
-        <div className="p-6 rounded-xl bg-hearth-700/50 border border-border-moderate">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-6 rounded-xl bg-hearth-700/50 border border-border-moderate space-y-4">
+          <div className="flex items-center justify-between">
             <span className="text-warm-200">Your Score</span>
             <span className="font-heading text-3xl font-bold text-amber">
               {Math.round(score * 100)}%
             </span>
           </div>
           <Progress value={score * 100} />
-          <p className="text-sm text-warm-400 mt-3">
-            Mastery update will be calculated when the backend exam API is implemented.
-          </p>
+
+          {submitResult && (
+            <div className="flex items-center justify-between pt-2 border-t border-border-moderate">
+              <span className="text-sm text-warm-400">Mastery Update</span>
+              <span className="text-sm font-medium text-warm-200">
+                {Math.round(submitResult.mastery_update.old * 100)}%
+                {' → '}
+                <span className={submitResult.mastery_update.delta >= 0 ? 'text-green-400' : 'text-red-400'}>
+                  {Math.round(submitResult.mastery_update.new * 100)}%
+                </span>
+                {' '}
+                <span className={`text-xs ${submitResult.mastery_update.delta >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ({submitResult.mastery_update.delta >= 0 ? '+' : ''}{Math.round(submitResult.mastery_update.delta * 100)}%)
+                </span>
+              </span>
+            </div>
+          )}
         </div>
+
+        {submitResult && submitResult.results.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-warm-200">Question Breakdown</h4>
+            {submitResult.results.map((r, index) => (
+              <div
+                key={r.exercise_id}
+                className="p-3 rounded-lg bg-hearth-700/30 border border-border-moderate space-y-1"
+              >
+                <div className="flex items-center gap-2">
+                  {r.is_correct
+                    ? <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
+                    : <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                  <span className="text-sm text-warm-200">Question {index + 1}</span>
+                  <span className="text-xs text-warm-400 ml-auto">{Math.round(r.score * 100)}%</span>
+                </div>
+                {r.feedback && (
+                  <p className="text-xs text-warm-400 pl-6">{r.feedback}</p>
+                )}
+                {r.misconceptions.length > 0 && (
+                  <p className="text-xs text-amber pl-6">
+                    Misconception: {r.misconceptions.join(', ')}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="flex gap-3">
           <Button
@@ -196,7 +262,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         <div className="flex items-center gap-1 flex-wrap">
           {examState.exercises.map((_, index) => (
             <button
-              key={index}
+              key={examState.exercises[index].id}
               onClick={() => goToExamQuestion(index)}
               className={`w-7 h-7 rounded-lg text-xs font-medium transition-all ${
                 index === examState.currentIndex
@@ -210,6 +276,12 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
             </button>
           ))}
         </div>
+
+        {submitError && (
+          <Alert className="border-red-500/30 bg-red-500/5">
+            <AlertDescription className="text-red-400">{submitError}</AlertDescription>
+          </Alert>
+        )}
 
         {/* Current exercise (exam mode - no feedback) */}
         {currentExercise && (
@@ -311,6 +383,12 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         </div>
       </div>
 
+      {startError && (
+        <Alert className="border-red-500/30 bg-red-500/5">
+          <AlertDescription className="text-red-400">{startError}</AlertDescription>
+        </Alert>
+      )}
+
       <Button
         onClick={handleStartExam}
         disabled={isStarting}
@@ -323,10 +401,6 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         ) : null}
         Start Exam
       </Button>
-
-      <p className="text-xs text-center text-warm-400">
-        Note: Full exam functionality requires the backend exam API to be implemented.
-      </p>
     </div>
   );
 }

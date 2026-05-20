@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/auth/:path*",
+      "destination": "https://lucubrum-api.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://lucubrum-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://lucubrum-api.onrender.com/admin/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

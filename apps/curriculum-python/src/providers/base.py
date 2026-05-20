@@ -2,7 +2,6 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any
 
 
 class LLMProvider(ABC):
@@ -60,5 +59,8 @@ def get_provider() -> LLMProvider:
     elif provider_name == "claude":
         from .claude import ClaudeProvider
         return ClaudeProvider()
+    elif provider_name == "zai":
+        from .zai import ZaiProvider
+        return ZaiProvider()
     else:
         raise ValueError(f"Unsupported LLM provider: {provider_name}")

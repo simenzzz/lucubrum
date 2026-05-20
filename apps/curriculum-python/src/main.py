@@ -133,10 +133,12 @@ async def health():
     db_status = "healthy"
 
     # Check if at least one LLM provider is configured
-    provider = os.getenv("LLM_PROVIDER", "gemini")
+    provider = os.getenv("LLM_PROVIDER", "gemini").lower()
     if provider == "gemini" and not os.getenv("GEMINI_API_KEY"):
         llm_status = "unhealthy"
     elif provider == "claude" and not os.getenv("ANTHROPIC_API_KEY"):
+        llm_status = "unhealthy"
+    elif provider == "zai" and not os.getenv("ZAI_API_KEY"):
         llm_status = "unhealthy"
 
     # Check database connection

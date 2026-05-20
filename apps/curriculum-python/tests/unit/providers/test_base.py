@@ -27,6 +27,13 @@ class TestGetProvider:
         provider = get_provider()
         assert provider.provider_name == "claude"
 
+    def test_zai_explicit(self, monkeypatch, mock_zai_client):
+        monkeypatch.setenv("LLM_PROVIDER", "zai")
+        monkeypatch.setenv("ZAI_API_KEY", "test-key")
+        from src.providers.base import get_provider
+        provider = get_provider()
+        assert provider.provider_name == "zai"
+
     def test_unsupported_provider_raises(self, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
         from src.providers.base import get_provider
@@ -39,3 +46,10 @@ class TestGetProvider:
         from src.providers.base import get_provider
         provider = get_provider()
         assert provider.provider_name == "gemini"
+
+    def test_zai_case_insensitive(self, monkeypatch, mock_zai_client):
+        monkeypatch.setenv("LLM_PROVIDER", "ZAI")
+        monkeypatch.setenv("ZAI_API_KEY", "test-key")
+        from src.providers.base import get_provider
+        provider = get_provider()
+        assert provider.provider_name == "zai"

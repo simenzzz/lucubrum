@@ -1,11 +1,9 @@
 """Mock fixtures for LLM provider clients."""
 
 from dataclasses import dataclass
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 
 # --- Claude mock helpers ---
 
@@ -45,7 +43,9 @@ def mock_claude_client(mocker):
 
     Usage:
         def test_something(mock_claude_client):
-            mock_claude_client.messages.create.return_value = create_claude_response('{"key": "val"}')
+            mock_claude_client.messages.create.return_value = create_claude_response(
+                '{"key": "val"}'
+            )
     """
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock()
@@ -77,12 +77,55 @@ def mock_gemini_client(mocker):
 
     Usage:
         def test_something(mock_gemini_client):
-            mock_gemini_client.aio.models.generate_content.return_value = create_gemini_response('{}')
+            mock_gemini_client.aio.models.generate_content.return_value = (
+                create_gemini_response('{}')
+            )
     """
     mock_client = MagicMock()
     mock_client.aio.models.generate_content = AsyncMock()
     mocker.patch(
         "src.providers.gemini.genai.Client",
+        return_value=mock_client,
+    )
+    return mock_client
+
+
+# --- Z.ai mock helpers ---
+
+
+@dataclass
+class ZaiMessage:
+    """Mimics a Z.ai chat completion message."""
+
+    content: str | None
+
+
+@dataclass
+class ZaiChoice:
+    """Mimics a Z.ai chat completion choice."""
+
+    message: ZaiMessage
+
+
+@dataclass
+class ZaiResponse:
+    """Mimics a Z.ai chat completion response."""
+
+    choices: list[ZaiChoice]
+
+
+def create_zai_response(content: str | None) -> ZaiResponse:
+    """Create a mock Z.ai API response with the given text content."""
+    return ZaiResponse(choices=[ZaiChoice(message=ZaiMessage(content=content))])
+
+
+@pytest.fixture
+def mock_zai_client(mocker):
+    """Patch ZaiClient and return the mock client."""
+    mock_client = MagicMock()
+    mock_client.chat.completions.create = MagicMock()
+    mocker.patch(
+        "src.providers.zai.ZaiClient",
         return_value=mock_client,
     )
     return mock_client

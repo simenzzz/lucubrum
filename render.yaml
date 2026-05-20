@@ -62,7 +62,6 @@ services:
     dockerfilePath: ./apps/api-node/Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    preDeployCommand: ./infra/scripts/db-migrate.sh
     envVars:
       - key: NODE_ENV
         value: production

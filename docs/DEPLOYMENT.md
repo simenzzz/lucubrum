@@ -44,6 +44,20 @@ DATABASE_POOL_MIN=1
 DATABASE_POOL_MAX=3
 ```
 
+## Run Database Migration
+
+Render Free Web Services do not support pre-deploy commands, so run the
+Supabase schema migration manually once from the repo root.
+
+`psql` must be installed locally and reachable on your `PATH`.
+
+```bash
+export DATABASE_URL='<supabase-session-pooler-url-with-sslmode=require>'
+./infra/scripts/db-migrate.sh
+```
+
+The migration script is idempotent and safe to rerun.
+
 ## Upstash Redis
 
 Create an Upstash Redis database and use the Redis protocol URL, not the REST

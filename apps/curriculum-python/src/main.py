@@ -34,6 +34,17 @@ logger = get_logger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 
+def get_database_pool_sizes() -> tuple[int, int]:
+    """Return configured database pool bounds."""
+    min_size = int(os.getenv("DATABASE_POOL_MIN", "1"))
+    max_size = int(os.getenv("DATABASE_POOL_MAX", "3"))
+    if min_size < 1:
+        min_size = 1
+    if max_size < min_size:
+        max_size = min_size
+    return min_size, max_size
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
@@ -41,10 +52,11 @@ async def lifespan(app: FastAPI):
     db_pool = None
     if DATABASE_URL:
         try:
+            db_pool_min, db_pool_max = get_database_pool_sizes()
             db_pool = await asyncpg.create_pool(
                 DATABASE_URL,
-                min_size=2,
-                max_size=10,
+                min_size=db_pool_min,
+                max_size=db_pool_max,
                 command_timeout=30,
             )
             app.state.db_pool = db_pool

@@ -29,23 +29,29 @@ class ClaudeProvider(LLMProvider):
         prompt: str,
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        system_prompt: str | None = None,
     ) -> str:
         """Generate a response from Claude.
 
         Args:
-            prompt: The prompt to send.
+            prompt: The user-provided prompt to send.
             temperature: Sampling temperature (0.0-1.0).
             max_tokens: Maximum tokens in response.
+            system_prompt: Optional system-level instructions.
 
         Returns:
             Raw string response from the model.
         """
-        message = await self._client.messages.create(
-            model=self._model_name,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        kwargs: dict = {
+            "model": self._model_name,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if system_prompt:
+            kwargs["system"] = system_prompt
+
+        message = await self._client.messages.create(**kwargs)
 
         # Extract text from response
         text_blocks = [

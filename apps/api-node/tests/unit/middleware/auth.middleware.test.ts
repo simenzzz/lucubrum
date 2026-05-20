@@ -260,7 +260,7 @@ describe('Auth Middleware', () => {
       expect(res.statusCode).toBe(403);
       expect(res.jsonData).toEqual({
         error: 'FORBIDDEN',
-        message: 'Required role: admin',
+        message: 'Insufficient permissions',
         request_id: 'unknown',
       });
     });

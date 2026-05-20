@@ -1,11 +1,4 @@
-"""Tests for src/api/normalize.py — POST /llm/normalize-topic endpoint.
-
-Note: The normalize endpoint has known bugs in metadata construction:
-- Uses `provider.model` instead of `provider.model_name`
-- Passes `duration_ms` and `final_artifact_hash` which ArtifactMetadata doesn't accept
-- Passes `created_at` as string instead of datetime
-These tests document the expected behavior and verify error handling.
-"""
+"""Tests for src/api/normalize.py — POST /llm/normalize-topic endpoint."""
 
 import json
 import pytest
@@ -27,9 +20,9 @@ def _normalize_request(**overrides) -> dict:
 class TestNormalizeEndpoint:
     @pytest.fixture(autouse=True)
     def _setup(self, monkeypatch):
-        monkeypatch.setenv("SERVICE_TOKEN", "test-token")
+        monkeypatch.setenv("SERVICE_TOKEN", "test-service-token")
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        self.headers = {"X-Service-Token": "test-token"}
+        self.headers = {"X-Service-Token": "test-service-token"}
 
     @pytest.fixture
     def _mock_deps(self, mocker):
@@ -75,11 +68,7 @@ class TestNormalizeEndpoint:
         assert resp.status_code == 503
 
     async def test_success_with_valid_llm_response(self, _mock_deps):
-        """Endpoint should return 200 with normalized topic when everything works.
-
-        Note: Due to a bug in metadata construction (duration_ms, final_artifact_hash),
-        this may return 500. The test documents current behavior.
-        """
+        """Endpoint should return 200 with normalized topic when everything works."""
         llm_response = json.dumps({
             "topic_normalized": "react_js",
             "domain_category": "web",
@@ -92,9 +81,7 @@ class TestNormalizeEndpoint:
             app_state_overrides={"staleness_policies": self._mock_staleness_service()},
         )
 
-        # Due to metadata construction bug, this fails with 500
-        # If fixed, it would be 200 with correct data
-        assert resp.status_code in (200, 500)
+        assert resp.status_code == 200
 
     async def test_invalid_llm_json_422(self, _mock_deps):
         self.mock_provider.generate.return_value = "not json at all"
@@ -168,7 +155,8 @@ class TestNormalizeEndpoint:
             app_state_overrides={"staleness_policies": self._mock_staleness_service()},
         )
 
-        assert resp.status_code == 500
+        # retry_llm_with_validation catches and retries, returning 422 on exhaustion
+        assert resp.status_code == 422
 
     async def test_auth_required(self):
         from src.main import app

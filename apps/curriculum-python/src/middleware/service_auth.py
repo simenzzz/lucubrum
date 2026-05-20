@@ -1,6 +1,7 @@
 """Service-to-service authentication middleware."""
 
 import os
+import secrets
 from datetime import datetime, timezone
 
 from fastapi import Request
@@ -36,9 +37,20 @@ class ServiceTokenMiddleware(BaseHTTPMiddleware):
         Args:
             app: The FastAPI application.
             excluded_paths: Additional paths to exclude from auth.
+
+        Raises:
+            ValueError: If SERVICE_TOKEN is not configured in production.
         """
         super().__init__(app)
         self.token = os.getenv("SERVICE_TOKEN")
+
+        # Fail closed when SERVICE_TOKEN is not configured
+        if not self.token:
+            raise ValueError(
+                "SERVICE_TOKEN environment variable is required in production. "
+                "Set SERVICE_TOKEN to a secure random string."
+            )
+
         self.excluded_paths = set(self.EXCLUDED_PATHS)
         if excluded_paths:
             self.excluded_paths.update(excluded_paths)
@@ -53,17 +65,9 @@ class ServiceTokenMiddleware(BaseHTTPMiddleware):
         if path in self.excluded_paths:
             return await call_next(request)
 
-        # If no token configured, allow requests (development mode)
-        if not self.token:
-            logger.warning(
-                "SERVICE_TOKEN not configured - allowing unauthenticated request",
-                path=path,
-            )
-            return await call_next(request)
-
-        # Validate the service token
+        # Validate the service token using timing-safe comparison
         auth_header = request.headers.get("X-Service-Token")
-        if auth_header != self.token:
+        if not secrets.compare_digest(auth_header or "", self.token):
             timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             request_id = request.headers.get("X-Request-ID", "unknown")
 

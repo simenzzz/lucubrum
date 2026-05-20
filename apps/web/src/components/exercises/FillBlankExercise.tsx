@@ -32,7 +32,9 @@ export function FillBlankExercise({
   examMode,
 }: FillBlankExerciseProps) {
   const { segments, blankCount } = parsePromptBlanks(exercise.prompt);
-  const expectedCount = Math.max(blankCount, exercise.correct_answer.answers.length);
+  const expectedCount = exercise.correct_answer
+    ? Math.max(blankCount, exercise.correct_answer.answers.length)
+    : blankCount;
   const answers = (answer as string[]) || Array.from({ length: expectedCount }, () => '');
 
   const handleBlankChange = (index: number, value: string) => {

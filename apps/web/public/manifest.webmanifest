@@ -1,6 +1,6 @@
 {
-  "name": "Learning Helper - Chart Your Course",
-  "short_name": "Learning Helper",
+  "name": "Lucubrum - Chart Your Course",
+  "short_name": "Lucubrum",
   "description": "Personalized learning roadmaps with AI-powered exercises",
   "start_url": "/",
   "display": "standalone",

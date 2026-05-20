@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * E2E Test Runner for Learning Helper
+ * E2E Test Runner for Lucubrum
  *
  * Usage:
  *   GEMINI_API_KEY=xxx YOUTUBE_API_KEY=yyy ts-node tests/e2e/run-e2e.ts
@@ -70,7 +70,7 @@ async function runTest(name: string, testFn: () => Promise<void>): Promise<void>
 }
 
 async function main() {
-  log('\n=== Learning Helper E2E Tests ===\n', colors.blue);
+  log('\n=== Lucubrum E2E Tests ===\n', colors.blue);
 
   const client = axios.create({
     baseURL: PYTHON_SERVICE_URL,

@@ -150,7 +150,7 @@ export function requireRole(role: string) {
       );
       res.status(403).json({
         error: 'FORBIDDEN',
-        message: `Required role: ${role}`,
+        message: 'Insufficient permissions',
         request_id: requestId,
       });
       return;

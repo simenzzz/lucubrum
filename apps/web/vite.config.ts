@@ -23,8 +23,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png', 'images/*.svg', 'textures/*.png'],
       manifest: {
-        name: 'Learning Helper - Chart Your Course',
-        short_name: 'Learning Helper',
+        name: 'Lucubrum - Chart Your Course',
+        short_name: 'Lucubrum',
         description: 'Personalized learning roadmaps with AI-powered exercises',
         theme_color: '#1A1915',
         background_color: '#F7F3E8',

@@ -12,6 +12,7 @@ class TestGeminiProvider:
     @pytest.fixture(autouse=True)
     def _setup(self, monkeypatch, mock_gemini_client):
         monkeypatch.setenv("GEMINI_API_KEY", "test-gemini-key")
+        monkeypatch.delenv("LLM_MODEL", raising=False)
         self.mock_client = mock_gemini_client
 
     def _make_provider(self, model=None):

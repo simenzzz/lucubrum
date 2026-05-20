@@ -84,7 +84,7 @@ async def generate_queries(request: GenerateQueriesRequest) -> GenerateQueriesRe
 
         # Define generation function
         async def generate_fn(prompt: str) -> str:
-            temperature = float(os.getenv("LLM_TEMPERATURE_QUERIES", 0.5))
+            temperature = float(os.getenv("LLM_TEMPERATURE_QUERIES", 0.7))
             return await provider.generate(prompt, temperature=temperature, max_tokens=1024)
 
         # Format tags as comma-separated string or "none"

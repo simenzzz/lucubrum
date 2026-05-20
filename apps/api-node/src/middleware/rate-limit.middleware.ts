@@ -5,7 +5,7 @@
  * Fails open on Redis errors (logs warning, allows request).
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { redis } from '../db/redis';
 import logger from '../utils/logger';
 
@@ -72,6 +72,12 @@ export const RateLimits = {
     limit: 60,
     windowSeconds: 60,
     keyPrefix: 'ratelimit:ip:health',
+  },
+  /** Per-email: 5 failed attempts / 15 minutes (password login) */
+  LOGIN_EMAIL: {
+    limit: 5,
+    windowSeconds: 900,
+    keyPrefix: 'ratelimit:email:login',
   },
 } as const;
 
@@ -174,8 +180,9 @@ async function checkRateLimit(
 /**
  * Create rate limiting middleware for user-based limits.
  * Requires authentication - uses req.user.user_id as the key.
+ *
  */
-export function rateLimitByUser(config: RateLimitConfig) {
+export function rateLimitByUser(config: RateLimitConfig): RequestHandler<any> {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const requestId = getRequestId(req);
 
@@ -230,8 +237,9 @@ export function rateLimitByUser(config: RateLimitConfig) {
 /**
  * Create rate limiting middleware for IP-based limits.
  * Does not require authentication - uses client IP as the key.
+ *
  */
-export function rateLimitByIP(config: RateLimitConfig) {
+export function rateLimitByIP(config: RateLimitConfig): RequestHandler<any> {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const requestId = getRequestId(req);
     const clientIP = getClientIP(req);
@@ -273,8 +281,9 @@ export function rateLimitByIP(config: RateLimitConfig) {
 /**
  * Combined rate limiting middleware that applies both user and IP limits.
  * Useful for authenticated endpoints that need both protection layers.
+ *
  */
-export function rateLimitCombined(userConfig: RateLimitConfig, ipConfig: RateLimitConfig) {
+export function rateLimitCombined(userConfig: RateLimitConfig, ipConfig: RateLimitConfig): RequestHandler<any> {
   const userLimiter = rateLimitByUser(userConfig);
   const ipLimiter = rateLimitByIP(ipConfig);
 
@@ -292,6 +301,53 @@ export function rateLimitCombined(userConfig: RateLimitConfig, ipConfig: RateLim
     // Apply user limit
     userLimiter(req, res, next);
   };
+}
+
+/**
+ * Check if a key is already at or over the rate limit.
+ * Cleans expired entries but does NOT increment the counter.
+ * Use this to pre-check before doing expensive work.
+ */
+export async function isRateLimited(key: string, config: RateLimitConfig): Promise<boolean> {
+  const fullKey = `${config.keyPrefix}:${key}`;
+  try {
+    const client = redis.getClient();
+    if (!client || !redis.isReady()) return false; // fail open
+    const now = Date.now();
+    const windowStart = now - config.windowSeconds * 1000;
+    await client.zremrangebyscore(fullKey, '-inf', windowStart);
+    const count = await client.zcard(fullKey);
+    return count >= config.limit;
+  } catch (error) {
+    logger.warn({ error, key: fullKey }, 'Read-only rate limit check failed, failing open');
+    return false;
+  }
+}
+
+/**
+ * Check rate limit for an arbitrary string key (not tied to a request).
+ * Used for service-level rate limiting (e.g., per-email password login).
+ * Increments the counter and returns true if the request is allowed, false if exceeded.
+ */
+export async function rateLimitByKey(key: string, config: RateLimitConfig): Promise<boolean> {
+  const result = await checkRateLimit(key, config);
+  return result.allowed;
+}
+
+/**
+ * Reset the rate limit counter for an arbitrary string key.
+ * Call this on successful login to clear failed attempt counters.
+ */
+export async function resetRateLimitByKey(key: string, config: RateLimitConfig): Promise<void> {
+  const fullKey = `${config.keyPrefix}:${key}`;
+  try {
+    const client = redis.getClient();
+    if (client && redis.isReady()) {
+      await client.del(fullKey);
+    }
+  } catch (error) {
+    logger.warn({ error, key: fullKey }, 'Failed to reset rate limit counter');
+  }
 }
 
 /**
@@ -315,4 +371,16 @@ export const rateLimit = {
 
   /** Health endpoint IP rate limit (60/minute per IP) */
   healthIP: () => rateLimitByIP(RateLimits.HEALTH_IP),
+
+  /** Read-only check: is the email already rate-limited? (does NOT increment) */
+  isLoginLimited: (email: string) => isRateLimited(email, RateLimits.LOGIN_EMAIL),
+
+  /** Record a failed login attempt (increments counter) */
+  recordFailedLogin: (email: string) => rateLimitByKey(email, RateLimits.LOGIN_EMAIL),
+
+  /** @deprecated Use isLoginLimited + recordFailedLogin instead */
+  loginEmail: (email: string) => rateLimitByKey(email, RateLimits.LOGIN_EMAIL),
+
+  /** Reset password login rate limit for an email on successful login */
+  resetLoginEmail: (email: string) => resetRateLimitByKey(email, RateLimits.LOGIN_EMAIL),
 };

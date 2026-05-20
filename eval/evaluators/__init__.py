@@ -1,4 +1,4 @@
-"""Evaluator implementations for the Learning Helper eval harness."""
+"""Evaluator implementations for the Lucubrum eval harness."""
 
 import sys
 from pathlib import Path

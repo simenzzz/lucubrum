@@ -36,8 +36,9 @@ export function CodingExercise({
   examMode,
 }: CodingExerciseProps) {
   const [showTestCases, setShowTestCases] = useState(false);
-  const { language: exerciseLanguage, test_cases, solution } = exercise.correct_answer;
-  const code = (answer as string) || solution;
+  const exerciseLanguage = exercise.correct_answer?.language ?? 'python';
+  const test_cases = exercise.correct_answer?.test_cases ?? [];
+  const code = (answer as string) || '';
   const language = LANGUAGE_MAP[exerciseLanguage.toLowerCase()] || 'plaintext';
 
   return (
@@ -45,7 +46,9 @@ export function CodingExercise({
       {/* Question */}
       <div>
         <p className="text-warm-50 font-medium mb-2">{exercise.prompt}</p>
-        <Badge variant="coding">{exerciseLanguage}</Badge>
+        {exercise.correct_answer && (
+          <Badge variant="coding">{exerciseLanguage}</Badge>
+        )}
       </div>
 
       {/* Code editor */}
@@ -69,45 +72,47 @@ export function CodingExercise({
         />
       </div>
 
-      {/* Test cases */}
-      <div className="rounded-xl border border-border-moderate overflow-hidden">
-        <button
-          onClick={() => setShowTestCases(!showTestCases)}
-          className="w-full flex items-center justify-between p-3 bg-hearth-700/50 hover:bg-hearth-700 transition-colors"
-        >
-          <span className="text-sm font-medium text-warm-50">
-            Test Cases ({test_cases.length})
-          </span>
-          {showTestCases ? (
-            <ChevronUp className="w-4 h-4 text-warm-400" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-warm-400" />
-          )}
-        </button>
+      {/* Test cases — hidden in exam mode to avoid leaking expected outputs */}
+      {!examMode && test_cases.length > 0 && (
+        <div className="rounded-xl border border-border-moderate overflow-hidden">
+          <button
+            onClick={() => setShowTestCases(!showTestCases)}
+            className="w-full flex items-center justify-between p-3 bg-hearth-700/50 hover:bg-hearth-700 transition-colors"
+          >
+            <span className="text-sm font-medium text-warm-50">
+              Test Cases ({test_cases.length})
+            </span>
+            {showTestCases ? (
+              <ChevronUp className="w-4 h-4 text-warm-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-warm-400" />
+            )}
+          </button>
 
-        {showTestCases && (
-          <div className="p-3 space-y-3 bg-hearth-800">
-            {test_cases.map((testCase, index) => (
-              <div
-                key={index}
-                className="p-3 rounded-lg bg-hearth-700/50 border border-border-subtle"
-              >
-                <div className="text-xs text-warm-400 mb-1">Test Case {index + 1}</div>
-                <div className="space-y-1 font-mono text-sm">
-                  <div className="flex gap-2">
-                    <span className="text-warm-400">Input:</span>
-                    <code className="text-lavender">{String(testCase.input)}</code>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-warm-400">Expected:</span>
-                    <code className="text-sage">{String(testCase.output)}</code>
+          {showTestCases && (
+            <div className="p-3 space-y-3 bg-hearth-800">
+              {test_cases.map((testCase, index) => (
+                <div
+                  key={index}
+                  className="p-3 rounded-lg bg-hearth-700/50 border border-border-subtle"
+                >
+                  <div className="text-xs text-warm-400 mb-1">Test Case {index + 1}</div>
+                  <div className="space-y-1 font-mono text-sm">
+                    <div className="flex gap-2">
+                      <span className="text-warm-400">Input:</span>
+                      <code className="text-lavender">{String(testCase.input)}</code>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-warm-400">Expected:</span>
+                      <code className="text-sage">{String(testCase.output)}</code>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Submit button */}
       {!examMode && (

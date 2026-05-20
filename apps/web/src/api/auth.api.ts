@@ -1,15 +1,17 @@
 import apiClient, { getApiError } from './client';
-import { setPKCEState } from '@/lib/tokenStorage';
+import { setPKCEState, setOAuthProvider } from '@/lib/tokenStorage';
 import {
-  GoogleAuthResponseSchema,
+  OAuthInitResponseSchema,
   AuthCallbackResponseSchema,
   safeParseWithLogging,
 } from '@/types/schemas';
 import type {
   GoogleAuthRequest,
-  GoogleAuthResponse,
+  OAuthInitResponse,
   AuthCallbackRequest,
   AuthCallbackResponse,
+  EmailRegisterRequest,
+  EmailLoginRequest,
 } from '@/types/api.types';
 
 /**
@@ -20,19 +22,12 @@ export const authApi = {
   /**
    * Get Google OAuth authorization URL
    */
-  async getGoogleAuthUrl(params?: GoogleAuthRequest): Promise<GoogleAuthResponse> {
+  async getGoogleAuthUrl(params?: GoogleAuthRequest): Promise<OAuthInitResponse> {
     try {
-      const response = await apiClient.get('/auth/google', {
-        params,
-      });
-      // Validate response
-      const data = safeParseWithLogging(
-        GoogleAuthResponseSchema,
-        response.data,
-        'getGoogleAuthUrl'
-      );
-      // Store the state for PKCE validation on callback
+      const response = await apiClient.get('/auth/google', { params });
+      const data = safeParseWithLogging(OAuthInitResponseSchema, response.data, 'getGoogleAuthUrl');
       setPKCEState(data.state);
+      setOAuthProvider('google');
       return data;
     } catch (error) {
       throw new Error(getApiError(error));
@@ -40,18 +35,64 @@ export const authApi = {
   },
 
   /**
-   * Exchange OAuth code for tokens
+   * Get Facebook OAuth authorization URL
+   */
+  async getFacebookAuthUrl(): Promise<OAuthInitResponse> {
+    try {
+      const response = await apiClient.get('/auth/facebook');
+      const data = safeParseWithLogging(OAuthInitResponseSchema, response.data, 'getFacebookAuthUrl');
+      setPKCEState(data.state);
+      setOAuthProvider('facebook');
+      return data;
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  /**
+   * Exchange Google OAuth code for tokens
    * Server sets HTTP-only cookies, returns user data
    */
   async callback(request: AuthCallbackRequest): Promise<AuthCallbackResponse> {
     try {
       const response = await apiClient.post('/auth/callback', request);
-      // Validate response
-      return safeParseWithLogging(
-        AuthCallbackResponseSchema,
-        response.data,
-        'callback'
-      );
+      return safeParseWithLogging(AuthCallbackResponseSchema, response.data, 'callback');
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  /**
+   * Exchange Facebook OAuth code for tokens
+   */
+  async exchangeFacebookCallback(request: AuthCallbackRequest): Promise<AuthCallbackResponse> {
+    try {
+      const response = await apiClient.post('/auth/facebook/callback', request);
+      return safeParseWithLogging(AuthCallbackResponseSchema, response.data, 'exchangeFacebookCallback');
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  /**
+   * Register a new user with email and password
+   */
+  async registerWithEmail(request: EmailRegisterRequest): Promise<AuthCallbackResponse> {
+    try {
+      const response = await apiClient.post('/auth/email/register', request);
+      return safeParseWithLogging(AuthCallbackResponseSchema, response.data, 'registerWithEmail');
+    } catch (error) {
+      throw new Error(getApiError(error));
+    }
+  },
+
+  /**
+   * Login with email and password
+   */
+  async loginWithEmail(request: EmailLoginRequest): Promise<AuthCallbackResponse> {
+    try {
+      const response = await apiClient.post('/auth/email/login', request);
+      return safeParseWithLogging(AuthCallbackResponseSchema, response.data, 'loginWithEmail');
     } catch (error) {
       throw new Error(getApiError(error));
     }

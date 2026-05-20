@@ -5,11 +5,26 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
-import { authService, AuthServiceError } from '../services/auth.service';
+import { authService, AuthServiceError, isFacebookConfigured } from '../services/auth.service';
 import { requireAuth } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
+import { z } from 'zod';
 import {
   OAuthCallbackSchema,
 } from '../validation/schemas';
+
+const EmailRegisterSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2).max(100),
+  password: z.string().min(8).max(128)
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number'),
+});
+
+const EmailLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 import type { UserRow } from '../db/queries/users';
 import {
   setAuthCookies,
@@ -74,6 +89,7 @@ interface ErrorResponse {
  */
 router.get(
   '/google',
+  rateLimit.authIP(),
   async (
     _req: Request,
     res: Response<OAuthInitResponse | ErrorResponse>
@@ -109,6 +125,7 @@ router.get(
  */
 router.post(
   '/callback',
+  rateLimit.authIP(),
   async (
     req: Request,
     res: Response<OAuthCallbackResponse | ErrorResponse>
@@ -170,6 +187,7 @@ router.post(
  */
 router.post(
   '/refresh',
+  rateLimit.authIP(),
   async (
     req: Request,
     res: Response<RefreshResponse | ErrorResponse>
@@ -298,6 +316,233 @@ router.post(
       message: 'Logged out successfully',
       refresh_token_revoked: refreshTokenRevoked,
     });
+  }
+);
+
+/**
+ * POST /auth/email/register
+ *
+ * Register a new user with email and password.
+ */
+router.post(
+  '/email/register',
+  rateLimit.authIP(),
+  async (
+    req: Request,
+    res: Response<OAuthCallbackResponse | ErrorResponse>
+  ) => {
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+    const parseResult = EmailRegisterSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errors = parseResult.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`);
+      return res.status(400).json({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid request body',
+        details: { validation_errors: errors },
+        request_id: requestId,
+      });
+    }
+
+    const { email, name, password } = parseResult.data;
+
+    try {
+      const result = await authService.registerWithEmail(email, name, password, requestId);
+      setAuthCookies(res, result.tokens.access_token, result.tokens.refresh_token);
+      return res.status(201).json({ user: toUserResponse(result.user), authenticated: true });
+    } catch (error) {
+      if ((error as AuthServiceError).code) {
+        const authError = error as AuthServiceError;
+        return res.status(authError.statusCode).json({
+          error: authError.code,
+          message: authError.message,
+          request_id: requestId,
+        });
+      }
+      logger.error({ error, requestId }, 'Unexpected email register error');
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        request_id: requestId,
+      });
+    }
+  }
+);
+
+/**
+ * POST /auth/email/login
+ *
+ * Authenticate with email and password.
+ */
+router.post(
+  '/email/login',
+  rateLimit.authIP(),
+  async (
+    req: Request,
+    res: Response<OAuthCallbackResponse | ErrorResponse>
+  ) => {
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+    const parseResult = EmailLoginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      const errors = parseResult.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`);
+      return res.status(400).json({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid request body',
+        details: { validation_errors: errors },
+        request_id: requestId,
+      });
+    }
+
+    const { email, password } = parseResult.data;
+
+    try {
+      const result = await authService.loginWithEmail(email, password, requestId);
+      setAuthCookies(res, result.tokens.access_token, result.tokens.refresh_token);
+      return res.json({ user: toUserResponse(result.user), authenticated: true });
+    } catch (error) {
+      if ((error as AuthServiceError).code) {
+        const authError = error as AuthServiceError;
+        return res.status(authError.statusCode).json({
+          error: authError.code,
+          message: authError.message,
+          request_id: requestId,
+        });
+      }
+      logger.error({ error, requestId }, 'Unexpected email login error');
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        request_id: requestId,
+      });
+    }
+  }
+);
+
+// Conditionally register Facebook routes only if all FB env vars are set
+if (isFacebookConfigured()) {
+  /**
+   * GET /auth/facebook
+   *
+   * Initiate Facebook OAuth flow.
+   */
+  router.get(
+    '/facebook',
+    rateLimit.authIP(),
+    async (
+      _req: Request,
+      res: Response<OAuthInitResponse | ErrorResponse>
+    ) => {
+      const requestId = uuidv4();
+      try {
+        const result = await authService.initiateFacebookOAuth();
+        return res.json({ authorization_url: result.authorization_url, state: result.state });
+      } catch (error) {
+        if ((error as AuthServiceError).code) {
+          const authError = error as AuthServiceError;
+          return res.status(authError.statusCode).json({
+            error: authError.code,
+            message: authError.message,
+            request_id: requestId,
+          });
+        }
+        logger.error({ error, requestId }, 'Facebook OAuth initiation failed');
+        return res.status(500).json({
+          error: 'OAUTH_INIT_FAILED',
+          message: 'Failed to initiate Facebook OAuth flow',
+          request_id: requestId,
+        });
+      }
+    }
+  );
+
+  /**
+   * POST /auth/facebook/callback
+   *
+   * Handle Facebook OAuth callback.
+   */
+  router.post(
+    '/facebook/callback',
+    rateLimit.authIP(),
+    async (
+      req: Request,
+      res: Response<OAuthCallbackResponse | ErrorResponse>
+    ) => {
+      const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+      const parseResult = OAuthCallbackSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        const errors = parseResult.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`);
+        return res.status(400).json({
+          error: 'VALIDATION_ERROR',
+          message: 'Invalid request body',
+          details: { validation_errors: errors },
+          request_id: requestId,
+        });
+      }
+
+      const { code, state } = parseResult.data;
+
+      try {
+        const result = await authService.handleFacebookCallback(code, state, requestId);
+        setAuthCookies(res, result.tokens.access_token, result.tokens.refresh_token);
+        return res.json({ user: toUserResponse(result.user), authenticated: true });
+      } catch (error) {
+        if ((error as AuthServiceError).code) {
+          const authError = error as AuthServiceError;
+          return res.status(authError.statusCode).json({
+            error: authError.code,
+            message: authError.message,
+            request_id: requestId,
+          });
+        }
+        logger.error({ error, requestId }, 'Unexpected Facebook callback error');
+        return res.status(500).json({
+          error: 'INTERNAL_ERROR',
+          message: 'An unexpected error occurred',
+          request_id: requestId,
+        });
+      }
+    }
+  );
+} else {
+  logger.info('Facebook OAuth routes not registered (FACEBOOK_APP_ID / FACEBOOK_APP_SECRET / FACEBOOK_REDIRECT_URI not set)');
+}
+
+/**
+ * POST /auth/signin-methods
+ *
+ * Hint email endpoint: accepts { email }, sends the user an email listing
+ * which providers they registered with. Always returns 200 to prevent enumeration.
+ *
+ * TODO: Wire up email sending service (SendGrid/SES) in a follow-up PR.
+ * For now, logs the intent and returns a constant response.
+ */
+const SigninMethodsSchema = z.object({
+  email: z.string().email(),
+});
+
+router.post(
+  '/signin-methods',
+  rateLimit.authIP(),
+  async (
+    req: Request,
+    res: Response<{ message: string } | ErrorResponse>
+  ) => {
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+    const parseResult = SigninMethodsSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      // Even on validation error, return generic message to prevent enumeration
+      return res.json({ message: 'If an account exists with that email, we sent sign-in method details to it.' });
+    }
+
+    const { email } = parseResult.data;
+
+    // TODO: Look up providers, send email via SendGrid/SES
+    logger.info({ email, requestId }, 'Sign-in methods hint requested (email sending not yet wired)');
+
+    return res.json({ message: 'If an account exists with that email, we sent sign-in method details to it.' });
   }
 );
 

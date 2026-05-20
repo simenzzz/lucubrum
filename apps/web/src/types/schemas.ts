@@ -17,7 +17,8 @@ export const UserSchema = z.object({
 export type User = z.infer<typeof UserSchema>;
 
 // Auth response schemas
-export const GoogleAuthResponseSchema = z.object({
+/** Provider-agnostic OAuth initiation response schema */
+export const OAuthInitResponseSchema = z.object({
   authorization_url: z.string().url(),
   state: z.string(),
 });
@@ -288,6 +289,26 @@ export const ApiErrorSchema = z.object({
   message: z.string(),
   details: z.unknown().optional(),
   request_id: z.string(),
+});
+
+// Email auth request validation schemas (for LoginPage forms)
+export const EmailRegisterRequestSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name too long'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128, 'Password too long')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
+export const EmailLoginRequestSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 // Request validation schemas

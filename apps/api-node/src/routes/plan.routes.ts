@@ -21,6 +21,8 @@ import {
   ResourceInput,
 } from '../db/queries/resources';
 import { requireAuth } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
+import { enforcePlanLimit, enforcePlanSize } from '../middleware/tier.middleware';
 import { upsertUserPlan } from '../db/queries/user-plans';
 import { getNodeLearnContent, getInitiallyUnlockedNodeIds, getDepth1NeighborIds, preloadNodeResources, nodeRowsToLearningNodes } from '../services/learn.service';
 
@@ -100,6 +102,9 @@ interface ErrorResponse {
  */
 router.post(
   '/',
+  rateLimit.planCreation(),
+  enforcePlanLimit(),
+  enforcePlanSize(),
   async (
     req: Request,
     res: Response<CreatePlanResponse | ErrorResponse>
@@ -250,6 +255,7 @@ router.post(
  */
 router.get(
   '/:planId',
+  rateLimit.general(),
   async (
     req: Request<GetPlanParams>,
     res: Response<GetPlanResponse | ErrorResponse>
@@ -303,6 +309,7 @@ router.get(
  */
 router.post(
   '/:planId/resources',
+  rateLimit.planCreation(),
   async (
     req: Request<AttachResourcesParams, unknown, unknown, AttachResourcesQuery>,
     res: Response<AttachResourcesResponse | ErrorResponse>
@@ -436,6 +443,7 @@ interface GetNodeLearnParams {
  */
 router.get(
   '/:planId/nodes/:nodeId/learn',
+  rateLimit.general(),
   async (
     req: Request<GetNodeLearnParams>,
     res: Response
@@ -454,10 +462,10 @@ router.get(
       }
 
       // Validate nodeId format
-      if (!nodeId || nodeId.length > 255) {
+      if (!nodeId || !/^[a-z0-9_]{3,100}$/.test(nodeId)) {
         return res.status(400).json({
           error: 'INVALID_NODE_ID',
-          message: 'Node ID is required and must be 255 characters or fewer',
+          message: 'Node ID must be 3-100 characters, containing only lowercase letters, numbers, and underscores',
           request_id: requestId,
         });
       }
@@ -525,6 +533,7 @@ router.get(
  */
 router.get(
   '/:planId/resources',
+  rateLimit.general(),
   async (
     req: Request<GetPlanParams>,
     res: Response<{ resources_by_node: Record<string, SelectedResource[]> } | ErrorResponse>
@@ -600,6 +609,7 @@ interface GetResourceStatusResponse {
 // with GET /:planId which also allows any authenticated user to access by ID).
 router.get(
   '/:planId/resource-status',
+  rateLimit.general(),
   async (
     req: Request<GetResourceStatusParams>,
     res: Response<GetResourceStatusResponse | ErrorResponse>

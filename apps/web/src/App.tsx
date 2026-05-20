@@ -4,6 +4,7 @@ import { Navbar } from './components/layout/Navbar';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { ToastContainer } from './components/layout/ToastContainer';
 import { LandingPage } from './pages/LandingPage';
+import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { RoadmapPage } from './pages/RoadmapPage';
 import { MyRoadmapsPage } from './pages/MyRoadmapsPage';
@@ -20,6 +21,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
               <Route path="/oauth/callback" element={<AuthCallbackPage />} />
 
               {/* Protected routes */}

@@ -9,6 +9,9 @@ import { isValidUUID } from '../utils/validation';
 import { masteryService, MasteryServiceError, GetMasteryResult, NextNodeRecommendation } from '../services/mastery.service';
 import { SubmitAttemptRequestSchema } from '../validation/schemas';
 import { requireAuth } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
+import { enforceDailyAttemptQuota } from '../middleware/tier.middleware';
+import { rollbackDailyLlmAttempt } from '../services/tier.service';
 
 const router = Router();
 
@@ -60,6 +63,8 @@ interface ErrorResponse {
  */
 router.post(
   '/attempts',
+  rateLimit.grading(),
+  enforceDailyAttemptQuota(),
   async (
     req: Request,
     res: Response<SubmitAttemptResponse | ErrorResponse>
@@ -118,6 +123,13 @@ router.post(
         mastery: result.mastery,
       });
     } catch (error) {
+      // Rollback tier quota reservation if it was applied
+      if (req.tierQuotaApplies) {
+        await rollbackDailyLlmAttempt(userId).catch((rollbackError) => {
+          logger.warn({ error: rollbackError, userId }, 'Failed to rollback daily LLM attempt');
+        });
+      }
+
       // Handle service errors
       if (error instanceof MasteryServiceError) {
         logger.error({ error, requestId }, 'Attempt submission failed');
@@ -147,6 +159,7 @@ router.post(
  */
 router.get(
   '/plan/:planId/nodes/:nodeId/mastery',
+  rateLimit.general(),
   async (
     req: Request<MasteryParams>,
     res: Response<GetNodeMasteryResponse | ErrorResponse>
@@ -195,6 +208,7 @@ router.get(
  */
 router.get(
   '/plan/:planId/mastery',
+  rateLimit.general(),
   async (
     req: Request<{ planId: string }>,
     res: Response<GetPlanMasteryResponse | ErrorResponse>
@@ -238,6 +252,7 @@ router.get(
  */
 router.get(
   '/plan/:planId/next',
+  rateLimit.general(),
   async (
     req: Request<{ planId: string }>,
     res: Response<NextNodeRecommendation | ErrorResponse>

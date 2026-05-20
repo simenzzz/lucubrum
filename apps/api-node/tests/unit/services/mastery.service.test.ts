@@ -9,7 +9,7 @@ import { EXERCISE_MASTERY_CAP, MASTERY_VOLUME_TARGET } from '../../../src/consta
 // Mock setup BEFORE imports
 const mockGetExerciseById = jest.fn() as jest.MockedFunction<(exerciseId: string) => Promise<any>>;
 const mockGetPlanWithNodes = jest.fn() as jest.MockedFunction<(planId: string) => Promise<any>>;
-const mockGetAllAttemptsForNode2 = jest.fn() as jest.MockedFunction<(userId: string, planId: string, nodeId: string) => Promise<any>>;
+
 const mockGetNodeResourceStatusBatch = jest.fn() as jest.MockedFunction<(planId: string) => Promise<any>>;
 const mockPreloadNodeResources = jest.fn() as jest.MockedFunction<(planId: string, nodeIds: string[], allNodes: any[]) => Promise<void>>;
 const mockGetDepth1NeighborIds = jest.fn().mockReturnValue([]);
@@ -25,10 +25,23 @@ jest.mock('../../../src/db/queries/plans', () => ({
   __esModule: true,
 }));
 
+jest.mock('../../../src/db/client', () => ({
+  db: {
+    query: jest.fn(),
+    close: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    transaction: jest.fn().mockImplementation(async (callback: unknown) => {
+      // Execute the callback with a fake client — the individual query functions are already mocked
+      return (callback as (client: any) => Promise<any>)(undefined);
+    }),
+  },
+  __esModule: true,
+}));
+
 jest.mock('../../../src/db/queries/mastery', () => ({
   insertAttempt: jest.fn(),
   getRecentAttempts: jest.fn(),
-  getAllAttemptsForNode: mockGetAllAttemptsForNode2,
+getAttemptStats: jest.fn(),
+  getAttemptStatsForPlan: jest.fn(),
   upsertMastery: jest.fn(),
   upsertMasteryIfHigher: jest.fn(),
   getMastery: jest.fn(),
@@ -54,7 +67,6 @@ jest.mock('../../../src/services/curriculum-client', () => ({
     gradeAnswer: jest.fn(),
     generatePlan: jest.fn(),
     generateExercises: jest.fn(),
-    fetchTranscript: jest.fn(),
     validateVideo: jest.fn(),
     checkStaleness: jest.fn(),
     normalizeTopic: jest.fn(),
@@ -67,12 +79,6 @@ jest.mock('../../../src/services/curriculum-client', () => ({
     constructor(msg: string, public statusCode: number, public errorCode: string, public details?: any) {
       super(msg);
       this.name = 'CurriculumServiceError';
-    }
-  },
-  TranscriptNotAvailableError: class extends Error {
-    constructor(msg: string) {
-      super(msg);
-      this.name = 'TranscriptNotAvailableError';
     }
   },
 }));
@@ -91,6 +97,8 @@ import { curriculumClient } from '../../../src/services/curriculum-client';
 import {
   insertAttempt,
   getRecentAttempts,
+  getAttemptStats,
+  getAttemptStatsForPlan,
   getMastery,
   getMasteryForPlan,
   getMaxCompletedDifficulty,
@@ -105,11 +113,19 @@ const mockedUpsertMastery = upsertMastery as jest.MockedFunction<typeof upsertMa
 const mockedUpsertMasteryIfHigher = upsertMasteryIfHigher as jest.MockedFunction<typeof upsertMasteryIfHigher>;
 const mockedGetMastery = getMastery as jest.MockedFunction<typeof getMastery>;
 const mockedGetMasteryForPlan = getMasteryForPlan as jest.MockedFunction<typeof getMasteryForPlan>;
+const mockedGetAttemptStats = getAttemptStats as jest.MockedFunction<typeof getAttemptStats>;
+const mockedGetAttemptStatsForPlan = getAttemptStatsForPlan as jest.MockedFunction<typeof getAttemptStatsForPlan>;
 const mockedGetMaxCompletedDifficulty = getMaxCompletedDifficulty as jest.MockedFunction<typeof getMaxCompletedDifficulty>;
 
 describe('MasteryService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  // Helper to convert attempt array to stats for calculateMastery
+  const toStats = (attempts: AttemptRow[]) => ({
+    total: attempts.length,
+    correct: attempts.filter(a => a.is_correct).length,
   });
 
   // Helper to create mock attempt
@@ -127,7 +143,7 @@ describe('MasteryService', () => {
 
   describe('calculateMastery', () => {
     it('should return 0 for no attempts', () => {
-      const result = masteryService.calculateMastery([], [], 0);
+      const result = masteryService.calculateMastery([], { total: 0, correct: 0 }, 0);
 
       expect(result).toBe(0);
     });
@@ -135,7 +151,7 @@ describe('MasteryService', () => {
     it('should return ~0.05 for 1 correct answer at difficulty 1', () => {
       const oneCorrect = [createMockAttempt(true)];
 
-      const result = masteryService.calculateMastery(oneCorrect, oneCorrect, 1);
+      const result = masteryService.calculateMastery(oneCorrect, toStats(oneCorrect), 1);
 
       // Formula: accuracy(1.0) * volume(sqrt(1)/sqrt(15)) * difficulty(0.2)
       // = 1.0 * 0.258 * 0.2 = ~0.052
@@ -145,7 +161,7 @@ describe('MasteryService', () => {
     it('should return ~0.23 for 5 correct answers at difficulty 2', () => {
       const fiveCorrect = Array(5).fill(null).map(() => createMockAttempt(true));
 
-      const result = masteryService.calculateMastery(fiveCorrect, fiveCorrect, 2);
+      const result = masteryService.calculateMastery(fiveCorrect, toStats(fiveCorrect), 2);
 
       // Formula: accuracy(1.0) * volume(sqrt(5)/sqrt(15)) * difficulty(0.4)
       // = 1.0 * 0.577 * 0.4 = ~0.231
@@ -155,7 +171,7 @@ describe('MasteryService', () => {
     it('should return ~0.16 for 3 correct answers at difficulty 3', () => {
       const threeCorrect = Array(3).fill(null).map(() => createMockAttempt(true));
 
-      const result = masteryService.calculateMastery(threeCorrect, threeCorrect, 3);
+      const result = masteryService.calculateMastery(threeCorrect, toStats(threeCorrect), 3);
 
       // Formula: accuracy(1.0) * volume(sqrt(3)/sqrt(15)) * difficulty(0.6)
       // = 1.0 * 0.447 * 0.6 = ~0.268 (but clamped)
@@ -166,7 +182,7 @@ describe('MasteryService', () => {
     it('should return raw score above cap for 10 correct at difficulty 5', () => {
       const tenCorrect = Array(10).fill(null).map(() => createMockAttempt(true));
 
-      const result = masteryService.calculateMastery(tenCorrect, tenCorrect, 5);
+      const result = masteryService.calculateMastery(tenCorrect, toStats(tenCorrect), 5);
 
       // Formula: accuracy(1.0) * volume(sqrt(10)/sqrt(15)) * difficulty(1.0)
       // = 1.0 * 0.816 * 1.0 = 0.816 (caller will cap at 0.35)
@@ -176,7 +192,7 @@ describe('MasteryService', () => {
     it('should return raw score at cap for 15 correct at difficulty 5', () => {
       const fifteenCorrect = Array(15).fill(null).map(() => createMockAttempt(true));
 
-      const result = masteryService.calculateMastery(fifteenCorrect, fifteenCorrect, 5);
+      const result = masteryService.calculateMastery(fifteenCorrect, toStats(fifteenCorrect), 5);
 
       // Formula: accuracy(1.0) * volume(sqrt(15)/sqrt(15)) * difficulty(1.0)
       // = 1.0 * 1.0 * 1.0 = 1.0 (caller will cap at 0.35)
@@ -189,7 +205,7 @@ describe('MasteryService', () => {
         ...Array(5).fill(null).map(() => createMockAttempt(false)),
       ];
 
-      const result = masteryService.calculateMastery(mixed.slice(0, 10), mixed, 5);
+      const result = masteryService.calculateMastery(mixed.slice(0, 10), toStats(mixed), 5);
 
       // Formula: accuracy(recent 1.0 * 0.6 + historical 0.667 * 0.4 = 0.867)
       //          * volume(sqrt(10)/sqrt(15)=0.816) * difficulty(1.0)
@@ -203,7 +219,7 @@ describe('MasteryService', () => {
         ...Array(5).fill(null).map(() => createMockAttempt(false)),
       ];
 
-      const result = masteryService.calculateMastery(mixed.slice(0, 10), mixed, 3);
+      const result = masteryService.calculateMastery(mixed.slice(0, 10), toStats(mixed), 3);
 
       // Formula: accuracy(0.5) * volume(sqrt(5)/sqrt(15)=0.577) * difficulty(0.6)
       // = 0.5 * 0.577 * 0.6 = ~0.173
@@ -217,7 +233,7 @@ describe('MasteryService', () => {
         createMockAttempt(false),
       ];
 
-      const result = masteryService.calculateMastery(allWrong, allWrong, 5);
+      const result = masteryService.calculateMastery(allWrong, toStats(allWrong), 5);
 
       // Accuracy is 0, so entire formula becomes 0
       expect(result).toBe(0);
@@ -228,7 +244,7 @@ describe('MasteryService', () => {
       // With volume multiplier at 1.0 (at or above target) and max difficulty
       const manyCorrect = Array(MASTERY_VOLUME_TARGET).fill(null).map(() => createMockAttempt(true));
 
-      const result = masteryService.calculateMastery(manyCorrect, manyCorrect, 5);
+      const result = masteryService.calculateMastery(manyCorrect, toStats(manyCorrect), 5);
 
       // Should not exceed 1.0
       expect(result).toBeLessThanOrEqual(1.0);
@@ -238,7 +254,7 @@ describe('MasteryService', () => {
     it('should handle difficulty of 0', () => {
       const oneCorrect = [createMockAttempt(true)];
 
-      const result = masteryService.calculateMastery(oneCorrect, oneCorrect, 0);
+      const result = masteryService.calculateMastery(oneCorrect, toStats(oneCorrect), 0);
 
       // Difficulty multiplier is 0, so entire formula becomes 0
       expect(result).toBe(0);
@@ -247,7 +263,7 @@ describe('MasteryService', () => {
     it('should handle negative max difficulty gracefully', () => {
       const oneCorrect = [createMockAttempt(true)];
 
-      const result = masteryService.calculateMastery(oneCorrect, oneCorrect, -1);
+      const result = masteryService.calculateMastery(oneCorrect, toStats(oneCorrect), -1);
 
       // Negative difficulty treated as 0 (0/5 = 0)
       expect(result).toBe(0);
@@ -256,7 +272,7 @@ describe('MasteryService', () => {
     it('should handle difficulty greater than 5', () => {
       const fiveCorrect = Array(5).fill(null).map(() => createMockAttempt(true));
 
-      const result = masteryService.calculateMastery(fiveCorrect, fiveCorrect, 10);
+      const result = masteryService.calculateMastery(fiveCorrect, toStats(fiveCorrect), 10);
 
       // Difficulty should cap at 5 (1.0 multiplier)
       expect(result).toBeCloseTo(0.58, 1); // Same as difficulty 5
@@ -278,7 +294,7 @@ describe('MasteryService', () => {
         createMockAttempt(false),
       ]; // 37.5% historical
 
-      const result = masteryService.calculateMastery(recent, all, 2);
+      const result = masteryService.calculateMastery(recent, toStats(all), 2);
 
       // Accuracy = 0.75 * 0.6 + 0.375 * 0.4 = 0.45 + 0.15 = 0.6
       // Volume = sqrt(3) / sqrt(15) = 0.447
@@ -384,7 +400,7 @@ describe('MasteryService', () => {
       mockedGetMasteryForPlan.mockResolvedValue([
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'basics', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false },
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([['basics', { total: 1, correct: 1 }]]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -397,6 +413,7 @@ describe('MasteryService', () => {
     it('should recommend first incomplete node when all unmastered', async () => {
       mockGetPlanWithNodes.mockResolvedValue(mockPlanWithNodes);
       mockedGetMasteryForPlan.mockResolvedValue([]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map());
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -412,7 +429,11 @@ describe('MasteryService', () => {
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'variables', mastery_score: 0.85, last_updated: new Date(), has_exam_attempt: false },
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'functions', mastery_score: 0.95, last_updated: new Date(), has_exam_attempt: false },
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['basics', { total: 1, correct: 1 }],
+        ['variables', { total: 1, correct: 1 }],
+        ['functions', { total: 1, correct: 1 }],
+      ]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -428,7 +449,10 @@ describe('MasteryService', () => {
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'basics', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false },
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'variables', mastery_score: 0.3, last_updated: new Date(), has_exam_attempt: false }, // Partial progress
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['basics', { total: 1, correct: 1 }],
+        ['variables', { total: 1, correct: 1 }],
+      ]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -445,7 +469,11 @@ describe('MasteryService', () => {
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'variables', mastery_score: 0.5, last_updated: new Date(), has_exam_attempt: false }, // Below 0.6 prereq threshold
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'functions', mastery_score: 0.7, last_updated: new Date(), has_exam_attempt: false }, // Wants to do functions
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['basics', { total: 1, correct: 1 }],
+        ['variables', { total: 1, correct: 1 }],
+        ['functions', { total: 1, correct: 1 }],
+      ]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -461,7 +489,10 @@ describe('MasteryService', () => {
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'basics', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false },
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'variables', mastery_score: 0.5, last_updated: new Date(), has_exam_attempt: false }, // Partial progress
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['basics', { total: 1, correct: 1 }],
+        ['variables', { total: 1, correct: 1 }],
+      ]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -475,7 +506,6 @@ describe('MasteryService', () => {
         ...mockPlanWithNodes,
         nodes: [],
       });
-      mockedGetMasteryForPlan.mockResolvedValue([]);
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -485,7 +515,10 @@ describe('MasteryService', () => {
     });
 
     it('should handle diamond prerequisite pattern correctly', async () => {
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['js-basics', { total: 1, correct: 1 }],
+        ['jsx', { total: 1, correct: 1 }],
+      ]));
 
       const diamondPlan = {
         plan: {
@@ -569,7 +602,10 @@ describe('MasteryService', () => {
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'basics', mastery_score: 0.85, last_updated: new Date(), has_exam_attempt: false },
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'functions', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false },
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['basics', { total: 1, correct: 1 }],
+        ['functions', { total: 1, correct: 1 }],
+      ]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -589,7 +625,9 @@ describe('MasteryService', () => {
       mockedGetMasteryForPlan.mockResolvedValue([
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'basics', mastery_score: 0.8, last_updated: new Date(), has_exam_attempt: false }, // Exactly at threshold
       ]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['basics', { total: 1, correct: 1 }],
+      ]));
 
       const result = await masteryService.getNextNode('user-123', 'plan-123');
 
@@ -601,7 +639,7 @@ describe('MasteryService', () => {
   describe('getNodeMastery', () => {
     it('should return novice with 0 score for no mastery', async () => {
       mockedGetMastery.mockResolvedValue(null);
-      mockGetAllAttemptsForNode2.mockResolvedValue([]);
+      mockedGetAttemptStats.mockResolvedValue({ total: 0, correct: 0 });
 
       const result = await masteryService.getNodeMastery('user-123', 'plan-123', 'node-123');
 
@@ -621,10 +659,7 @@ describe('MasteryService', () => {
         last_updated: lastUpdated,
         has_exam_attempt: false,
       });
-      mockGetAllAttemptsForNode2.mockResolvedValue([
-        createMockAttempt(true),
-        createMockAttempt(false),
-      ]);
+      mockedGetAttemptStats.mockResolvedValue({ total: 2, correct: 1 });
 
       const result = await masteryService.getNodeMastery('user-123', 'plan-123', 'node-123');
 
@@ -638,7 +673,7 @@ describe('MasteryService', () => {
   describe('getPlanMastery', () => {
     it('should return empty object for no mastery records', async () => {
       mockedGetMasteryForPlan.mockResolvedValue([]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([]);
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map());
 
       const result = await masteryService.getPlanMastery('user-123', 'plan-123');
 
@@ -650,11 +685,10 @@ describe('MasteryService', () => {
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'node-1', mastery_score: 0.9, last_updated: new Date(), has_exam_attempt: false },
         { user_id: 'user-123', plan_id: 'plan-123', node_id: 'node-2', mastery_score: 0.5, last_updated: new Date(), has_exam_attempt: false },
       ]);
-      mockGetAllAttemptsForNode2.mockImplementation((userId, planId, nodeId) => {
-        if (nodeId === 'node-1') return Promise.resolve([createMockAttempt(true)]);
-        if (nodeId === 'node-2') return Promise.resolve([createMockAttempt(true), createMockAttempt(false)]);
-        return Promise.resolve([]);
-      });
+      mockedGetAttemptStatsForPlan.mockResolvedValue(new Map([
+        ['node-1', { total: 1, correct: 1 }],
+        ['node-2', { total: 2, correct: 1 }],
+      ]));
 
       const result = await masteryService.getPlanMastery('user-123', 'plan-123');
 
@@ -709,10 +743,14 @@ describe('MasteryService', () => {
       };
 
       mockGetExerciseById.mockResolvedValue(mockExercise as any);
+      mockGetPlanWithNodes.mockResolvedValue({
+        plan: { plan_id: 'plan-123', user_id: 'user-123', topic: 'Test', user_level: 'intermediate', plan_size: 'moderate', metadata: {}, created_at: new Date() },
+        nodes: [],
+      });
       mockedCurriculumClient.gradeAnswer.mockResolvedValue(mockGrade);
       mockedInsertAttempt.mockResolvedValue({ attempt_id: 'attempt-123' });
       mockedGetRecentAttempts.mockResolvedValue([createMockAttempt(true)]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([createMockAttempt(true)]);
+      mockedGetAttemptStats.mockResolvedValue({ total: 1, correct: 1 });
       mockedGetMaxCompletedDifficulty.mockResolvedValue(1);
       mockedUpsertMasteryIfHigher.mockResolvedValue(true);
 
@@ -814,10 +852,14 @@ describe('MasteryService', () => {
       const perfectAttempts = Array(10).fill(null).map(() => createMockAttempt(true));
 
       mockGetExerciseById.mockResolvedValue(mockExercise as any);
+      mockGetPlanWithNodes.mockResolvedValue({
+        plan: { plan_id: 'plan-123', user_id: 'user-123', topic: 'Test', user_level: 'intermediate', plan_size: 'moderate', metadata: {}, created_at: new Date() },
+        nodes: [],
+      });
       mockedCurriculumClient.gradeAnswer.mockResolvedValue(mockGrade);
       mockedInsertAttempt.mockResolvedValue({ attempt_id: 'attempt-123' });
       mockedGetRecentAttempts.mockResolvedValue(perfectAttempts);
-      mockGetAllAttemptsForNode2.mockResolvedValue(perfectAttempts);
+      mockedGetAttemptStats.mockResolvedValue({ total: 10, correct: 10 });
       mockedGetMaxCompletedDifficulty.mockResolvedValue(5);
       mockedGetMastery.mockResolvedValue(null);
       mockedUpsertMasteryIfHigher.mockResolvedValue(true);
@@ -830,7 +872,8 @@ describe('MasteryService', () => {
         'user-123',
         'plan-123',
         'node-123',
-        EXERCISE_MASTERY_CAP
+        EXERCISE_MASTERY_CAP,
+        undefined
       );
     });
 
@@ -886,10 +929,14 @@ describe('MasteryService', () => {
       const perfectAttempts = Array(10).fill(null).map(() => createMockAttempt(true));
 
       mockGetExerciseById.mockResolvedValue(mockExercise as any);
+      mockGetPlanWithNodes.mockResolvedValue({
+        plan: { plan_id: 'plan-123', user_id: 'user-123', topic: 'Test', user_level: 'intermediate', plan_size: 'moderate', metadata: {}, created_at: new Date() },
+        nodes: [],
+      });
       mockedCurriculumClient.gradeAnswer.mockResolvedValue(mockGrade);
       mockedInsertAttempt.mockResolvedValue({ attempt_id: 'attempt-123' });
       mockedGetRecentAttempts.mockResolvedValue(perfectAttempts);
-      mockGetAllAttemptsForNode2.mockResolvedValue(perfectAttempts);
+      mockedGetAttemptStats.mockResolvedValue({ total: 10, correct: 10 });
       mockedGetMaxCompletedDifficulty.mockResolvedValue(5);
       // upsertMasteryIfHigher returns false since current mastery is higher
       mockedUpsertMasteryIfHigher.mockResolvedValue(false);
@@ -903,7 +950,8 @@ describe('MasteryService', () => {
         'user-123',
         'plan-123',
         'node-123',
-        EXERCISE_MASTERY_CAP
+        EXERCISE_MASTERY_CAP,
+        undefined
       );
     });
 
@@ -957,10 +1005,14 @@ describe('MasteryService', () => {
       });
 
       mockGetExerciseById.mockResolvedValue(mockExercise as any);
+      mockGetPlanWithNodes.mockResolvedValue({
+        plan: { plan_id: 'plan-123', user_id: 'user-123', topic: 'Test', user_level: 'intermediate', plan_size: 'moderate', metadata: {}, created_at: new Date() },
+        nodes: [],
+      });
       mockedCurriculumClient.gradeAnswer.mockResolvedValue(mockGrade);
       mockedInsertAttempt.mockResolvedValue({ attempt_id: 'attempt-123' });
       mockedGetRecentAttempts.mockResolvedValue([]);
-      mockGetAllAttemptsForNode2.mockResolvedValue([]);
+      mockedGetAttemptStats.mockResolvedValue({ total: 0, correct: 0 });
       mockedGetMaxCompletedDifficulty.mockResolvedValue(0);
       // No update since raw score (0) < current mastery (cap)
       mockedUpsertMasteryIfHigher.mockResolvedValue(false);
@@ -1027,10 +1079,14 @@ describe('MasteryService', () => {
 
       mockedGetMastery.mockResolvedValue(null); // No prior mastery
       mockGetExerciseById.mockResolvedValue(mockExercise as any);
+      mockGetPlanWithNodes.mockResolvedValue({
+        plan: { plan_id: 'plan-123', user_id: 'user-123', topic: 'Test', user_level: 'intermediate', plan_size: 'moderate', metadata: {}, created_at: new Date() },
+        nodes: [],
+      });
       mockedCurriculumClient.gradeAnswer.mockResolvedValue(mockGrade);
       mockedInsertAttempt.mockResolvedValue({ attempt_id: 'attempt-123' });
       mockedGetRecentAttempts.mockResolvedValue(partialAttempts);
-      mockGetAllAttemptsForNode2.mockResolvedValue(partialAttempts);
+      mockedGetAttemptStats.mockResolvedValue({ total: 10, correct: 3 });
       mockedGetMaxCompletedDifficulty.mockResolvedValue(0.1);
       mockedUpsertMasteryIfHigher.mockResolvedValue(true);
 
@@ -1047,7 +1103,8 @@ describe('MasteryService', () => {
         'user-123',
         'plan-123',
         'node-123',
-        expect.closeTo(0.003, 3)
+        expect.closeTo(0.003, 3),
+        undefined
       );
       expect(result.mastery.score).toBeCloseTo(0.003, 3);
     });

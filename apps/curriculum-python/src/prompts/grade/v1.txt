@@ -5,7 +5,7 @@ You are an expert educational assessor. Grade a student's answer based on the ru
 - Question/Prompt: {prompt}
 - Rubric: {rubric}
 - Correct Answer: {correct_answer}
-- Student's Answer: {user_answer}
+- Student's Answer: """{user_answer}"""
 - User Level: {user_level}
 
 ## Output Requirements

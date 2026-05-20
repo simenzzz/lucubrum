@@ -9,7 +9,7 @@ class TestServiceTokenMiddleware:
 
     @pytest.fixture(autouse=True)
     def _setup(self, monkeypatch):
-        monkeypatch.setenv("SERVICE_TOKEN", "valid-test-token")
+        monkeypatch.setenv("SERVICE_TOKEN", "test-service-token")
 
     async def _get(self, path: str, headers: dict | None = None):
         from src.main import app
@@ -51,7 +51,7 @@ class TestServiceTokenMiddleware:
                 "user_level": "beginner",
                 "request_id": "00000000-0000-0000-0000-000000000002",
             },
-            headers={"X-Service-Token": "valid-test-token"},
+            headers={"X-Service-Token": "test-service-token"},
         )
         assert resp.status_code == 200
 

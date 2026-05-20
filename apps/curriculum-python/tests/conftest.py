@@ -31,7 +31,7 @@ def test_postgres():
             "port": 5432,
             "user": "test_user",
             "password": "test_password",
-            "database": "learning_helper_test",
+            "database": "lucubrum_test",
         }
     else:
         # Fallback to testcontainers for local dev
@@ -53,7 +53,7 @@ def test_postgres():
                 "port": 5433,
                 "user": "test_user",
                 "password": "test_password",
-                "database": "learning_helper_test",
+                "database": "lucubrum_test",
             }
 
 

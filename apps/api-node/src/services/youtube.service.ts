@@ -97,6 +97,23 @@ interface SearchQuotaStats {
   estimatedQuotaUsed: number;
 }
 
+const MIN_VIDEO_DURATION_SECONDS = 60;
+
+/**
+ * Build content_text by combining description + title + channel.
+ * Returns null if the combined text is still shorter than minLength.
+ */
+export function buildContentText(
+  video: { description?: string; title: string; channelTitle: string },
+  minLength: number
+): string | null {
+  const desc = video.description?.trim() || '';
+  const combined = desc
+    ? `${desc} — ${video.title} by ${video.channelTitle}`
+    : `${video.title} by ${video.channelTitle}`;
+  return combined.length >= minLength ? combined : null;
+}
+
 const DEFAULT_OPTIONS: Required<ResourceAttachmentOptions> = {
   minRelevanceScore: 0.6,
   mustWatchCount: 1,
@@ -246,7 +263,10 @@ class YouTubeService {
       },
     });
 
-    const videoIds = searchResponse.data.items
+    const searchItems = searchResponse.data?.items;
+    if (!searchItems || !Array.isArray(searchItems)) return results;
+
+    const videoIds = searchItems
       .map((item: { id: { videoId: string } }) => item.id.videoId)
       .join(',');
 
@@ -261,23 +281,29 @@ class YouTubeService {
       },
     });
 
-    for (const item of detailsResponse.data.items) {
+    const detailItems = detailsResponse.data?.items;
+    if (!detailItems || !Array.isArray(detailItems)) return results;
+
+    for (const item of detailItems) {
+      if (!item.snippet || !item.contentDetails) continue;
+
       const candidate: VideoCandidate = {
         videoId: item.id,
-        title: item.snippet.title,
-        channelTitle: item.snippet.channelTitle,
-        description: item.snippet.description,
-        publishedAt: item.snippet.publishedAt,
-        durationSeconds: this.parseDuration(item.contentDetails.duration),
-        viewCount: parseInt(item.statistics.viewCount || '0', 10),
-        likeCount: parseInt(item.statistics.likeCount || '0', 10),
+        title: item.snippet.title ?? '',
+        channelTitle: item.snippet.channelTitle ?? '',
+        description: item.snippet.description ?? '',
+        publishedAt: item.snippet.publishedAt ?? '',
+        durationSeconds: this.parseDuration(item.contentDetails?.duration ?? ''),
+        viewCount: parseInt(item.statistics?.viewCount ?? '0', 10),
+        likeCount: parseInt(item.statistics?.likeCount ?? '0', 10),
         searchQuery: query,
       };
 
       results.push(candidate);
     }
 
-    return results;
+    // Filter out YouTube Shorts (< 60s) — low-value for learning content
+    return results.filter((v) => v.durationSeconds >= MIN_VIDEO_DURATION_SECONDS);
   }
 
   /**
@@ -299,13 +325,22 @@ class YouTubeService {
     const results = await queue.addAll(
       candidates.map((video) => async (): Promise<ValidationResult> => {
         try {
+          const contentText = buildContentText(video, 10);
+          if (!contentText) {
+            logger.debug(
+              { videoId: video.videoId, title: video.title },
+              'Skipping video validation — insufficient content text'
+            );
+            return { video, validated: null };
+          }
+
           const validation = await curriculumClient.validateVideo({
             video_id: video.videoId,
             plan_id: planId,
             node_id: node.node_id,
             node_title: node.title,
             node_objectives: node.objectives,
-            content_text: video.description || `${video.title} by ${video.channelTitle}`,
+            content_text: contentText,
             video_title: video.title,
             channel_name: video.channelTitle,
             request_id: requestId,
@@ -374,7 +409,10 @@ class YouTubeService {
         score += coverageRatio * 0.15; // 15% for coverage
 
         // Recency
-        const videoAge = (Date.now() - new Date(video.publishedAt).getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+        const publishedTime = new Date(video.publishedAt).getTime();
+        const videoAge = Number.isNaN(publishedTime)
+          ? Infinity
+          : (Date.now() - publishedTime) / (365.25 * 24 * 60 * 60 * 1000);
         if (videoAge <= 2) {
           score += 0.10; // 10% for recent
         } else if (videoAge <= 5) {

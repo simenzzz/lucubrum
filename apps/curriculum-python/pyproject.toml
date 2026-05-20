@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "learning-helper-curriculum"
+name = "lucubrum-curriculum"
 version = "0.1.0"
-description = "Python/FastAPI Curriculum Service for Learning Helper"
+description = "Python/FastAPI Curriculum Service for Lucubrum"
 readme = "README.md"
-authors = ["Learning Helper Team"]
+authors = ["Lucubrum Team"]
 
 [tool.poetry.dependencies]
 python = "^3.11"

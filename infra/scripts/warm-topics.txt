@@ -1,0 +1,35 @@
+# Cache warm-up topic list for Lucubrum.
+# One topic per line. Lines starting with '#' are ignored.
+# Used by cache-warm.sh (--topics flag overrides this file).
+
+# Programming Fundamentals
+Python basics
+JavaScript fundamentals
+Data structures and algorithms
+Object-oriented programming
+Functional programming
+
+# Web Development
+HTML and CSS
+React fundamentals
+Node.js basics
+REST API design
+SQL fundamentals
+
+# Computer Science
+Operating systems fundamentals
+Computer networking basics
+Database design
+Git version control
+Linux command line
+
+# Data & AI
+Machine learning basics
+Statistics for data science
+NumPy and pandas
+Data visualization with Python
+
+# DevOps
+Docker fundamentals
+CI/CD pipelines
+Kubernetes basics

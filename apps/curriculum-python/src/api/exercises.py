@@ -227,7 +227,7 @@ async def generate_exercises(
             status_code=500,
             detail={
                 "error": "INTERNAL_ERROR",
-                "message": f"Unexpected error generating exercises: {str(e)}",
+                "message": "An unexpected error occurred while generating exercises",
                 "request_id": str(request.request_id),
             },
         )

@@ -147,18 +147,30 @@ export async function getActiveExamSession(
   return result.rows[0] as unknown as ExamSessionRow;
 }
 
+
 /**
- * Mark an exam session as completed.
+ * Atomically complete an exam session if it is still valid (not expired, not already completed).
+ * Returns the session row if successful, null if expired or already completed (TOCTOU-safe).
  */
-export async function completeExamSession(
+export async function completeExamSessionIfValid(
   sessionId: string
-): Promise<void> {
-  await db.query(
-    `UPDATE exam_sessions SET completed_at = NOW() WHERE session_id = $1`,
+): Promise<ExamSessionRow | null> {
+  const result = await db.query(
+    `UPDATE exam_sessions
+     SET completed_at = NOW()
+     WHERE session_id = $1
+       AND completed_at IS NULL
+       AND expires_at > NOW()
+     RETURNING *`,
     [sessionId]
   );
 
-  logger.info({ sessionId }, 'Exam session completed');
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  logger.info({ sessionId }, 'Exam session completed atomically');
+  return result.rows[0] as unknown as ExamSessionRow;
 }
 
 /**
@@ -249,38 +261,3 @@ export async function getExamAttempt(
   return result.rows[0] as unknown as ExamAttemptRow;
 }
 
-/**
- * Check if a session has already been submitted.
- */
-export async function isSessionCompleted(
-  sessionId: string
-): Promise<boolean> {
-  const result = await db.query<{ completed_at: Date | null }>(
-    `SELECT completed_at FROM exam_sessions WHERE session_id = $1`,
-    [sessionId]
-  );
-
-  if (result.rows.length === 0) {
-    return false;
-  }
-
-  return result.rows[0].completed_at !== null;
-}
-
-/**
- * Check if a session has expired.
- */
-export async function isSessionExpired(
-  sessionId: string
-): Promise<boolean> {
-  const result = await db.query<{ expires_at: Date }>(
-    `SELECT expires_at FROM exam_sessions WHERE session_id = $1`,
-    [sessionId]
-  );
-
-  if (result.rows.length === 0) {
-    return true; // Session not found, treat as expired
-  }
-
-  return new Date() > new Date(result.rows[0].expires_at);
-}

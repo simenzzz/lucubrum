@@ -1,15 +1,23 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import type { UserPlanSummary } from '@/types/api.types';
 import { timeAgo } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { useNextNode } from '@/hooks/usePlan';
 
 interface PlanProgressCardProps {
   plan: UserPlanSummary;
 }
 
 export function PlanProgressCard({ plan }: PlanProgressCardProps) {
+  const { data: next, isLoading } = useNextNode(plan.plan_id);
+
+  const pct = next?.current_progress.completion_percentage ?? null;
+  const nodesCompleted = next?.current_progress.nodes_completed ?? null;
+  const totalNodes = next?.current_progress.total_nodes ?? null;
+
   return (
     <Link
       to={`/roadmap/${plan.plan_id}`}
@@ -38,7 +46,21 @@ export function PlanProgressCard({ plan }: PlanProgressCardProps) {
           </div>
         </div>
 
-        <ChevronRight className="w-5 h-5 text-warm-600 group-hover:text-amber group-hover:translate-x-1 transition-all" />
+        <div className="flex items-center gap-3">
+          {/* Progress indicator */}
+          {isLoading ? (
+            <div className="w-16 h-2 bg-hearth-700 rounded-full animate-pulse" />
+          ) : pct !== null && totalNodes !== null ? (
+            <div className="flex items-center gap-2">
+              <Progress value={pct} className="w-16 h-2" />
+              <span className="text-xs text-warm-400 tabular-nums">
+                {nodesCompleted}/{totalNodes}
+              </span>
+            </div>
+          ) : null}
+
+          <ChevronRight className="w-5 h-5 text-warm-600 group-hover:text-amber group-hover:translate-x-1 transition-all" />
+        </div>
       </div>
     </Link>
   );

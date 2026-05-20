@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import planRoutes from './routes/plan.routes';
 import authRoutes from './routes/auth.routes';
 import exerciseRoutes from './routes/exercise.routes';
@@ -13,9 +14,14 @@ import { redis } from './db/redis';
 import { curriculumClient } from './services/curriculum-client';
 import { startQualitySignalsJob } from './jobs/quality-signals';
 import { csrfProtection } from './middleware/csrf.middleware';
+import { rateLimit } from './middleware/rate-limit.middleware';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configure trust proxy for correct client IP detection
+// This is required when running behind a reverse proxy (nginx)
+app.set('trust proxy', parseInt(process.env.TRUST_PROXY_HOPS || '1', 10));
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -63,21 +69,36 @@ function validateCorsOrigin(): void {
 // Validate configuration at startup
 validateCorsOrigin();
 
-// Validate required environment variables
+// Validate required environment variables at startup
 function validateRequiredEnvVars(): void {
-  const requiredVars = {
-    'JWT_SECRET': process.env.JWT_SECRET,
-    'GOOGLE_CLIENT_ID': process.env.GOOGLE_CLIENT_ID,
-    'GOOGLE_CLIENT_SECRET': process.env.GOOGLE_CLIENT_SECRET,
-  };
+  const requiredEnvVars = [
+    'JWT_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GOOGLE_REDIRECT_URI',
+    'POSTGRES_HOST',
+    'POSTGRES_DB',
+    'POSTGRES_USER',
+    'POSTGRES_PASSWORD',
+    'REDIS_URL',
+    'SERVICE_TOKEN',
+    'YOUTUBE_API_KEY',
+  ];
 
-  const missing = Object.entries(requiredVars)
-    .filter(([_, value]) => !value)
-    .map(([name]) => name);
-
+  const missing = requiredEnvVars.filter(key => !process.env[key]);
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}`
+    );
+  }
+
+  // Facebook OAuth: if any FB env var is set, require all three
+  const fbVars = ['FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET', 'FACEBOOK_REDIRECT_URI'];
+  const fbSet = fbVars.filter(key => process.env[key]);
+  if (fbSet.length > 0 && fbSet.length < fbVars.length) {
+    const fbMissing = fbVars.filter(key => !process.env[key]);
+    throw new Error(
+      `Partial Facebook OAuth configuration. Set all or none: missing ${fbMissing.join(', ')}`
     );
   }
 
@@ -85,6 +106,20 @@ function validateRequiredEnvVars(): void {
 }
 
 validateRequiredEnvVars();
+
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "https://i.ytimg.com"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://www.facebook.com", "https://graph.facebook.com"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 
 // CORS configuration for cookie-based auth
 app.use((req, res, next) => {
@@ -116,7 +151,7 @@ app.use((req, _res, next) => {
 });
 
 // Health check
-app.get('/health', async (_req, res) => {
+app.get('/health', rateLimit.healthIP(), async (_req, res) => {
   const checks: Record<string, string> = {
     database: 'healthy',
     redis: 'healthy',

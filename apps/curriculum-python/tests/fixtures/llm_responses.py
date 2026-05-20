@@ -162,15 +162,6 @@ VALID_QUERY_SUGGESTIONS: Dict[str, Any] = {
     "model": "gemini-2.5-flash",
 }
 
-# Valid transcript
-VALID_TRANSCRIPT: Dict[str, Any] = {
-    "transcript": "This is a test transcript for the video.",
-    "language": "en",
-    "duration_millis": 300000,
-    "is_available": True,
-    "request_id": "test-transcript-request",
-}
-
 # Valid video validation
 VALID_VIDEO_VALIDATION: Dict[str, Any] = {
     "is_relevant": True,

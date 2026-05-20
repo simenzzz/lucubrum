@@ -26,9 +26,9 @@ def _staleness_request(**overrides) -> dict:
 class TestStalenessEndpoint:
     @pytest.fixture(autouse=True)
     def _setup(self, monkeypatch):
-        monkeypatch.setenv("SERVICE_TOKEN", "test-token")
+        monkeypatch.setenv("SERVICE_TOKEN", "test-service-token")
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        self.headers = {"X-Service-Token": "test-token"}
+        self.headers = {"X-Service-Token": "test-service-token"}
 
     @pytest.fixture
     def _mock_deps(self, mocker):
@@ -53,9 +53,10 @@ class TestStalenessEndpoint:
     async def test_no_facts_returns_not_stale(self):
         """No MCP facts → not stale, no LLM call."""
         resp = await self._post(_staleness_request(mcp_facts=[]))
-        # This will fail because provider="none" is not in Literal["gemini","claude"]
-        # The production code has a bug here — test verifies that.
-        assert resp.status_code == 500  # ArtifactMetadata rejects provider="none"
+        assert resp.status_code == 200
+        result = resp.json()["result"]
+        assert result["is_stale"] is False
+        assert result["contradiction_rate"] == 0.0
 
     async def test_success_not_stale(self, _mock_deps):
         llm_response = json.dumps({
@@ -108,7 +109,7 @@ class TestStalenessEndpoint:
         resp = await self._post(_staleness_request())
 
         assert resp.status_code == 422
-        assert "invalid JSON" in resp.json()["detail"]["message"]
+        assert "invalid response" in resp.json()["detail"]["message"]
 
     async def test_markdown_code_block_handled(self, _mock_deps):
         llm_response = '```json\n{"contradictions_found": [], "sources_checked": []}\n```'

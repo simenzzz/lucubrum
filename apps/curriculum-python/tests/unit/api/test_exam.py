@@ -61,9 +61,9 @@ def _exam_request(**overrides) -> dict:
 class TestExamEndpoint:
     @pytest.fixture(autouse=True)
     def _setup(self, monkeypatch):
-        monkeypatch.setenv("SERVICE_TOKEN", "test-token")
+        monkeypatch.setenv("SERVICE_TOKEN", "test-service-token")
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        self.headers = {"X-Service-Token": "test-token"}
+        self.headers = {"X-Service-Token": "test-service-token"}
 
     @pytest.fixture
     def _mock_deps(self, mocker):

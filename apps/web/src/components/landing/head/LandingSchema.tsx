@@ -13,7 +13,7 @@ export function LandingSchema({ topic }: LandingSchemaProps) {
     const schema = {
       '@context': 'https://schema.org',
       '@type': 'WebApplication',
-      name: 'Learning Helper',
+      name: 'Lucubrum',
       description:
         'AI-powered personalized learning roadmaps with curated resources, adaptive exercises, and mastery tracking. Chart your course to knowledge.',
       url: 'https://learninghelper.app',
@@ -35,7 +35,7 @@ export function LandingSchema({ topic }: LandingSchemaProps) {
       ],
       author: {
         '@type': 'Organization',
-        name: 'Learning Helper',
+        name: 'Lucubrum',
       },
       aggregateRating: {
         '@type': 'AggregateRating',
@@ -69,19 +69,19 @@ export function LandingSchema({ topic }: LandingSchemaProps) {
     document.head.appendChild(breadcrumbScript);
 
     // Set meta tags
-    document.title = 'Learning Helper - Chart Your Course';
+    document.title = 'Lucubrum - Chart Your Course';
 
     const metaTags = [
-      { name: 'application-name', content: 'Learning Helper' },
+      { name: 'application-name', content: 'Lucubrum' },
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-      { name: 'apple-mobile-web-app-title', content: 'Learning Helper' },
+      { name: 'apple-mobile-web-app-title', content: 'Lucubrum' },
       { property: 'og:type', content: 'website' },
-      { property: 'og:title', content: 'Learning Helper - Chart Your Course' },
+      { property: 'og:title', content: 'Lucubrum - Chart Your Course' },
       { property: 'og:description', content: 'AI-powered personalized learning roadmaps with curated resources, adaptive exercises, and mastery tracking.' },
       { property: 'og:url', content: 'https://learninghelper.app' },
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: 'Learning Helper - Chart Your Course' },
+      { name: 'twitter:title', content: 'Lucubrum - Chart Your Course' },
       { name: 'twitter:description', content: 'AI-powered personalized learning roadmaps with curated resources, adaptive exercises, and mastery tracking.' },
     ];
 

@@ -7,7 +7,11 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
 import { isValidUserId } from '../utils/validation';
 import { requireAuth } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
 import { getUserPlansWithDetails, PaginatedUserPlans } from '../db/queries/user-plans';
+import { getTierForUser, getLimitsForUser } from '../config/tier.config';
+import { countActivePlansForUser, getUserRoles } from '../db/queries/tier';
+import { getDailyLlmAttemptCount } from '../services/tier.service';
 
 const router = Router();
 
@@ -53,6 +57,7 @@ interface ErrorResponse {
  */
 router.get(
   '/:userId/plans',
+  rateLimit.general(),
   async (
     req: Request<GetUserPlansParams, unknown, unknown, GetUserPlansQuery>,
     res: Response<GetUserPlansResponse | ErrorResponse>
@@ -126,6 +131,108 @@ router.get(
       });
     } catch (error) {
       logger.error({ error, userId, requestId }, 'Error fetching user plans');
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        request_id: requestId,
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/users/:userId/usage
+ *
+ * Get tier usage and limits for a user.
+ * Users can only access their own usage unless they have admin role.
+ */
+router.get(
+  '/:userId/usage',
+  rateLimit.general(),
+  async (
+    req: Request<GetUserPlansParams>,
+    res: Response<Record<string, unknown> | ErrorResponse>
+  ) => {
+    const { userId } = req.params;
+    const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
+    try {
+      if (!isValidUserId(userId)) {
+        return res.status(400).json({
+          error: 'INVALID_USER_ID',
+          message: 'User ID must be a non-empty alphanumeric string',
+          request_id: requestId,
+        });
+      }
+
+      // Authorization: users can only access their own usage unless admin
+      if (!req.user) {
+        return res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Authentication required',
+          request_id: requestId,
+        });
+      }
+
+      const isAdmin = req.user.roles.includes('admin');
+      if (req.user.user_id !== userId && !isAdmin) {
+        return res.status(403).json({
+          error: 'FORBIDDEN',
+          message: 'You can only access your own usage',
+          request_id: requestId,
+        });
+      }
+
+      // Fetch roles from DB to get accurate tier info
+      // - For own usage: use JWT roles (faster, typically accurate)
+      // - For admin viewing others: MUST fetch from DB (JWT doesn't have target's roles)
+      let roles: string[];
+      if (req.user.user_id === userId) {
+        roles = req.user.roles;
+      } else {
+        const dbRoles = await getUserRoles(userId);
+        if (dbRoles === null) {
+          return res.status(404).json({
+            error: 'USER_NOT_FOUND',
+            message: 'Target user not found',
+            request_id: requestId,
+          });
+        }
+        roles = dbRoles;
+      }
+
+      const tier = getTierForUser(roles);
+      const limits = getLimitsForUser(roles);
+
+      // Fetch current usage
+      const [activePlanCount, dailyLlmAttempts] = await Promise.all([
+        countActivePlansForUser(userId, limits.planHistoryDays),
+        getDailyLlmAttemptCount(userId),
+      ]);
+
+      return res.json({
+        tier,
+        usage: {
+          active_plans: {
+            current: activePlanCount,
+            limit: isFinite(limits.maxActivePlans) ? limits.maxActivePlans : null,
+          },
+          daily_llm_attempts: {
+            current: dailyLlmAttempts,
+            limit: isFinite(limits.dailyLlmAttempts) ? limits.dailyLlmAttempts : null,
+          },
+        },
+        limits: {
+          allowed_plan_sizes: limits.allowedPlanSizes,
+          max_exams_per_node: isFinite(limits.maxExamsPerNode) ? limits.maxExamsPerNode : null,
+          exercise_regenerations: isFinite(limits.exerciseRegenerations)
+            ? limits.exerciseRegenerations
+            : null,
+          plan_history_days: limits.planHistoryDays,
+        },
+      });
+    } catch (error) {
+      logger.error({ error, userId, requestId }, 'Error fetching user usage');
       return res.status(500).json({
         error: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred',

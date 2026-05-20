@@ -15,12 +15,25 @@ export interface DatabaseConfig {
 }
 
 function getConfig(): DatabaseConfig {
+  const host = process.env.POSTGRES_HOST;
+  const port = process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT, 10) : 5432;
+  const database = process.env.POSTGRES_DB;
+  const user = process.env.POSTGRES_USER;
+  const password = process.env.POSTGRES_PASSWORD;
+
+  // Fail fast if any required config is missing
+  if (!host || !database || !user || !password) {
+    throw new Error(
+      'Missing required database configuration. Set POSTGRES_HOST, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD'
+    );
+  }
+
   return {
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-    database: process.env.POSTGRES_DB || 'learning_helper',
-    user: process.env.POSTGRES_USER || 'learning_helper',
-    password: process.env.POSTGRES_PASSWORD || 'learning_helper_dev',
+    host,
+    port,
+    database,
+    user,
+    password,
     max: parseInt(process.env.POSTGRES_POOL_MAX || '10', 10),
   };
 }

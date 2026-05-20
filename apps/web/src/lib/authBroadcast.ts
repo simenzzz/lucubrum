@@ -26,7 +26,7 @@ type AuthMessageHandler = {
   onLogout?: () => void;
 };
 
-const CHANNEL_NAME = 'learning-helper-auth-sync';
+const CHANNEL_NAME = 'lucubrum-auth-sync';
 
 // Check if BroadcastChannel is supported
 const isBroadcastChannelSupported = typeof BroadcastChannel !== 'undefined';

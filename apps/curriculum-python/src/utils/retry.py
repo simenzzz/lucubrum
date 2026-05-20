@@ -66,8 +66,10 @@ def _extract_json_from_response(raw_output: str) -> str:
 
     # 0. Enforce text length limit to prevent ReDoS attacks
     if len(text) > MAX_TEXT_LENGTH:
+        original_length = len(text)
         logger.warning(
-            f"Input text exceeds MAX_TEXT_LENGTH ({MAX_TEXT_LENGTH}), truncating"
+            f"Input text ({original_length} chars) exceeds MAX_TEXT_LENGTH ({MAX_TEXT_LENGTH}), "
+            f"truncating {original_length - MAX_TEXT_LENGTH} chars"
         )
         text = text[:MAX_TEXT_LENGTH]
 

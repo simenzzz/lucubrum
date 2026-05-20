@@ -5,23 +5,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import logger from '../utils/logger';
 
-// Types for transcript and validation
-export interface TranscriptSegment {
-  start_seconds: number;
-  duration_seconds: number;
-  text: string;
-}
-
-export interface Transcript {
-  schema_version: string;
-  video_id: string;
-  language: string;
-  segments: TranscriptSegment[];
-  full_text: string;
-  duration_seconds: number;
-  fetch_source: 'youtube_transcript_api' | 'youtube_api' | 'manual';
-}
-
 export interface VideoValidation {
   schema_version: string;
   video_id: string;
@@ -149,11 +132,6 @@ export interface Grade {
 }
 
 // Request types
-export interface FetchTranscriptRequest {
-  video_id: string;
-  language?: string;
-}
-
 export interface ValidateVideoRequest {
   video_id: string;
   plan_id: string;
@@ -288,16 +266,6 @@ export class CurriculumServiceError extends Error {
   }
 }
 
-export class TranscriptNotAvailableError extends CurriculumServiceError {
-  constructor(videoId: string, reason: string) {
-    super(`Transcript unavailable for ${videoId}: ${reason}`, 404, 'TRANSCRIPT_NOT_AVAILABLE', {
-      video_id: videoId,
-      reason,
-    });
-    this.name = 'TranscriptNotAvailableError';
-  }
-}
-
 /**
  * Client for the Python Curriculum Service.
  */
@@ -305,7 +273,10 @@ export class CurriculumClient {
   private client: AxiosInstance;
 
   constructor() {
-    const baseURL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000';
+    const serviceHostPort = process.env.PYTHON_SERVICE_HOSTPORT;
+    const baseURL =
+      process.env.PYTHON_SERVICE_URL ||
+      (serviceHostPort ? `http://${serviceHostPort}` : 'http://localhost:8000');
     const serviceToken = process.env.SERVICE_TOKEN;
 
     this.client = axios.create({
@@ -332,11 +303,13 @@ export class CurriculumClient {
         return response;
       },
       (error: AxiosError) => {
+        const respData = error.response?.data as Record<string, unknown> | undefined;
         logger.error(
           {
             url: error.config?.url,
             status: error.response?.status,
-            data: error.response?.data,
+            errorCode: respData?.error,
+            errorMessage: respData?.message,
           },
           'Curriculum API error'
         );
@@ -346,33 +319,19 @@ export class CurriculumClient {
   }
 
   /**
-   * Fetch transcript for a YouTube video.
+   * Extract and validate a field from the upstream response.
+   * Throws CurriculumServiceError if the field is missing or null.
    */
-  async fetchTranscript(request: FetchTranscriptRequest): Promise<Transcript> {
-    try {
-      const response = await this.client.post<{ transcript: Transcript }>(
-        '/llm/transcript',
-        request
+  private extractField<T>(data: Record<string, unknown>, field: string, endpoint: string): T {
+    const value = data[field];
+    if (value === undefined || value === null) {
+      throw new CurriculumServiceError(
+        `Missing '${field}' in response from ${endpoint}`,
+        502,
+        'INVALID_UPSTREAM_RESPONSE'
       );
-      return response.data.transcript;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        if (error.response?.status === 404 && data?.error === 'TRANSCRIPT_NOT_AVAILABLE') {
-          throw new TranscriptNotAvailableError(
-            request.video_id,
-            (data?.reason as string) || 'Unknown reason'
-          );
-        }
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'UNKNOWN_ERROR',
-          data
-        );
-      }
-      throw error;
     }
+    return value as T;
   }
 
   /**
@@ -380,11 +339,11 @@ export class CurriculumClient {
    */
   async validateVideo(request: ValidateVideoRequest): Promise<VideoValidation> {
     try {
-      const response = await this.client.post<{ validation: VideoValidation }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/validate-video',
         request
       );
-      return response.data.validation;
+      return this.extractField<VideoValidation>(response.data, 'validation', '/llm/validate-video');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -404,11 +363,11 @@ export class CurriculumClient {
    */
   async checkStaleness(request: CheckStalenessRequest): Promise<StalenessResult> {
     try {
-      const response = await this.client.post<{ result: StalenessResult }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/check-staleness',
         request
       );
-      return response.data.result;
+      return this.extractField<StalenessResult>(response.data, 'result', '/llm/check-staleness');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -440,13 +399,13 @@ export class CurriculumClient {
    */
   async generatePlan(request: GeneratePlanRequest): Promise<Plan> {
     try {
-      const response = await this.client.post<{ plan: Plan }>('/llm/plan', {
+      const response = await this.client.post<Record<string, unknown>>('/llm/plan', {
         topic: request.topic,
         user_level: request.user_level,
         plan_size: request.plan_size || 'moderate',
         request_id: request.request_id,
       });
-      return response.data.plan;
+      return this.extractField<Plan>(response.data, 'plan', '/llm/plan');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -466,11 +425,11 @@ export class CurriculumClient {
    */
   async generateExercises(request: GenerateExercisesRequest): Promise<ExerciseSet> {
     try {
-      const response = await this.client.post<{ exercise_set: ExerciseSet }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/exercises',
         request
       );
-      return response.data.exercise_set;
+      return this.extractField<ExerciseSet>(response.data, 'exercise_set', '/llm/exercises');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -490,8 +449,8 @@ export class CurriculumClient {
    */
   async gradeAnswer(request: GradeRequest): Promise<Grade> {
     try {
-      const response = await this.client.post<{ grade: Grade }>('/llm/grade', request);
-      return response.data.grade;
+      const response = await this.client.post<Record<string, unknown>>('/llm/grade', request);
+      return this.extractField<Grade>(response.data, 'grade', '/llm/grade');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -535,7 +494,7 @@ export class CurriculumClient {
    */
   async getFacts(request: GetFactsRequest): Promise<GetFactsResponse> {
     try {
-      const response = await this.client.post<{ facts: string[]; sources: string[] }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/get-facts',
         {
           normalized_topic: request.normalized_topic,
@@ -544,8 +503,8 @@ export class CurriculumClient {
         }
       );
       return {
-        facts: response.data.facts,
-        sources: response.data.sources,
+        facts: this.extractField<string[]>(response.data, 'facts', '/llm/get-facts'),
+        sources: this.extractField<string[]>(response.data, 'sources', '/llm/get-facts'),
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -566,11 +525,11 @@ export class CurriculumClient {
    */
   async generateExam(request: GenerateExamRequest): Promise<ExamExerciseSet> {
     try {
-      const response = await this.client.post<{ exam_exercise_set: ExamExerciseSet }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/exam',
         request
       );
-      return response.data.exam_exercise_set;
+      return this.extractField<ExamExerciseSet>(response.data, 'exam_exercise_set', '/llm/exam');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -590,11 +549,11 @@ export class CurriculumClient {
    */
   async generateQueries(request: GenerateQueriesRequest): Promise<QuerySuggestions> {
     try {
-      const response = await this.client.post<{ suggestions: QuerySuggestions }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/queries',
         request
       );
-      return response.data.suggestions;
+      return this.extractField<QuerySuggestions>(response.data, 'suggestions', '/llm/queries');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;
@@ -614,11 +573,11 @@ export class CurriculumClient {
    */
   async generateReadingMaterial(request: GenerateReadingMaterialRequest): Promise<ReadingMaterial> {
     try {
-      const response = await this.client.post<{ reading_material: ReadingMaterial }>(
+      const response = await this.client.post<Record<string, unknown>>(
         '/llm/reading-material',
         request
       );
-      return response.data.reading_material;
+      return this.extractField<ReadingMaterial>(response.data, 'reading_material', '/llm/reading-material');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const data = error.response?.data as Record<string, unknown> | undefined;

@@ -1,7 +1,5 @@
 """Topic normalization API endpoint."""
 
-import json
-import logging
 import os
 from datetime import datetime, timezone
 from typing import Literal
@@ -17,7 +15,8 @@ from ..models.normalize import (
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.logger import get_logger
-from ..utils.retry import _extract_json_from_response
+from ..utils.prompts import load_prompt
+from ..utils.retry import RetryConfig, retry_llm_with_validation
 
 logger = get_logger(__name__)
 
@@ -74,8 +73,6 @@ async def normalize_topic(
 
     try:
         # Load prompt template
-        from ..utils.prompts import load_prompt
-
         prompt_template = load_prompt("normalize", "v1")
 
         # Get policies with descriptions for the prompt
@@ -86,43 +83,59 @@ async def normalize_topic(
         policies_text = "\n".join(policies_list)
         categories_list = sorted(policy_descriptions.keys())
 
-        # Format prompt with injected policies
-        prompt = prompt_template.replace("{policies}", policies_text)
-        prompt = prompt.replace("{categories}", ", ".join(categories_list))
-        prompt = prompt.replace("{{topic}}", request.topic)
+        # Pre-format the template with injected policies (static per-request)
+        prompt_with_policies = prompt_template.replace("{policies}", policies_text)
+        prompt_with_policies = prompt_with_policies.replace(
+            "{categories}", ", ".join(categories_list)
+        )
+        # Replace {{topic}} with {topic} so retry_llm_with_validation can format it
+        prompt_with_policies = prompt_with_policies.replace("{{topic}}", "{topic}")
 
         # Get LLM provider
         provider = get_provider()
 
-        # Generate response
-        start_time = datetime.now(timezone.utc)
-        raw_output = await provider.generate(prompt, temperature=0.3)
-        duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+        # Define generation function
+        async def generate_fn(prompt: str) -> str:
+            temperature = float(os.getenv("LLM_TEMPERATURE_NORMALIZE", 0.3))
+            return await provider.generate(prompt, temperature=temperature, max_tokens=2048)
 
-        # Parse and validate
-        try:
-            cleaned = _extract_json_from_response(raw_output)
-            data = json.loads(cleaned)
-            validated = RawNormalizeOutput.model_validate(data)
-        except (json.JSONDecodeError, Exception) as e:
-            logger.warning(
-                "Normalization validation failed",
-                topic=request.topic,
-                error=str(e),
-                raw_output_hash=compute_sha256(raw_output),
+        # Prepare prompt kwargs
+        prompt_kwargs = {
+            "topic": request.topic,
+        }
+
+        # Configure retry
+        config = RetryConfig(include_errors_in_prompt=True)
+
+        # Call LLM with retry
+        result = await retry_llm_with_validation(
+            generate_fn=generate_fn,
+            prompt_template=prompt_with_policies,
+            prompt_kwargs=prompt_kwargs,
+            model_class=RawNormalizeOutput,
+            config=config,
+        )
+
+        if not result.success or result.value is None:
+            logger.error(
+                "Normalization failed after %d attempts. Errors: %s",
+                result.total_attempts,
+                result.final_errors,
             )
             raise HTTPException(
                 status_code=422,
                 detail={
-                    "error": "VALIDATION_ERROR",
-                    "message": f"Failed to validate LLM output: {e}",
-                    "details": {"raw_output": raw_output[:500]},
-                    "request_id": request.request_id,
-                    "timestamp": datetime.now(timezone.utc)
-                    .isoformat()
-                    .replace("+00:00", "Z"),
+                    "error": "VALIDATION_FAILED",
+                    "message": "Failed to generate valid normalization after retries",
+                    "validation_errors": result.final_errors,
+                    "attempts": result.total_attempts,
+                    "request_id": str(request.request_id),
                 },
             )
+
+        # Compute hashes
+        raw_output_hash = compute_sha256(result.raw_output)
+        artifact_hash = compute_sha256(result.value.model_dump_json())
 
         # Create metadata
         metadata = ArtifactMetadata(
@@ -130,29 +143,26 @@ async def normalize_topic(
             prompt_version=prompt_version,
             provider=provider.provider_name,
             model=provider.model_name,
-            created_at=datetime.now(timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z"),
-            raw_output_hash=compute_sha256(raw_output),
-            artifact_hash=compute_sha256(
-                json.dumps(validated.model_dump(), sort_keys=True)
-            ),
-            validation_retry_count=0,
+            created_at=datetime.now(timezone.utc),
+            raw_output_hash=raw_output_hash,
+            artifact_hash=artifact_hash,
+            validation_retry_count=result.retry_count,
         )
 
         logger.info(
-            "Topic normalized",
-            request_id=request.request_id,
-            topic=request.topic,
-            normalized=validated.topic_normalized,
-            domain_category=validated.domain_category,
-            staleness_policy=validated.staleness_policy,
+            "Topic normalized. request_id=%s topic=%s normalized=%s domain=%s policy=%s retries=%d",
+            request.request_id,
+            request.topic,
+            result.value.topic_normalized,
+            result.value.domain_category,
+            result.value.staleness_policy,
+            result.retry_count,
         )
 
         return NormalizeTopicResponse(
-            topic_normalized=validated.topic_normalized,
-            domain_category=validated.domain_category,
-            staleness_policy=validated.staleness_policy,
+            topic_normalized=result.value.topic_normalized,
+            domain_category=result.value.domain_category,
+            staleness_policy=result.value.staleness_policy,
             metadata=metadata,
         )
 
@@ -160,10 +170,10 @@ async def normalize_topic(
         raise
     except Exception as e:
         logger.error(
-            "Unexpected error in topic normalization",
-            request_id=request.request_id,
-            topic=request.topic,
-            error=str(e),
+            "Unexpected error in topic normalization. request_id=%s topic=%s error=%s",
+            request.request_id,
+            request.topic,
+            str(e),
         )
         raise HTTPException(
             status_code=500,
@@ -171,7 +181,7 @@ async def normalize_topic(
                 "error": "INTERNAL_ERROR",
                 "message": "An unexpected error occurred",
                 "details": {},
-                "request_id": request.request_id,
+                "request_id": str(request.request_id),
                 "timestamp": datetime.now(timezone.utc)
                 .isoformat()
                 .replace("+00:00", "Z"),

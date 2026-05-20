@@ -5,8 +5,10 @@
 
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 import logger from '../utils/logger';
 import { requireAuth, requireRole } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
 import { redis } from '../db/redis';
 import {
   getLLMCallLogs,
@@ -16,6 +18,9 @@ import {
   LLMCallLogEntry,
   SystemMetrics,
 } from '../db/queries/admin';
+import { getUserRoles, updateUserRoles } from '../db/queries/tier';
+import { TIER_PRO_ROLE, TIER_SUPER_ROLE } from '../config/tier.config';
+import { isValidUserId } from '../utils/validation';
 import {
   getAllStalenessPolicies,
   getStalenessPolicyById,
@@ -25,6 +30,14 @@ import {
 } from '../db/queries/staleness-policies';
 
 const router = Router();
+
+// Zod schema for staleness policy validation
+const StalenessPolicySchema = z.object({
+  domain_category: z.string().min(1).max(100).regex(/^[a-z_]+$/),
+  policy_value: z.string().min(1).max(50),
+  description: z.string().max(500).optional(),
+  is_active: z.boolean().optional(),
+});
 
 // Apply auth and admin role requirement to all admin routes
 router.use(requireAuth);
@@ -56,6 +69,7 @@ function getRequestId(req: Request): string {
  */
 router.delete(
   '/cache/youtube',
+  rateLimit.general(),
   async (req: Request, res: Response<{ message: string; keys_deleted: number } | ErrorResponse>) => {
     const requestId = getRequestId(req);
 
@@ -122,6 +136,7 @@ router.delete(
  */
 router.delete(
   '/cache/plans',
+  rateLimit.general(),
   async (req: Request, res: Response<{ message: string; keys_deleted: number } | ErrorResponse>) => {
     const requestId = getRequestId(req);
     const topic = req.query.topic as string | undefined;
@@ -204,6 +219,7 @@ router.delete(
  */
 router.delete(
   '/cache/plans/:cacheKey',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ message: string; deleted: boolean } | ErrorResponse>
@@ -268,6 +284,7 @@ router.delete(
  */
 router.get(
   '/llm-calls',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<
@@ -335,6 +352,7 @@ router.get(
  */
 router.get(
   '/llm-calls/filters',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ operations: string[]; providers: string[] } | ErrorResponse>
@@ -371,6 +389,7 @@ router.get(
  */
 router.get(
   '/metrics',
+  rateLimit.general(),
   async (req: Request, res: Response<{ metrics: SystemMetrics } | ErrorResponse>) => {
     const requestId = getRequestId(req);
 
@@ -398,6 +417,7 @@ router.get(
  */
 router.get(
   '/cache/stats',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<
@@ -455,6 +475,102 @@ router.get(
   }
 );
 
+// ==================== User Tier Management ====================
+
+const UpdateTierSchema = z.object({
+  tier: z.enum(['free', 'pro', 'super']),
+});
+
+/**
+ * PUT /admin/users/:userId/tier
+ * Update a user's tier (free or pro).
+ * Reads current roles, removes pro role if present, adds if tier === 'pro'.
+ *
+ * KNOWN LIMITATION: Role changes take effect on next token refresh (up to 15 minutes).
+ * Active JWTs are not invalidated, so users will retain their old tier until
+ * their token expires and they re-authenticate.
+ */
+router.put(
+  '/users/:userId/tier',
+  rateLimit.general(),
+  async (
+    req: Request,
+    res: Response<{ user_id: string; tier: string; roles: string[]; warning?: string } | ErrorResponse>
+  ) => {
+    const requestId = getRequestId(req);
+    const { userId } = req.params;
+
+    // Validate userId format
+    if (!isValidUserId(userId)) {
+      return res.status(400).json({
+        error: 'INVALID_USER_ID',
+        message: 'User ID must be a non-empty alphanumeric string',
+        request_id: requestId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    try {
+      const parseResult = UpdateTierSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          error: 'VALIDATION_ERROR',
+          message: 'Invalid tier value. Must be "free", "pro", or "super".',
+          details: { validation_errors: parseResult.error.errors },
+          request_id: requestId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      const { tier } = parseResult.data;
+
+      // Get current roles
+      const currentRoles = await getUserRoles(userId);
+      if (currentRoles === null) {
+        return res.status(404).json({
+          error: 'USER_NOT_FOUND',
+          message: `User ${userId} not found`,
+          request_id: requestId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Build new roles: strip both tier roles, then add the target one
+      const TIER_ROLES = [TIER_PRO_ROLE, TIER_SUPER_ROLE];
+      const rolesWithoutTier = currentRoles.filter((r) => !TIER_ROLES.includes(r));
+      const roleToAdd = tier === 'pro' ? TIER_PRO_ROLE
+        : tier === 'super' ? TIER_SUPER_ROLE
+        : null;
+      const newRoles = roleToAdd
+        ? [...rolesWithoutTier, roleToAdd]
+        : rolesWithoutTier;
+
+      await updateUserRoles(userId, newRoles);
+
+      logger.info(
+        { requestId, userId, tier, adminUserId: req.user?.user_id },
+        'User tier updated'
+      );
+
+      return res.json({
+        user_id: userId,
+        tier,
+        roles: newRoles,
+        // Document the JWT staleness limitation
+        warning: 'Role change takes effect on next token refresh (up to 15 minutes)',
+      });
+    } catch (error) {
+      logger.error({ error, requestId, userId }, 'Failed to update user tier');
+      return res.status(500).json({
+        error: 'DATABASE_ERROR',
+        message: 'Failed to update user tier',
+        request_id: requestId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 // ==================== Staleness Policies Management ====================
 
 /**
@@ -463,6 +579,7 @@ router.get(
  */
 router.get(
   '/staleness-policies',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ policies: unknown[] } | ErrorResponse>
@@ -490,6 +607,7 @@ router.get(
  */
 router.get(
   '/staleness-policies/:id',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ policy: unknown } | ErrorResponse>
@@ -537,6 +655,7 @@ router.get(
  */
 router.post(
   '/staleness-policies',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ policy: unknown } | ErrorResponse>
@@ -544,16 +663,19 @@ router.post(
     const requestId = getRequestId(req);
 
     try {
-      const { domain_category, policy_value, description } = req.body;
-
-      if (!domain_category || !policy_value) {
+      // Validate request body with Zod schema
+      const parseResult = StalenessPolicySchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({
           error: 'VALIDATION_ERROR',
-          message: 'domain_category and policy_value are required',
+          message: 'Invalid staleness policy data',
+          details: { validation_errors: parseResult.error.errors },
           request_id: requestId,
           timestamp: new Date().toISOString(),
         });
       }
+
+      const { domain_category, policy_value, description } = parseResult.data;
 
       const policy = await createStalenessPolicy({
         domain_category,
@@ -596,6 +718,7 @@ router.post(
  */
 router.put(
   '/staleness-policies/:id',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ policy: unknown } | ErrorResponse>
@@ -614,7 +737,19 @@ router.put(
     }
 
     try {
-      const { domain_category, policy_value, description, is_active } = req.body;
+      // Validate request body with Zod schema (partial for update)
+      const parseResult = StalenessPolicySchema.partial().safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          error: 'VALIDATION_ERROR',
+          message: 'Invalid staleness policy data',
+          details: { validation_errors: parseResult.error.errors },
+          request_id: requestId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      const { domain_category, policy_value, description, is_active } = parseResult.data;
 
       const policy = await updateStalenessPolicy(policyId, {
         domain_category,
@@ -667,6 +802,7 @@ router.put(
  */
 router.delete(
   '/staleness-policies/:id',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ message: string; deleted: boolean } | ErrorResponse>
@@ -724,6 +860,7 @@ router.delete(
  */
 router.post(
   '/staleness-policies/reload',
+  rateLimit.general(),
   async (
     req: Request,
     res: Response<{ message: string } | ErrorResponse>

@@ -1,7 +1,7 @@
 # SCHEMAS.md — Data Schema Reference
 
 ## Overview
-This document defines the **contract schemas** used throughout the Learning Helper system.
+This document defines the **contract schemas** used throughout the Lucubrum system.
 
 ### Source of Truth (Hard Rule)
 - **Source of truth:** Pydantic v2 models in the Python Curriculum service: `apps/curriculum/src/models/`

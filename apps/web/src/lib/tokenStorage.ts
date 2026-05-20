@@ -7,8 +7,9 @@
  */
 
 const STORAGE_KEYS = {
-  PKCE_VERIFIER: 'learning_helper_pkce_verifier',
-  PKCE_STATE: 'learning_helper_pkce_state',
+  PKCE_VERIFIER: 'lucubrum_pkce_verifier',
+  PKCE_STATE: 'lucubrum_pkce_state',
+  OAUTH_PROVIDER: 'lucubrum_oauth_provider',
 } as const;
 
 /**
@@ -80,15 +81,50 @@ export function removePKCEState(): void {
 }
 
 /**
+ * Store OAuth provider name in sessionStorage (e.g. 'google', 'facebook')
+ */
+export function setOAuthProvider(provider: string): void {
+  try {
+    sessionStorage.setItem(STORAGE_KEYS.OAUTH_PROVIDER, provider);
+  } catch (error) {
+    console.error('Failed to store OAuth provider:', error);
+  }
+}
+
+/**
+ * Get OAuth provider name from sessionStorage
+ */
+export function getOAuthProvider(): string | null {
+  try {
+    return sessionStorage.getItem(STORAGE_KEYS.OAUTH_PROVIDER);
+  } catch (error) {
+    console.error('Failed to retrieve OAuth provider:', error);
+    return null;
+  }
+}
+
+/**
+ * Remove OAuth provider from sessionStorage
+ */
+export function removeOAuthProvider(): void {
+  try {
+    sessionStorage.removeItem(STORAGE_KEYS.OAUTH_PROVIDER);
+  } catch (error) {
+    console.error('Failed to remove OAuth provider:', error);
+  }
+}
+
+/**
  * Clear all auth-related storage (PKCE state and legacy tokens)
  */
 export function clearAuthStorage(): void {
   removePKCEVerifier();
   removePKCEState();
+  removeOAuthProvider();
 
   // Clean up legacy token storage from previous auth implementation
   try {
-    localStorage.removeItem('learning_helper_refresh_token');
+    localStorage.removeItem('lucubrum_refresh_token');
   } catch {
     // Ignore errors
   }

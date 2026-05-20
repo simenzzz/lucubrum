@@ -53,9 +53,11 @@ Output: {{"topic_normalized": "calculus_basics", "domain_category": "math", "sta
 - Return ONLY valid JSON (no markdown, no code fences)
 - Follow this exact schema:
 ```json
-{
+{{
   "topic_normalized": "string",
   "domain_category": "string",
   "staleness_policy": "string"
-}
+}}
 ```
+
+{validation_errors}

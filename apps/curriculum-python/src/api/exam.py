@@ -164,7 +164,7 @@ async def generate_exam(
             status_code=500,
             detail={
                 "error": "INTERNAL_ERROR",
-                "message": f"Unexpected error generating exam: {str(e)}",
+                "message": "An unexpected error occurred while generating the exam",
                 "request_id": str(request.request_id),
             },
         )

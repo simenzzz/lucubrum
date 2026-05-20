@@ -9,6 +9,8 @@ import { isValidUUID } from '../utils/validation';
 import { examService, ExamServiceError, StartExamResult, SubmitExamResult } from '../services/exam.service';
 import { StartExamRequestSchema, SubmitExamRequestSchema } from '../validation/schemas';
 import { requireAuth } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
+import { enforceExamLimit } from '../middleware/tier.middleware';
 
 const router = Router();
 
@@ -35,6 +37,8 @@ interface ErrorResponse {
  */
 router.post(
   '/:planId/nodes/:nodeId/exam/start',
+  rateLimit.general(),
+  enforceExamLimit(),
   async (
     req: Request<ExamParams>,
     res: Response<StartExamResult | ErrorResponse>
@@ -135,6 +139,7 @@ router.post(
  */
 router.post(
   '/:planId/nodes/:nodeId/exam/submit',
+  rateLimit.general(),
   async (
     req: Request<ExamParams>,
     res: Response<SubmitExamResult | ErrorResponse>

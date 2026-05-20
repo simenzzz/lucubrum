@@ -17,7 +17,6 @@ from .api.queries import router as queries_router
 from .api.reading_material import router as reading_material_router
 from .api.staleness import router as staleness_router
 from .api.validate_video import router as validate_video_router
-from .api.transcript import router as transcript_router
 from .api.normalize import router as normalize_router
 from .api.facts import router as facts_router
 from .api.exam import router as exam_router
@@ -67,11 +66,17 @@ async def lifespan(app: FastAPI):
         logger.info("Database pool closed")
 
 
+# Detect if we're in development
+is_dev = os.getenv("ENVIRONMENT", "development") == "development"
+
 app = FastAPI(
-    title="Learning Helper Curriculum Service",
+    title="Lucubrum Curriculum Service",
     version="0.1.0",
     description="LLM-powered curriculum generation service",
     lifespan=lifespan,
+    docs_url="/docs" if is_dev else None,
+    redoc_url="/redoc" if is_dev else None,
+    openapi_url="/openapi.json" if is_dev else None,
 )
 
 # Add service token authentication middleware
@@ -112,7 +117,6 @@ app.include_router(exercises_router)
 app.include_router(grade_router)
 app.include_router(staleness_router)
 app.include_router(validate_video_router)
-app.include_router(transcript_router)
 app.include_router(normalize_router)
 app.include_router(facts_router)
 app.include_router(exam_router)
@@ -120,8 +124,11 @@ app.include_router(exam_router)
 
 @app.get("/health")
 async def health():
-    """Health check endpoint with dependency status."""
-    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    """Health check endpoint — returns minimal status only.
+
+    Internal dependency details are logged server-side but not exposed
+    to callers, to avoid leaking infrastructure topology.
+    """
     llm_status = "healthy"
     db_status = "healthy"
 
@@ -138,7 +145,7 @@ async def health():
             async with app.state.db_pool.acquire() as conn:
                 await conn.fetchval("SELECT 1")
         except Exception as e:
-            logger.warning(f"Database health check failed: {e}")
+            logger.warning("Database health check failed", error=str(e))
             db_status = "unhealthy"
     else:
         db_status = "not_configured"
@@ -149,15 +156,17 @@ async def health():
     elif db_status == "not_configured":
         overall_status = "degraded"
 
-    return {
-        "status": overall_status,
-        "service": "curriculum-python",
-        "timestamp": timestamp,
-        "dependencies": {
-            "llm_provider": llm_status,
-            "database": db_status,
-        },
-    }
+    # Log details server-side for debugging
+    if overall_status != "healthy":
+        logger.warning(
+            "Health check degraded",
+            overall=overall_status,
+            llm=llm_status,
+            db=db_status,
+        )
+
+    # Return only aggregate status — no dependency topology
+    return {"status": overall_status}
 
 
 logger.info("Curriculum service started")

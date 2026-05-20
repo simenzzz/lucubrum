@@ -20,6 +20,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   const {
     examState,
     isExamInProgress,
+    examExpiredNeedsSubmit,
     startExam,
     setExamAnswer,
     nextExamQuestion,
@@ -28,6 +29,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     completeExam,
     cancelExam,
     getUnansweredCount,
+    clearExamExpiredFlag,
   } = useRoadmapStore();
 
   const [isStarting, setIsStarting] = useState(false);
@@ -47,6 +49,30 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
   });
+
+  // Guard: on mount, clear stale exam state (wrong node or completed exam)
+  useEffect(() => {
+    const state = useRoadmapStore.getState();
+    const { examState: currentExamState } = state;
+    if (!currentExamState) return;
+
+    const isDifferentNode = currentExamState.planId !== planId || currentExamState.nodeId !== node.node_id;
+    const isStaleCompleted = currentExamState.isComplete;
+
+    if (isDifferentNode || isStaleCompleted) {
+      state.clearExamState();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-submit expired exam on rehydration (page reload while exam was in progress)
+  useEffect(() => {
+    if (examExpiredNeedsSubmit && examState && !examState.isComplete) {
+      handleSubmitRef.current().finally(() => {
+        clearExamExpiredFlag();
+      });
+    }
+  }, [examExpiredNeedsSubmit, examState, clearExamExpiredFlag]);
 
   // Timer effect — deps narrowed to exam identity fields, not full examState object
   useEffect(() => {
@@ -86,6 +112,8 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     try {
       const result = await startExamMutation.mutateAsync({ planId, nodeId: node.node_id });
       startExam({
+        planId,
+        nodeId: node.node_id,
         sessionId: result.session_id,
         exercises: result.exercises,
         examDifficulty: result.exam_difficulty,
@@ -286,6 +314,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         {/* Current exercise (exam mode - no feedback) */}
         {currentExercise && (
           <ExerciseCard
+            key={currentExercise.id}
             exercise={currentExercise}
             planId={planId}
             nodeId={node.node_id}
@@ -307,7 +336,13 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
 
           {examState.currentIndex === examState.exercises.length - 1 ? (
             <Button
-              onClick={handleSubmit}
+              onClick={() => {
+                const unanswered = getUnansweredCount();
+                if (unanswered > 0 && !confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
+                  return;
+                }
+                handleSubmit();
+              }}
               disabled={isSubmitting}
               variant="primary"
             >
@@ -345,7 +380,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         </div>
         <h3 className="font-heading text-xl font-semibold text-warm-50 mb-2">Ready for an Exam?</h3>
         <p className="text-warm-400 max-w-md mx-auto">
-          Test your knowledge with a timed exam. You'll have 30 minutes to answer 10 questions.
+          Test your knowledge with a timed exam.
           Your mastery score will be updated based on your performance.
         </p>
       </div>
@@ -355,11 +390,11 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
         <ul className="space-y-2 text-sm text-warm-200">
           <li className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber" />
-            <span>Time limit: 30 minutes</span>
+            <span>Time limit: up to 30 minutes</span>
           </li>
           <li className="flex items-center gap-2">
-            <span className="w-4 h-4 flex items-center justify-center text-amber font-bold">10</span>
-            <span>Questions: 10</span>
+            <span className="w-4 h-4 flex items-center justify-center text-amber font-bold">?</span>
+            <span>Around 10 questions (varies by topic)</span>
           </li>
           <li className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber" />

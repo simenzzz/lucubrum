@@ -1,11 +1,13 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
+import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware';
 import superjson from 'superjson';
 import type { ExamExercise, PlanNode, SubmitExamResult } from '@/types/api.types';
 
 export type NodeTab = 'learn' | 'practice' | 'exam';
 
 export interface ExamState {
+  planId: string;
+  nodeId: string;
   sessionId: string;
   exercises: ExamExercise[];
   examDifficulty: number;
@@ -31,6 +33,7 @@ interface RoadmapState {
   // Exam state
   examState: ExamState | null;
   isExamInProgress: boolean;
+  examExpiredNeedsSubmit: boolean;
 
   // Actions - Node selection
   selectNode: (node: PlanNode) => void;
@@ -46,6 +49,8 @@ interface RoadmapState {
 
   // Actions - Exam
   startExam: (params: {
+    planId: string;
+    nodeId: string;
     sessionId: string;
     exercises: ExamExercise[];
     examDifficulty: number;
@@ -57,47 +62,42 @@ interface RoadmapState {
   goToExamQuestion: (index: number) => void;
   completeExam: (result?: SubmitExamResult) => void;
   cancelExam: () => void;
+  clearExamState: () => void;
   getUnansweredCount: () => number;
+  clearExamExpiredFlag: () => void;
 }
+
+type PersistedState = Pick<RoadmapState, 'examState' | 'isExamInProgress' | 'examExpiredNeedsSubmit'>;
 
 /**
  * Custom storage adapter using superjson to handle Map and Date serialization.
- * zustand persist stores { state, version } wrappers — we serialize/deserialize
- * only the `state` portion with superjson to preserve Map/Date types.
+ * Uses superjson.stringify/parse at the storage level to avoid double-serialization
+ * issues that arise when combining createJSONStorage with a custom replacer.
  */
-const superjsonStorage: StateStorage = {
-  getItem: (name: string): string | null => {
+const superjsonStorage: PersistStorage<PersistedState> = {
+  getItem: (name) => {
     const str = localStorage.getItem(name);
     if (!str) return null;
     try {
-      const wrapper = JSON.parse(str);
-      if (wrapper.state) {
-        wrapper.state = superjson.deserialize(wrapper.state);
-      }
-      return JSON.stringify(wrapper);
-    } catch (error) {
+      return superjson.parse<StorageValue<PersistedState>>(str);
+    } catch {
       if (import.meta.env.DEV) {
-        console.warn('[RoadmapStore] Failed to deserialize state, clearing:', error);
+        console.warn('[RoadmapStore] Failed to deserialize state, clearing');
       }
       localStorage.removeItem(name);
       return null;
     }
   },
-  setItem: (name: string, value: string): void => {
+  setItem: (name, value) => {
     try {
-      const wrapper = JSON.parse(value);
-      if (wrapper.state) {
-        wrapper.state = superjson.serialize(wrapper.state);
-      }
-      localStorage.setItem(name, JSON.stringify(wrapper));
+      localStorage.setItem(name, superjson.stringify(value));
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error('[RoadmapStore] Failed to serialize state:', error);
       }
-      localStorage.setItem(name, value);
     }
   },
-  removeItem: (name: string): void => {
+  removeItem: (name) => {
     localStorage.removeItem(name);
   },
 };
@@ -124,6 +124,7 @@ export const useRoadmapStore = create<RoadmapState>()(
 
       examState: null,
       isExamInProgress: false,
+      examExpiredNeedsSubmit: false,
 
       // Node selection actions
       selectNode: (node: PlanNode) => {
@@ -173,9 +174,11 @@ export const useRoadmapStore = create<RoadmapState>()(
       },
 
       // Exam actions
-      startExam: ({ sessionId, exercises, examDifficulty, timeLimitSeconds }) => {
+      startExam: ({ planId, nodeId, sessionId, exercises, examDifficulty, timeLimitSeconds }) => {
         set({
           examState: {
+            planId,
+            nodeId,
             sessionId,
             exercises,
             examDifficulty,
@@ -267,29 +270,49 @@ export const useRoadmapStore = create<RoadmapState>()(
         });
       },
 
+      clearExamState: () => {
+        set({
+          examState: null,
+          isExamInProgress: false,
+          examExpiredNeedsSubmit: false,
+        });
+      },
+
       getUnansweredCount: () => {
         const examState = get().examState;
         if (!examState) return 0;
 
         return examState.exercises.length - examState.answers.size;
       },
+
+      clearExamExpiredFlag: () => {
+        set({ examExpiredNeedsSubmit: false });
+      },
     }),
     {
-      name: 'learning-helper-roadmap',
-      storage: createJSONStorage(() => superjsonStorage),
+      name: 'lucubrum-roadmap',
+      storage: superjsonStorage,
       // Only persist exam-related state
       partialize: (state) => ({
         examState: state.examState,
         isExamInProgress: state.isExamInProgress,
+        examExpiredNeedsSubmit: state.examExpiredNeedsSubmit,
       }),
       // Handle expired exams on rehydration
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
-        // Check if there's an exam that has expired
+        // Migrate: clear exam states that predate planId/nodeId fields
+        if (state.examState && (!state.examState.planId || !state.examState.nodeId)) {
+          state.examState = null;
+          state.isExamInProgress = false;
+          state.examExpiredNeedsSubmit = false;
+          return;
+        }
+
+        // Check if there's an exam that has expired — set flag for ExamTab to auto-submit
         if (state.examState && !state.examState.isComplete && isExamExpired(state.examState)) {
-          // Auto-complete expired exam
-          state.completeExam();
+          state.examExpiredNeedsSubmit = true;
         }
 
         // Migrate: submitResult was added after initial release

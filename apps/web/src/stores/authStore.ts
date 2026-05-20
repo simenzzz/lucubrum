@@ -5,6 +5,8 @@ import {
   clearAuthStorage,
   getPKCEState,
   removePKCEState,
+  getOAuthProvider,
+  removeOAuthProvider,
 } from '@/lib/tokenStorage';
 import { notifyLogout, clearLegacyTokens } from '@/api/client';
 import { authApi } from '@/api/auth.api';
@@ -18,7 +20,10 @@ interface AuthState {
   error: string | null;
 
   // Actions
-  login: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithFacebook: () => Promise<void>;
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (email: string, name: string, password: string) => Promise<void>;
   handleCallback: (code: string, state: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
@@ -40,11 +45,10 @@ export const useAuthStore = create<AuthState>()(
       /**
        * Initiate Google OAuth login
        */
-      login: async () => {
+      loginWithGoogle: async () => {
         set({ isLoading: true, error: null });
         try {
           const { authorization_url } = await authApi.getGoogleAuthUrl();
-          // Redirect to Google OAuth
           window.location.href = authorization_url;
         } catch (error) {
           set({ error: (error as Error).message, isLoading: false });
@@ -52,38 +56,70 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /**
-       * Handle OAuth callback
-       * Server sets HTTP-only cookies, we just receive user data
+       * Initiate Facebook OAuth login
+       */
+      loginWithFacebook: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const { authorization_url } = await authApi.getFacebookAuthUrl();
+          window.location.href = authorization_url;
+        } catch (error) {
+          set({ error: (error as Error).message, isLoading: false });
+        }
+      },
+
+      /**
+       * Login with email and password
+       */
+      loginWithEmail: async (email: string, password: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.loginWithEmail({ email, password });
+          set({ user: response.user, isAuthenticated: true, isLoading: false, error: null });
+        } catch (error) {
+          set({ error: (error as Error).message, isLoading: false, isAuthenticated: false });
+          throw error;
+        }
+      },
+
+      /**
+       * Register a new user with email and password
+       */
+      registerWithEmail: async (email: string, name: string, password: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await authApi.registerWithEmail({ email, name, password });
+          set({ user: response.user, isAuthenticated: true, isLoading: false, error: null });
+        } catch (error) {
+          set({ error: (error as Error).message, isLoading: false, isAuthenticated: false });
+          throw error;
+        }
+      },
+
+      /**
+       * Handle OAuth callback — routes to correct provider based on sessionStorage
        */
       handleCallback: async (code: string, state: string) => {
         set({ isLoading: true, error: null });
         try {
-          // Validate PKCE state before making API call
           const storedState = getPKCEState();
           if (!storedState || state !== storedState) {
             throw new Error('Invalid authentication state. Please try again.');
           }
-          // Clear PKCE state after validation
           removePKCEState();
 
-          // Clear any legacy tokens from previous auth implementation
           clearLegacyTokens();
 
-          const response = await authApi.callback({ code, state });
+          const provider = getOAuthProvider() || 'google';
+          removeOAuthProvider();
 
-          // Update state (tokens are in HTTP-only cookies)
-          set({
-            user: response.user,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-          });
+          const response = provider === 'facebook'
+            ? await authApi.exchangeFacebookCallback({ code, state })
+            : await authApi.callback({ code, state });
+
+          set({ user: response.user, isAuthenticated: true, isLoading: false, error: null });
         } catch (error) {
-          set({
-            error: (error as Error).message,
-            isLoading: false,
-            isAuthenticated: false,
-          });
+          set({ error: (error as Error).message, isLoading: false, isAuthenticated: false });
         }
       },
 
@@ -148,7 +184,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'learning-helper-auth',
+      name: 'lucubrum-auth',
       // Only persist user data, not loading/error states
       partialize: (state) => ({
         user: state.user,

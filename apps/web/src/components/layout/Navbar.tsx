@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, Menu, X, LogOut, User, Map } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { useState } from 'react';
 
 export function Navbar() {
   const location = useLocation();
-  const { user, isAuthenticated, logout, login } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -28,7 +29,7 @@ export function Navbar() {
   };
 
   const handleLogin = () => {
-    login();
+    navigate('/login');
   };
 
   const handleLogout = () => {
@@ -48,7 +49,7 @@ export function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-heading font-bold text-lg leading-tight text-warm-50">
-                Learning Helper
+                Lucubrum
               </span>
               <span className="text-xs text-warm-400">Shape Your Path</span>
             </div>

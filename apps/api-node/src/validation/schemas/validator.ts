@@ -16,7 +16,6 @@ export type SchemaName =
   | 'exercise_set.v1'
   | 'grade.v1'
   | 'query_suggestions.v1'
-  | 'transcript.v1'
   | 'video_validation.v1'
   | 'staleness_result.v1';
 
@@ -34,7 +33,9 @@ class SchemaValidator {
 
   constructor(schemasDir?: string) {
     this.schemasDir =
-      schemasDir || join(__dirname, '..', '..', '..', '..', '..', 'packages', 'contracts', 'schemas');
+      schemasDir ||
+      process.env.SCHEMAS_DIR ||
+      join(__dirname, '..', '..', '..', '..', '..', 'packages', 'contracts', 'schemas');
 
     this.ajv = new Ajv({
       allErrors: true,
@@ -58,7 +59,6 @@ class SchemaValidator {
       'exercise_set.v1',
       'grade.v1',
       'query_suggestions.v1',
-      'transcript.v1',
       'video_validation.v1',
       'staleness_result.v1',
     ];

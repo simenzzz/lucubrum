@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Staleness evaluator for Learning Helper eval harness.
+Staleness evaluator for Lucubrum eval harness.
 
 This evaluator is currently disabled pending MCP integration.
 The implementation is complete and will be enabled when MCP is available.

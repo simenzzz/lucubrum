@@ -30,13 +30,15 @@ class GeminiProvider(LLMProvider):
         prompt: str,
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        system_prompt: str | None = None,
     ) -> str:
         """Generate a response from Gemini.
 
         Args:
-            prompt: The prompt to send.
+            prompt: The user-provided prompt to send.
             temperature: Sampling temperature (0.0-1.0).
             max_tokens: Maximum tokens in response.
+            system_prompt: Optional system-level instructions.
 
         Returns:
             Raw string response from the model.
@@ -45,6 +47,7 @@ class GeminiProvider(LLMProvider):
             temperature=temperature,
             max_output_tokens=max_tokens,
             response_mime_type='application/json',
+            system_instruction=system_prompt if system_prompt else None,
         )
 
         response = await self._client.aio.models.generate_content(
@@ -53,7 +56,10 @@ class GeminiProvider(LLMProvider):
             config=config,
         )
 
-        return response.text
+        text = response.text
+        if not text:
+            return ""
+        return text
 
     @property
     def provider_name(self) -> str:

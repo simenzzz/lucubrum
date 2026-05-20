@@ -120,7 +120,7 @@ async def validate_video(request: ValidateVideoRequest) -> ValidateVideoResponse
                 detail={
                     "error": "VALIDATION_FAILED",
                     "message": "Failed to validate video after retries",
-                    "validation_errors": [f"Attempt {i+1}: validation failed" for i in range(len(result.final_errors))],
+                    "validation_errors": result.final_errors,
                     "attempts": result.total_attempts,
                     "request_id": str(request.request_id),
                 },

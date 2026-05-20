@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 class ArtifactMetadata(BaseModel):
     """Metadata attached to every LLM-generated artifact for auditing."""
 
-    provider: Literal["gemini", "claude"]
+    provider: Literal["gemini", "claude", "local", "none"]
     model: str
     prompt_version: str = Field(..., description="e.g., 'plan/v1'")
     created_at: datetime

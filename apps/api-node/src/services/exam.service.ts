@@ -3,14 +3,12 @@
  */
 
 import logger from '../utils/logger';
-import { curriculumClient, ExamExerciseSet, Exercise, Grade } from './curriculum-client';
+import { curriculumClient, CurriculumServiceError, ExamExerciseSet, Exercise, Grade } from './curriculum-client';
 import {
   createExamSession,
   getExamSession,
-  completeExamSession,
+  completeExamSessionIfValid,
   createExamAttempt,
-  isSessionCompleted,
-  isSessionExpired,
 } from '../db/queries/exams';
 import { getMastery, upsertMastery } from '../db/queries/mastery';
 import { getPlanWithNodes, NodeRow } from '../db/queries/plans';
@@ -176,19 +174,25 @@ class ExamService {
       requestId
     );
 
+    // 3.5. Filter out flashcard exercises (belt-and-suspenders defense)
+    // Flashcards don't work in exams since students can't see the answer to self-assess
+    const gradableExercises = examExerciseSet.exercises.filter(
+      (ex) => ex.type !== 'flashcard'
+    );
+
     // 4. Create exam session
     const timeLimitSeconds = input.time_limit_seconds ?? DEFAULT_TIME_LIMIT_SECONDS;
     const session = await createExamSession({
       user_id: userId,
       plan_id: planId,
       node_id: nodeId,
-      exercises: examExerciseSet.exercises,
+      exercises: gradableExercises,
       exam_difficulty: examExerciseSet.exam_difficulty,
       time_limit_seconds: timeLimitSeconds,
     });
 
     // 5. Return exercises without answers
-    const exercisesWithoutAnswers = stripExerciseAnswers(examExerciseSet.exercises);
+    const exercisesWithoutAnswers = stripExerciseAnswers(gradableExercises);
 
     logger.info(
       { sessionId: session.session_id, exerciseCount: exercisesWithoutAnswers.length },
@@ -252,8 +256,8 @@ class ExamService {
       );
     }
 
-    // 4. Check if already submitted
-    if (await isSessionCompleted(sessionId)) {
+    // 4. Fast-path validation — reject obviously invalid sessions before grading
+    if (session.completed_at !== null) {
       throw new ExamServiceError(
         'Exam has already been submitted',
         400,
@@ -261,9 +265,7 @@ class ExamService {
         { session_id: sessionId }
       );
     }
-
-    // 5. Check if expired
-    if (await isSessionExpired(sessionId)) {
+    if (new Date() > new Date(session.expires_at)) {
       throw new ExamServiceError(
         'Exam session has expired',
         400,
@@ -272,11 +274,24 @@ class ExamService {
       );
     }
 
+    // 5. Fetch plan to get user_level for grading
+    const planData = await getPlanWithNodes(planId);
+    if (!planData) {
+      throw new ExamServiceError(
+        'Plan not found',
+        404,
+        'PLAN_NOT_FOUND',
+        { plan_id: planId }
+      );
+    }
+    const userLevel = (planData.plan.user_level as 'beginner' | 'intermediate' | 'advanced') ?? 'intermediate';
+
     // 6. Get exercises from session
     const exercises = session.exercises as Exercise[];
     const exerciseMap = new Map(exercises.map((ex) => [ex.id, ex]));
 
-    // 7. Grade each answer
+    // 7. Grade each answer (external call — done BEFORE marking session complete
+    //    so a transient grading failure doesn't leave the session permanently stuck)
     const gradeResults: ExerciseGradeResult[] = [];
     let correctCount = 0;
 
@@ -290,13 +305,12 @@ class ExamService {
         continue;
       }
 
-      // Grade the answer
       const gradeResult = await this.gradeAnswer(
         planId,
         nodeId,
         exercise,
         answer.user_answer,
-        session.user_id,
+        userLevel,
         requestId
       );
 
@@ -317,21 +331,41 @@ class ExamService {
     const totalExercises = exercises.length;
     const examScore = totalExercises > 0 ? correctCount / totalExercises : 0;
 
-    // 9. Get current mastery and calculate new mastery
+    // 9. Atomically mark session completed AFTER grading succeeds
+    //    If a concurrent request already completed it, we reject here instead of
+    //    double-writing mastery/attempt records.
+    const completedSession = await completeExamSessionIfValid(sessionId);
+    if (!completedSession) {
+      // Re-read session to give an accurate error
+      const freshSession = await getExamSession(sessionId);
+      if (freshSession?.completed_at !== null) {
+        throw new ExamServiceError(
+          'Exam has already been submitted',
+          400,
+          'EXAM_ALREADY_SUBMITTED',
+          { session_id: sessionId }
+        );
+      }
+      throw new ExamServiceError(
+        'Exam session has expired',
+        400,
+        'SESSION_EXPIRED',
+        { session_id: sessionId, expires_at: session.expires_at }
+      );
+    }
+
+    // 10. Get current mastery and calculate new mastery
     const masteryRow = await getMastery(userId, planId, nodeId);
     const oldMastery = masteryRow?.mastery_score ?? 0;
     const newMastery = calculateNewMastery(oldMastery, examScore);
 
-    // 10. Update mastery
+    // 11. Update mastery
     await upsertMastery(userId, planId, nodeId, newMastery);
 
     // Fire and forget - trigger preloading for newly-unlocked nodes
     triggerMasteryUnlockPreload(userId, planId).catch(error => {
       logger.warn({ userId, planId, error }, 'Background exam mastery preload failed');
     });
-
-    // 11. Mark session as completed
-    await completeExamSession(sessionId);
 
     // 12. Create exam attempt record
     const attempt = await createExamAttempt({
@@ -444,7 +478,7 @@ class ExamService {
     nodeId: string,
     exercise: Exercise,
     userAnswer: unknown,
-    _userId: string,
+    userLevel: 'beginner' | 'intermediate' | 'advanced',
     requestId: string
   ): Promise<Grade> {
     // For MCQ, do local grading
@@ -520,38 +554,6 @@ class ExamService {
       };
     }
 
-    // For flashcard, do simple string comparison
-    if (exercise.type === 'flashcard') {
-      const correctAnswer = String(exercise.correct_answer).toLowerCase().trim();
-      const userAnswerStr = String(userAnswer).toLowerCase().trim();
-      // Simple similarity - contains key terms
-      const isCorrect =
-        userAnswerStr === correctAnswer ||
-        correctAnswer.split(' ').filter((w) => w.length > 3).every((word) => userAnswerStr.includes(word));
-      return {
-        schema_version: 'grade.v1',
-        plan_id: planId,
-        node_id: nodeId,
-        exercise_id: exercise.id,
-        score: isCorrect ? 1.0 : 0.0,
-        is_correct: isCorrect,
-        feedback: isCorrect
-          ? 'Correct!'
-          : `The expected answer was: ${exercise.correct_answer}`,
-        misconceptions: null,
-        metadata: {
-          provider: 'local',
-          model: 'flashcard-grader',
-          prompt_version: 'n/a',
-          created_at: new Date().toISOString(),
-          request_id: requestId,
-          raw_output_hash: '',
-          artifact_hash: '',
-          validation_retry_count: 0,
-        },
-      };
-    }
-
     // For short_answer and coding, use Python grading service
     try {
       return await curriculumClient.gradeAnswer({
@@ -563,16 +565,29 @@ class ExamService {
         rubric: exercise.rubric,
         correct_answer: exercise.correct_answer,
         user_answer: userAnswer,
-        user_level: 'intermediate', // Default for exam grading
+        user_level: userLevel,
         request_id: requestId,
       });
     } catch (error) {
+      // Transient errors (5xx, timeout) — re-throw, don't silently penalize
+      if (
+        error instanceof CurriculumServiceError &&
+        error.statusCode >= 500
+      ) {
+        throw new ExamServiceError(
+          'Grading service temporarily unavailable',
+          503,
+          'GRADING_UNAVAILABLE',
+          { exercise_id: exercise.id }
+        );
+      }
+
+      // Validation errors (422, bad input) — fallback to 0, log details
       logger.error(
         { exerciseId: exercise.id, exerciseType: exercise.type, error },
-        'Grading failed, defaulting to incorrect'
+        'Grading validation failed, defaulting to incorrect'
       );
 
-      // Default to incorrect if grading fails
       return {
         schema_version: 'grade.v1',
         plan_id: planId,

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Evaluation harness entrypoint for Learning Helper curriculum generation.
+Evaluation harness entrypoint for Lucubrum curriculum generation.
 
 Runs evaluation for one or all prompts using golden_data.json.
 

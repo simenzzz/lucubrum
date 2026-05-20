@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Base evaluator class for Learning Helper eval harness.
+Base evaluator class for Lucubrum eval harness.
 
 Provides shared functionality for HTTP requests, rate limiting, parallel execution,
 metrics collection, and results persistence. Individual prompt evaluators inherit

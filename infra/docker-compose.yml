@@ -1,46 +1,52 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: learning-helper-postgres
+    container_name: lucubrum-postgres
     environment:
-      POSTGRES_USER: learning_helper
-      POSTGRES_PASSWORD: learning_helper_dev
-      POSTGRES_DB: learning_helper
+      POSTGRES_USER: lucubrum
+      POSTGRES_PASSWORD: lucubrum_dev
+      POSTGRES_DB: lucubrum
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U learning_helper"]
+      test: ["CMD-SHELL", "pg_isready -U lucubrum"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: learning-helper-redis
+    container_name: lucubrum-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"  # Bind to localhost only
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   api-node:
     build:
-      context: ../apps/api-node
-      dockerfile: Dockerfile
-    container_name: learning-helper-api
+      context: ..
+      dockerfile: apps/api-node/Dockerfile
+    container_name: lucubrum-api
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://learning_helper:learning_helper_dev@postgres:5432/learning_helper
-      REDIS_URL: redis://redis:6379
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: postgresql://lucubrum:lucubrum_dev@postgres:5432/lucubrum
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       PYTHON_SERVICE_URL: http://curriculum-python:8000
       SERVICE_TOKEN: ${SERVICE_TOKEN}
       JWT_SECRET: ${JWT_SECRET}
@@ -53,6 +59,13 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      FACEBOOK_REDIRECT_URI: ${FACEBOOK_REDIRECT_URI:-}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      QUALITY_SIGNALS_ENABLED: ${QUALITY_SIGNALS_ENABLED:-true}
+      QUALITY_SIGNALS_SCHEDULE: ${QUALITY_SIGNALS_SCHEDULE:-0 2 * * *}
+      QUALITY_SIGNALS_MIN_SAMPLE_SIZE: ${QUALITY_SIGNALS_MIN_SAMPLE_SIZE:-20}
     ports:
       - "3000:3000"
     depends_on:
@@ -68,7 +81,7 @@ services:
       retries: 3
     volumes:
       - ../apps/api-node/src:/app/src
-      - ../packages:/packages
+      - ../packages:/app/packages
     profiles:
       - full
 
@@ -76,13 +89,13 @@ services:
     build:
       context: ../apps/curriculum-python
       dockerfile: Dockerfile
-    container_name: learning-helper-curriculum
+    container_name: lucubrum-curriculum
     environment:
       ENVIRONMENT: development
       PORT: 8000
       LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
       LLM_MODEL: ${LLM_MODEL:-gemini-2.5-flash}
-      DATABASE_URL: postgresql://learning_helper:learning_helper_dev@postgres:5432/learning_helper
+      DATABASE_URL: postgresql://lucubrum:lucubrum_dev@postgres:5432/lucubrum
       SERVICE_TOKEN: ${SERVICE_TOKEN}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
@@ -108,7 +121,7 @@ services:
         VITE_API_BASE_URL: ""
         VITE_APP_URL: http://localhost:5173
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-    container_name: learning-helper-web
+    container_name: lucubrum-web
     ports:
       - "5173:80"
     depends_on:

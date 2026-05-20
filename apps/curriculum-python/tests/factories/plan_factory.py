@@ -83,19 +83,6 @@ def create_test_normalize_response(overrides: Optional[Dict[str, Any]] = None) -
     return {**defaults, **(overrides or {})}
 
 
-def create_test_transcript(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Create a test transcript response."""
-    defaults = {
-        "transcript": "This is a test transcript for the video.",
-        "language": "en",
-        "duration_millis": 300000,
-        "is_available": True,
-        "request_id": str(uuid.uuid4()),
-        "fetched_at": datetime.utcnow().isoformat(),
-    }
-    return {**defaults, **(overrides or {})}
-
-
 def create_test_facts(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Create a test facts response."""
     defaults = {

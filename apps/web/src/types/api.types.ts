@@ -5,9 +5,21 @@ export interface GoogleAuthRequest {
   redirect_uri?: string;
 }
 
-export interface GoogleAuthResponse {
+/** Provider-agnostic OAuth initiation response (Google, Facebook) */
+export interface OAuthInitResponse {
   authorization_url: string;
   state: string;
+}
+
+export interface EmailRegisterRequest {
+  email: string;
+  name: string;
+  password: string;
+}
+
+export interface EmailLoginRequest {
+  email: string;
+  password: string;
 }
 
 export interface AuthCallbackRequest {

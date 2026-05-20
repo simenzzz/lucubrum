@@ -1,5 +1,5 @@
 /**
- * E2E Tests for Learning Helper API
+ * E2E Tests for Lucubrum API
  *
  * These tests validate the full application stack including:
  * - Service health checks

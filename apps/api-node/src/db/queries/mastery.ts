@@ -3,8 +3,16 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import type { PoolClient } from 'pg';
 import { db } from '../client';
 import logger from '../../utils/logger';
+
+/** Helper: use provided client (for transactions) or fall back to pool. */
+function queryRunner(client?: PoolClient) {
+  return client
+    ? <T extends Record<string, unknown>>(text: string, params?: unknown[]) => client.query<T>(text, params)
+    : <T extends Record<string, unknown>>(text: string, params?: unknown[]) => db.query<T>(text, params);
+}
 
 // Types matching the database schema
 export interface AttemptRow {
@@ -45,11 +53,13 @@ export interface AttemptInput {
 export async function insertAttempt(
   userId: string,
   exerciseId: string,
-  attempt: AttemptInput
+  attempt: AttemptInput,
+  client?: PoolClient
 ): Promise<{ attempt_id: string }> {
   const attemptId = uuidv4();
+  const query = queryRunner(client);
 
-  await db.query(
+  await query(
     `INSERT INTO attempts (attempt_id, user_id, exercise_id, user_answer, score, is_correct, feedback, misconceptions)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
@@ -80,9 +90,11 @@ export async function getRecentAttempts(
   userId: string,
   planId: string,
   nodeId: string,
-  limit: number = 10
+  limit: number = 10,
+  client?: PoolClient
 ): Promise<AttemptRow[]> {
-  const result = await db.query(
+  const query = queryRunner(client);
+  const result = await query(
     `SELECT a.attempt_id, a.user_id, a.exercise_id, a.user_answer, a.score, a.is_correct, a.feedback, a.misconceptions, a.created_at
      FROM attempts a
      JOIN exercises e ON e.exercise_id = a.exercise_id
@@ -95,24 +107,60 @@ export async function getRecentAttempts(
   return result.rows as unknown as AttemptRow[];
 }
 
+
 /**
- * Get all attempts for a node (no limit).
+ * Aggregate attempt stats (total count and correct count) for a single node.
+ * Avoids fetching all rows into memory.
  */
-export async function getAllAttemptsForNode(
+export async function getAttemptStats(
   userId: string,
   planId: string,
-  nodeId: string
-): Promise<AttemptRow[]> {
-  const result = await db.query(
-    `SELECT a.attempt_id, a.user_id, a.exercise_id, a.user_answer, a.score, a.is_correct, a.feedback, a.misconceptions, a.created_at
+  nodeId: string,
+  client?: PoolClient
+): Promise<{ total: number; correct: number }> {
+  const query = queryRunner(client);
+  const result = await query<{ total: string; correct: string }>(
+    `SELECT COUNT(*) AS total,
+            COUNT(*) FILTER (WHERE a.is_correct) AS correct
      FROM attempts a
      JOIN exercises e ON e.exercise_id = a.exercise_id
-     WHERE a.user_id = $1 AND e.plan_id = $2 AND e.node_id = $3
-     ORDER BY a.created_at DESC`,
+     WHERE a.user_id = $1 AND e.plan_id = $2 AND e.node_id = $3`,
     [userId, planId, nodeId]
   );
 
-  return result.rows as unknown as AttemptRow[];
+  return {
+    total: parseInt(result.rows[0]?.total || '0', 10),
+    correct: parseInt(result.rows[0]?.correct || '0', 10),
+  };
+}
+
+/**
+ * Aggregate attempt stats for all nodes in a plan.
+ * Returns a Map from node_id to { total, correct }.
+ */
+export async function getAttemptStatsForPlan(
+  userId: string,
+  planId: string
+): Promise<Map<string, { total: number; correct: number }>> {
+  const result = await db.query<{ node_id: string; total: string; correct: string }>(
+    `SELECT e.node_id,
+            COUNT(*) AS total,
+            COUNT(*) FILTER (WHERE a.is_correct) AS correct
+     FROM attempts a
+     JOIN exercises e ON e.exercise_id = a.exercise_id
+     WHERE a.user_id = $1 AND e.plan_id = $2
+     GROUP BY e.node_id`,
+    [userId, planId]
+  );
+
+  const map = new Map<string, { total: number; correct: number }>();
+  for (const row of result.rows) {
+    map.set(row.node_id, {
+      total: parseInt(row.total || '0', 10),
+      correct: parseInt(row.correct || '0', 10),
+    });
+  }
+  return map;
 }
 
 /**
@@ -147,9 +195,11 @@ export async function upsertMasteryIfHigher(
   userId: string,
   planId: string,
   nodeId: string,
-  masteryScore: number
+  masteryScore: number,
+  client?: PoolClient
 ): Promise<boolean> {
-  const result = await db.query(
+  const query = queryRunner(client);
+  const result = await query(
     `INSERT INTO user_mastery (user_id, plan_id, node_id, mastery_score, last_updated)
      VALUES ($1, $2, $3, $4, NOW())
      ON CONFLICT (user_id, plan_id, node_id)
@@ -174,9 +224,11 @@ export async function upsertMasteryIfHigher(
 export async function getMastery(
   userId: string,
   planId: string,
-  nodeId: string
+  nodeId: string,
+  client?: PoolClient
 ): Promise<MasteryRow | null> {
-  const result = await db.query(
+  const query = queryRunner(client);
+  const result = await query(
     `SELECT um.user_id, um.plan_id, um.node_id, um.mastery_score, um.last_updated,
             (EXISTS (
               SELECT 1 FROM exam_attempts ea
@@ -223,9 +275,11 @@ export async function getMasteryForPlan(
 export async function getMaxCompletedDifficulty(
   userId: string,
   planId: string,
-  nodeId: string
+  nodeId: string,
+  client?: PoolClient
 ): Promise<number> {
-  const result = await db.query<{ max_difficulty: number | null }>(
+  const query = queryRunner(client);
+  const result = await query<{ max_difficulty: number | null }>(
     `SELECT MAX(e.difficulty) as max_difficulty
      FROM attempts a
      JOIN exercises e ON e.exercise_id = a.exercise_id

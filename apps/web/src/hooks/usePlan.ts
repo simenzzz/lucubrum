@@ -203,6 +203,7 @@ export function useSubmitExam() {
     }) => examApi.submit(planId, nodeId, { session_id: sessionId, answers }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['plan-mastery', variables.planId] });
+      queryClient.invalidateQueries({ queryKey: ['next-node', variables.planId] });
     },
   });
 }

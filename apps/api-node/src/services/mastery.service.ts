@@ -2,12 +2,15 @@
  * Mastery service for tracking user progress and grading answers.
  */
 
+import type { PoolClient } from 'pg';
 import logger from '../utils/logger';
+import { db } from '../db/client';
 import { curriculumClient, Grade, ExerciseType } from './curriculum-client';
 import {
   insertAttempt,
   getRecentAttempts,
-  getAllAttemptsForNode,
+  getAttemptStats,
+  getAttemptStatsForPlan,
   upsertMasteryIfHigher,
   getMastery,
   getMasteryForPlan,
@@ -117,24 +120,40 @@ class MasteryService {
       );
     }
 
-    // 2. Call Python grade endpoint
-    const grade = await this.gradeAnswer(exercise, input.user_answer, requestId);
+    // 2. Fetch plan to get user_level for grading
+    const planData = await getPlanWithNodes(input.plan_id);
+    if (!planData) {
+      throw new MasteryServiceError(
+        'Plan not found',
+        404,
+        'PLAN_NOT_FOUND',
+        { plan_id: input.plan_id }
+      );
+    }
+    const userLevel = (planData.plan.user_level as 'beginner' | 'intermediate' | 'advanced') ?? 'intermediate';
 
-    // 3. Persist attempt
-    const { attempt_id } = await insertAttempt(userId, input.exercise_id, {
-      user_answer: input.user_answer,
-      score: grade.score,
-      is_correct: grade.is_correct,
-      feedback: grade.feedback,
-      misconceptions: grade.misconceptions,
+    // 3. Call Python grade endpoint
+    const grade = await this.gradeAnswer(exercise, input.user_answer, userLevel, requestId);
+
+    // 4. Persist attempt + recalculate mastery in a transaction to prevent race conditions
+    const { attempt_id, mastery } = await db.transaction(async (client) => {
+      const { attempt_id: aid } = await insertAttempt(userId, input.exercise_id, {
+        user_answer: input.user_answer,
+        score: grade.score,
+        is_correct: grade.is_correct,
+        feedback: grade.feedback,
+        misconceptions: grade.misconceptions,
+      }, client);
+
+      const m = await this.recalculateMastery(
+        userId,
+        exercise.plan_id,
+        exercise.node_id,
+        client
+      );
+
+      return { attempt_id: aid, mastery: m };
     });
-
-    // 4. Recalculate mastery
-    const mastery = await this.recalculateMastery(
-      userId,
-      exercise.plan_id,
-      exercise.node_id
-    );
 
     logger.info(
       {
@@ -163,13 +182,13 @@ class MasteryService {
     nodeId: string
   ): Promise<GetMasteryResult> {
     const mastery = await getMastery(userId, planId, nodeId);
-    const allAttempts = await getAllAttemptsForNode(userId, planId, nodeId);
+    const stats = await getAttemptStats(userId, planId, nodeId);
 
     if (!mastery) {
       return {
         score: 0,
         level: 'novice',
-        total_attempts: allAttempts.length,
+        total_attempts: stats.total,
         last_updated: null,
         has_exam_attempt: false,
       };
@@ -178,7 +197,7 @@ class MasteryService {
     return {
       score: mastery.mastery_score,
       level: this.masteryToLevel(mastery.mastery_score),
-      total_attempts: allAttempts.length,
+      total_attempts: stats.total,
       last_updated: mastery.last_updated,
       has_exam_attempt: mastery.has_exam_attempt,
     };
@@ -192,14 +211,15 @@ class MasteryService {
     planId: string
   ): Promise<Record<string, GetMasteryResult>> {
     const masteryRows = await getMasteryForPlan(userId, planId);
+    const statsMap = await getAttemptStatsForPlan(userId, planId);
     const result: Record<string, GetMasteryResult> = {};
 
     for (const row of masteryRows) {
-      const allAttempts = await getAllAttemptsForNode(userId, planId, row.node_id);
+      const stats = statsMap.get(row.node_id) ?? { total: 0, correct: 0 };
       result[row.node_id] = {
         score: row.mastery_score,
         level: this.masteryToLevel(row.mastery_score),
-        total_attempts: allAttempts.length,
+        total_attempts: stats.total,
         last_updated: row.last_updated,
         has_exam_attempt: row.has_exam_attempt,
       };
@@ -214,11 +234,10 @@ class MasteryService {
   private async gradeAnswer(
     exercise: ExerciseRow,
     userAnswer: unknown,
+    userLevel: 'beginner' | 'intermediate' | 'advanced',
     requestId: string
   ): Promise<Grade> {
     try {
-      // Need to get plan's user_level - for now default to intermediate
-      // In a real implementation, we'd fetch the plan to get user_level
       return await curriculumClient.gradeAnswer({
         plan_id: exercise.plan_id,
         node_id: exercise.node_id,
@@ -228,7 +247,7 @@ class MasteryService {
         rubric: exercise.rubric,
         correct_answer: exercise.correct_answer,
         user_answer: userAnswer,
-        user_level: 'intermediate', // Default, should be fetched from plan
+        user_level: userLevel,
         request_id: requestId,
       });
     } catch (error) {
@@ -277,26 +296,27 @@ class MasteryService {
   private async recalculateMastery(
     userId: string,
     planId: string,
-    nodeId: string
+    nodeId: string,
+    client?: PoolClient
   ): Promise<{ score: number; level: MasteryLevel; total_attempts: number }> {
-    const recentAttempts = await getRecentAttempts(userId, planId, nodeId, 10);
-    const allAttempts = await getAllAttemptsForNode(userId, planId, nodeId);
-    const maxDifficulty = await getMaxCompletedDifficulty(userId, planId, nodeId);
+    const recentAttempts = await getRecentAttempts(userId, planId, nodeId, 10, client);
+    const stats = await getAttemptStats(userId, planId, nodeId, client);
+    const maxDifficulty = await getMaxCompletedDifficulty(userId, planId, nodeId, client);
 
     // Calculate raw mastery score and cap at exercise limit
-    const rawScore = this.calculateMastery(recentAttempts, allAttempts, maxDifficulty);
+    const rawScore = this.calculateMastery(recentAttempts, stats, maxDifficulty);
     const cappedScore = Math.min(rawScore, EXERCISE_MASTERY_CAP);
     const level = this.masteryToLevel(cappedScore);
 
     // Atomically update mastery only if new score is higher (preserves exam-set mastery)
-    const didUpdate = await upsertMasteryIfHigher(userId, planId, nodeId, cappedScore);
+    const didUpdate = await upsertMasteryIfHigher(userId, planId, nodeId, cappedScore, client);
 
     if (!didUpdate) {
-      const currentMastery = await getMastery(userId, planId, nodeId);
+      const currentMastery = await getMastery(userId, planId, nodeId, client);
       return {
         score: currentMastery?.mastery_score ?? cappedScore,
         level: this.masteryToLevel(currentMastery?.mastery_score ?? cappedScore),
-        total_attempts: allAttempts.length,
+        total_attempts: stats.total,
       };
     }
 
@@ -308,7 +328,7 @@ class MasteryService {
     return {
       score: cappedScore,
       level,
-      total_attempts: allAttempts.length,
+      total_attempts: stats.total,
     };
   }
 
@@ -495,11 +515,11 @@ class MasteryService {
    */
   calculateMastery(
     recentAttempts: AttemptRow[],
-    allAttempts: AttemptRow[],
+    allAttemptStats: { total: number; correct: number },
     maxDifficulty: number
   ): number {
     // No attempts = no mastery
-    if (allAttempts.length === 0) {
+    if (allAttemptStats.total === 0) {
       return 0;
     }
 
@@ -508,16 +528,12 @@ class MasteryService {
       recentAttempts.length > 0
         ? recentAttempts.filter((a) => a.is_correct).length / recentAttempts.length
         : 0;
-    const historicalAccuracy =
-      allAttempts.length > 0
-        ? allAttempts.filter((a) => a.is_correct).length / allAttempts.length
-        : 0;
+    const historicalAccuracy = allAttemptStats.correct / allAttemptStats.total;
     const accuracy = recentAccuracy * 0.6 + historicalAccuracy * 0.4;
 
     // Volume component - sqrt curve for diminishing returns
-    const correctCount = allAttempts.filter((a) => a.is_correct).length;
     const volumeMultiplier = Math.min(
-      Math.sqrt(correctCount) / Math.sqrt(MASTERY_VOLUME_TARGET),
+      Math.sqrt(allAttemptStats.correct) / Math.sqrt(MASTERY_VOLUME_TARGET),
       1.0
     );
 

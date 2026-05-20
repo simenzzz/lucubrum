@@ -145,15 +145,6 @@ export const VALID_NORMALIZE_RESPONSE = {
   normalized_at: new Date().toISOString(),
 };
 
-export const VALID_TRANSCRIPT_RESPONSE = {
-  transcript: 'This is a test transcript for the video.',
-  language: 'en',
-  duration_millis: 300000,
-  is_available: true,
-  request_id: 'test-transcript-request',
-  fetched_at: new Date().toISOString(),
-};
-
 export const VALID_VIDEO_VALIDATION_RESPONSE = {
   is_relevant: true,
   relevance_score: 0.85,

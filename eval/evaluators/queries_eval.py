@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Queries evaluator for Learning Helper eval harness."""
+"""Queries evaluator for Lucubrum eval harness."""
 
 import uuid
 from datetime import datetime

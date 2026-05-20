@@ -89,3 +89,47 @@ export async function updateLastLogin(userId: string): Promise<void> {
   );
   logger.debug({ userId }, 'Updated user last_login_at');
 }
+
+/**
+ * Input for creating an email/password user.
+ */
+export interface CreateEmailUserInput {
+  user_id: string;
+  email: string;
+  name: string;
+  password_hash: string;
+}
+
+/**
+ * Create a new email/password user with a UUID user_id.
+ */
+export async function createEmailUser(input: CreateEmailUserInput): Promise<UserRow> {
+  const { user_id, email, name, password_hash } = input;
+
+  const result = await db.query(
+    `INSERT INTO users (user_id, email, name, picture_url, roles, password_hash, email_verified, last_login_at)
+     VALUES ($1, $2, $3, NULL, '["user"]'::jsonb, $4, false, NOW())
+     RETURNING user_id, email, name, picture_url, roles, created_at, last_login_at`,
+    [user_id, email, name, password_hash]
+  );
+
+  logger.debug({ user_id, email }, 'Email user created');
+  return result.rows[0] as unknown as UserRow;
+}
+
+/**
+ * Get a user by email including their password_hash (for login verification).
+ * Returns null if the user does not exist.
+ */
+export async function getUserByEmailWithHash(
+  email: string
+): Promise<(UserRow & { password_hash: string | null }) | null> {
+  const result = await db.query(
+    `SELECT user_id, email, name, picture_url, roles, created_at, last_login_at, password_hash
+     FROM users
+     WHERE email = $1`,
+    [email]
+  );
+
+  return (result.rows[0] as unknown as (UserRow & { password_hash: string | null })) || null;
+}

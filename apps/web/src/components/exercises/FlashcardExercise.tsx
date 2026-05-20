@@ -79,8 +79,14 @@ export function FlashcardExercise({
             )}
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
-            <span className="text-xs text-sage uppercase tracking-wide mb-4">Answer</span>
-            <p className="text-lg font-medium text-warm-50">{exercise.correct_answer}</p>
+            <span className="text-xs text-sage uppercase tracking-wide mb-4">
+              {examMode ? 'Self Assessment' : 'Answer'}
+            </span>
+            {examMode ? (
+              <p className="text-warm-400">Flip back and rate your knowledge below</p>
+            ) : (
+              <p className="text-lg font-medium text-warm-50">{exercise.correct_answer}</p>
+            )}
             <span className="absolute bottom-4 text-xs text-warm-600">
               Click to flip back
             </span>
@@ -102,7 +108,7 @@ export function FlashcardExercise({
       </div>
 
       {/* Self-assessment (after flipping) */}
-      {isFlipped && !examMode && (
+      {isFlipped && (
         <div className="space-y-3">
           <p className="text-sm text-center text-warm-400">How well did you know this?</p>
           <div className="flex justify-center gap-2">

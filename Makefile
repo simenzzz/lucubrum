@@ -2,7 +2,7 @@
 
 # Default target
 help:
-	@echo "Learning Helper - Development Commands"
+	@echo "Lucubrum - Development Commands"
 	@echo ""
 	@echo "Local Development (Fast & Hybrid):"
 	@echo "  make dev             - Start apps locally + DBs in Docker (Best for coding)"

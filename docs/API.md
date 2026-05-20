@@ -4,7 +4,7 @@
 This document describes all public-facing API endpoints (Node service) and internal LLM service endpoints (Python service).
 
 **Base URLs**:
-- Node API (public): `http://localhost:3000/api` (dev) / `https://api.learning-helper.com` (prod)
+- Node API (public): `http://localhost:3000/api` (dev) / `https://api.lucubrum.com` (prod)
 - Python LLM Service (internal): `http://localhost:8000` (dev) / `http://llm-service:8000` (prod)
 
 **Authentication**: 
@@ -369,6 +369,74 @@ List all plans for a user.
   "offset": 0
 }
 ```
+
+---
+
+### GET /api/users/:userId/usage
+Get tier usage and limits for a user.
+
+**Authorization**: Users can access their own usage. Admin role required to view other users' usage.
+
+**Response** (200 OK):
+```json
+{
+  "tier": "free",
+  "usage": {
+    "active_plans": {
+      "current": 2,
+      "limit": 3
+    },
+    "daily_llm_attempts": {
+      "current": 7,
+      "limit": 15
+    }
+  },
+  "limits": {
+    "allowed_plan_sizes": ["basic", "moderate"],
+    "max_exams_per_node": 2,
+    "exercise_regenerations": 0,
+    "plan_history_days": 30
+  }
+}
+```
+
+**Errors**:
+- 403: Forbidden (not own usage, not admin)
+- 404: User not found (admin viewing other users)
+
+---
+
+### PUT /admin/users/:userId/tier
+Update a user's tier (admin only).
+
+**Authorization**: Admin role required.
+
+**Request**:
+```json
+{
+  "tier": "pro"
+}
+```
+
+**Fields**:
+- `tier` (string, required): "free" or "pro"
+
+**Response** (200 OK):
+```json
+{
+  "user_id": "user-123",
+  "tier": "pro",
+  "roles": ["user", "pro"],
+  "warning": "Role change takes effect on next token refresh (up to 15 minutes)"
+}
+```
+
+**Errors**:
+- 400: Invalid tier value or invalid userId format
+- 403: Forbidden (not admin)
+- 404: User not found
+
+**Known Limitation**: Active JWTs are not invalidated when tier changes. Users retain their old tier until token expires (max 15 minutes).
 
 ---
 
@@ -750,6 +818,7 @@ All errors follow this structure:
 - `NODE_NOT_FOUND`: Node ID doesn't exist in plan
 - `EXERCISE_NOT_FOUND`: Exercise ID doesn't exist
 - `UNAUTHORIZED`: Missing or invalid auth token
+- `TIER_LIMIT_EXCEEDED`: Free tier limit reached (see details for specific limit)
 
 #### 5xx Server Errors
 - `PLAN_GENERATION_FAILED`: Unable to generate valid plan
@@ -770,6 +839,16 @@ All errors follow this structure:
 - **Plan Creation**: 10 requests / hour
 - **Exercise Generation**: 50 requests / hour
 - **Grading**: 200 requests / hour
+
+### Tier-Based Enforcement
+In addition to rate limits, free-tier users have quota-based enforcement on specific operations (see `docs/TIERS.md`):
+- **Active Plans**: Max 3 concurrent plans
+- **Daily LLM Attempts**: 15 per day (resets at midnight UTC)
+- **Exams Per Node**: 2 attempts
+- **Exercise Regeneration**: Disabled for free tier
+- **Plan Sizes**: Limited to `basic` and `moderate`
+
+Tier enforcement returns `403 TIER_LIMIT_EXCEEDED` (not 429). Pro users bypass all tier limits.
 
 ### Internal API (Python Service)
 - **No user-level limits** (called by Node service only)

@@ -252,7 +252,7 @@ async def generate_plan(request: GeneratePlanRequest) -> GeneratePlanResponse:
             status_code=500,
             detail={
                 "error": "INTERNAL_ERROR",
-                "message": f"Unexpected error generating plan: {str(e)}",
+                "message": "An unexpected error occurred while generating the plan",
                 "request_id": str(request.request_id),
             },
         )

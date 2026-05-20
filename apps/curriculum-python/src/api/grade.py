@@ -8,7 +8,7 @@ from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from ..models.grade import Grade
 from ..models.metadata import ArtifactMetadata
@@ -39,7 +39,9 @@ class GradeRequest(BaseModel):
     prompt: str = Field(..., min_length=10, description="The exercise question/prompt")
     rubric: str = Field(..., min_length=20, max_length=500, description="Grading rubric")
     correct_answer: Any = Field(..., description="The correct answer (type varies by exercise)")
-    user_answer: Any = Field(..., description="The user's submitted answer")
+    user_answer: Any = Field(
+        ..., description="The user's submitted answer (max 10,000 characters when serialized to string)"
+    )
     user_level: Literal["beginner", "intermediate", "advanced"] = Field(
         ..., description="User's level"
     )
@@ -64,6 +66,23 @@ class RawGradeOutput(BaseModel):
     feedback: str = Field(..., min_length=20, max_length=300)
     misconceptions: list[str] | None = None
 
+    @model_validator(mode="after")
+    def validate_score_correctness_consistency(self) -> "RawGradeOutput":
+        """Ensure is_correct is consistent with score thresholds.
+
+        Matches the Grade model validator so the retry loop feeds
+        the error back to the LLM for self-correction.
+        """
+        if self.score >= 0.7 and not self.is_correct:
+            raise ValueError(
+                f"Score {self.score} >= 0.7 requires is_correct=True"
+            )
+        if self.score < 0.5 and self.is_correct:
+            raise ValueError(
+                f"Score {self.score} < 0.5 requires is_correct=False"
+            )
+        return self
+
 
 @router.post("/grade", response_model=GradeResponse)
 async def grade_answer(request: GradeRequest) -> GradeResponse:
@@ -83,6 +102,18 @@ async def grade_answer(request: GradeRequest) -> GradeResponse:
         HTTPException(500): On unexpected errors.
     """
     try:
+        # Validate user_answer size (serialize and check length)
+        user_answer_str = _format_answer_for_prompt(request.user_answer)
+        if len(user_answer_str) > 10000:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "ANSWER_TOO_LONG",
+                    "message": "User answer exceeds maximum length of 10,000 characters",
+                    "request_id": str(request.request_id),
+                },
+            )
+
         # Use local grading for MCQ and flashcard
         if request.exercise_type in LOCAL_GRADING_TYPES:
             return _grade_locally(request)
@@ -98,7 +129,7 @@ async def grade_answer(request: GradeRequest) -> GradeResponse:
             status_code=500,
             detail={
                 "error": "INTERNAL_ERROR",
-                "message": f"Unexpected error grading answer: {str(e)}",
+                "message": "An unexpected error occurred while grading the answer",
                 "request_id": str(request.request_id),
             },
         )
@@ -130,7 +161,7 @@ def _grade_locally(request: GradeRequest) -> GradeResponse:
 
     # Create metadata for local grading (provider="local")
     metadata = ArtifactMetadata(
-        provider="gemini",  # Use default provider for metadata consistency
+        provider="local",
         model="local_grading",
         prompt_version="grade/local",
         created_at=datetime.now(timezone.utc),

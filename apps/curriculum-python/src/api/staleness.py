@@ -13,7 +13,10 @@ from ..models.transcript import StalenessResult
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.prompts import load_prompt, format_prompt
+from ..utils.logger import get_logger
 from ..utils.retry import _extract_json_from_response
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/llm", tags=["staleness"])
 
@@ -119,7 +122,7 @@ async def check_staleness(request: StalenessCheckRequest) -> StalenessCheckRespo
 
         # Get LLM provider and generate
         provider = get_provider()
-        temperature = float(os.getenv("LLM_TEMPERATURE_STALENESS", "0.2"))
+        temperature = float(os.getenv("LLM_TEMPERATURE_STALENESS", "0.3"))
 
         raw_response = await provider.generate(
             prompt=prompt,
@@ -132,12 +135,13 @@ async def check_staleness(request: StalenessCheckRequest) -> StalenessCheckRespo
             cleaned = _extract_json_from_response(raw_response)
             parsed = json.loads(cleaned)
         except json.JSONDecodeError as e:
+            logger.warning("LLM returned invalid JSON", error=str(e), request_id=str(request.request_id))
             raise HTTPException(
                 status_code=422,
                 detail={
                     "error": "VALIDATION_FAILED",
-                    "message": f"LLM returned invalid JSON: {str(e)}",
-                    "raw_response": raw_response[:500],
+                    "message": "LLM returned invalid response",
+                    "request_id": str(request.request_id),
                 },
             )
 
@@ -176,18 +180,22 @@ async def check_staleness(request: StalenessCheckRequest) -> StalenessCheckRespo
     except HTTPException:
         raise
     except FileNotFoundError as e:
+        logger.error("Staleness prompt template not found", error=str(e), request_id=str(request.request_id))
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "PROMPT_NOT_FOUND",
-                "message": str(e),
+                "message": "Required prompt template could not be loaded",
+                "request_id": str(request.request_id),
             },
         )
     except Exception as e:
+        logger.exception("Unexpected error during staleness check", error=str(e), request_id=str(request.request_id))
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "INTERNAL_ERROR",
-                "message": f"Unexpected error during staleness check: {str(e)}",
+                "message": "An unexpected error occurred while checking staleness",
+                "request_id": str(request.request_id),
             },
         )

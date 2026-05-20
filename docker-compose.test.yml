@@ -2,9 +2,9 @@ services:
   # Test Database
   test-postgres:
     image: postgres:15-alpine
-    container_name: learning-test-postgres
+    container_name: lucubrum-test-postgres
     environment:
-      POSTGRES_DB: learning_helper_test
+      POSTGRES_DB: lucubrum_test
       POSTGRES_USER: test_user
       POSTGRES_PASSWORD: test_password
     ports:
@@ -21,7 +21,7 @@ services:
   # Test Redis
   test-redis:
     image: redis:7-alpine
-    container_name: learning-test-redis
+    container_name: lucubrum-test-redis
     ports:
       - "6380:6379"  # Different port to avoid conflicts
     healthcheck:
@@ -37,7 +37,7 @@ services:
     build:
       context: ./apps/api-node
       dockerfile: Dockerfile
-    container_name: learning-node-tests
+    container_name: lucubrum-node-tests
     depends_on:
       test-postgres:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: test
-      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/learning_helper_test
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/lucubrum_test
       REDIS_URL: redis://test-redis:6379
       PYTHON_SERVICE_URL: http://python-service:8000
       SERVICE_TOKEN: test-service-token
@@ -66,14 +66,14 @@ services:
     build:
       context: ./apps/curriculum-python
       dockerfile: Dockerfile
-    container_name: learning-python-tests
+    container_name: lucubrum-python-tests
     depends_on:
       test-postgres:
         condition: service_healthy
     environment:
       ENVIRONMENT: test
       DOCKER_TEST_ENV: "true"
-      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/learning_helper_test
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/lucubrum_test
       LLM_PROVIDER: gemini
       LLM_MODEL: gemini-2.5-flash-test
       GEMINI_API_KEY: test-api-key
@@ -91,13 +91,13 @@ services:
     build:
       context: ./apps/curriculum-python
       dockerfile: Dockerfile
-    container_name: learning-python-service-test
+    container_name: lucubrum-python-service-test
     depends_on:
       test-postgres:
         condition: service_healthy
     environment:
       ENVIRONMENT: test
-      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/learning_helper_test
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/lucubrum_test
       PORT: 8000
       SERVICE_TOKEN: test-service-token
       PYTHON_LOG_LEVEL: ERROR
@@ -122,4 +122,4 @@ volumes:
 
 networks:
   default:
-    name: learning-test-network
+    name: lucubrum-test-network

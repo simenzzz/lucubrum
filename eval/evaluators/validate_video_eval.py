@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate video evaluator for Learning Helper eval harness."""
+"""Validate video evaluator for Lucubrum eval harness."""
 
 import uuid
 from datetime import datetime

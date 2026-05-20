@@ -1,4 +1,4 @@
-# Implementation Roadmap - Learning Helper
+# Implementation Roadmap - Lucubrum
 
 > **For AI Coding Agents**: This roadmap reflects the ACTUAL state of the codebase as of January 2026. Read the "What's Already Built" section carefully before implementing anything.
 
@@ -318,11 +318,11 @@ curl -X POST http://localhost:3000/api/plan \
   }'
 
 # Check database
-psql postgresql://learning_helper:learning_helper_dev@localhost:5432/learning_helper \
+psql postgresql://lucubrum:lucubrum_dev@localhost:5432/lucubrum \
   -c "SELECT plan_id, topic, user_level FROM plans ORDER BY created_at DESC LIMIT 1;"
 
 # Check nodes were created
-psql postgresql://learning_helper:learning_helper_dev@localhost:5432/learning_helper \
+psql postgresql://lucubrum:lucubrum_dev@localhost:5432/lucubrum \
   -c "SELECT plan_id, node_id, title FROM nodes LIMIT 10;"
 ```
 
@@ -945,4 +945,76 @@ curl -X POST http://localhost:3000/admin/staleness-policies \
 
 ---
 
-*Last updated: January 2026 (Phase 7 Caching & Staleness Detection complete)*
+## Phase 8: Tier & Monetization ✅ COMPLETE
+
+**Goal**: Implement free/pro tier enforcement with atomic quota checks and fail-closed security.
+
+**Status**: ✅ **PHASE COMPLETE** - All tasks implemented.
+
+### Overview
+Free users have enforced limits (3 plans, 15 daily LLM attempts, 2 exams per node, no exercise regeneration). Pro users have unlimited access. Enforcement uses atomic Redis operations to prevent race conditions and fails-closed on database errors to prevent unlimited free access during outages.
+
+**See**: `docs/TIERS.md` for complete tier system documentation.
+
+| Task | File | Exit Criteria |
+|------|------|---------------|
+| 8.1 | `src/config/tier.config.ts` | ✅ Complete - Tier limits config with NaN handling |
+| 8.2 | `src/services/tier.service.ts` | ✅ Complete - Atomic `reserveDailyLlmAttempt`, `rollbackDailyLlmAttempt` |
+| 8.3 | `src/middleware/tier.middleware.ts` | ✅ Complete - All middleware, fail-closed on DB errors |
+| 8.4 | `src/routes/mastery.routes.ts` | ✅ Complete - Uses reserve/rollback pattern |
+| 8.5 | `src/routes/admin.routes.ts` | ✅ Complete - `PUT /admin/users/:userId/tier` with userId validation |
+| 8.6 | `src/routes/user.routes.ts` | ✅ Complete - `GET /api/users/:userId/usage` with DB role fetch for admins |
+| 8.7 | `tests/unit/services/tier.service.test.ts` | ✅ Complete - Tests for atomic reserve/rollback |
+| 8.8 | `tests/unit/middleware/tier.middleware.test.ts` | ✅ Complete - Tests for fail-closed behavior |
+| 8.9 | `docs/TIERS.md` | ✅ Complete - Comprehensive tier documentation |
+
+### Key Implementation Details
+
+#### Atomic Quota Reservation (TOCTOU Fix)
+Redis INCR is atomic, preventing race conditions on daily quota:
+
+```typescript
+// Reserve: INCR first, then check
+const newCount = await redis.incr(key);
+if (newCount > limit) {
+  await redis.decr(key);  // Rollback
+  return { allowed: false, current: newCount - 1, limit };
+}
+return { allowed: true, current: newCount, limit };
+```
+
+#### Fail-Closed Policy
+- **Redis errors**: Fail open (preserve availability, matches rate limiter pattern)
+- **Postgres errors**: Fail closed (DB errors = unlimited free access if fail-open)
+
+#### Middleware Integration
+- `enforceDailyAttemptQuota()`: Atomic reserve, sets `req.tierQuotaApplies` flag
+- Route handler: Calls `rollbackDailyLlmAttempt()` on grading failure
+- `enforcePlanLimit()`, `enforceExamLimit()`, `enforceExerciseRegenLimit()`: Fail-closed on DB errors
+
+### Verification
+```bash
+# 1. Run all tests
+cd apps/api-node && npx jest --testPathPattern=tests/unit --verbose
+
+# 2. Test atomic reserve (concurrent requests should not bypass limit)
+# - Send 20 concurrent requests with limit=15
+# - Exactly 5 should get 403 TIER_LIMIT_EXCEEDED
+
+# 3. Test fail-closed
+# - Mock Postgres to throw in enforcePlanLimit
+# - Should return 503, not allow unlimited plan creation
+
+# 4. Test admin tier update
+curl -X PUT http://localhost:3000/admin/users/$USER_ID/tier \
+  -H "Authorization: Bearer $ADMIN_JWT" \
+  -d '{"tier": "pro"}'
+
+# 5. Check usage endpoint
+curl http://localhost:3000/api/users/$USER_ID/usage \
+  -H "Authorization: Bearer $JWT"
+```
+
+---
+
+*Last updated: February 2026 (Phase 8 Tier & Monetization complete)*

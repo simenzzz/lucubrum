@@ -9,6 +9,7 @@ import cron from 'node-cron';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/client';
 import { redis } from '../db/redis';
+import { deleteExpiredTokens } from '../db/queries/tokens';
 import logger from '../utils/logger';
 import { MASTERY_THRESHOLD } from '../constants/mastery';
 
@@ -205,7 +206,14 @@ async function runQualitySignalsJob(): Promise<void> {
       }
     }
 
-    logger.info({ requestId, processed, invalidated }, 'Quality signals job completed');
+    // Housekeeping: purge expired and long-revoked refresh tokens
+    let tokensPurged = 0;
+    try {
+      tokensPurged = await deleteExpiredTokens();
+    } catch (err) {
+      logger.error({ error: err, requestId }, 'Token cleanup failed (non-fatal)');
+    }
+    logger.info({ requestId, processed, invalidated, tokensPurged }, 'Quality signals job completed');
 
   } catch (error) {
     logger.error({ error, requestId }, 'Quality signals job failed');

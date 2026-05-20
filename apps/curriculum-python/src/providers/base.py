@@ -14,13 +14,16 @@ class LLMProvider(ABC):
         prompt: str,
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        system_prompt: str | None = None,
     ) -> str:
         """Generate a response from the LLM.
 
         Args:
-            prompt: The prompt to send to the LLM.
+            prompt: The user-provided prompt to send to the LLM.
             temperature: Sampling temperature (0.0-1.0).
             max_tokens: Maximum tokens in response.
+            system_prompt: Optional system-level instructions, separated from
+                user content to reduce prompt injection risk.
 
         Returns:
             Raw string response from the LLM.

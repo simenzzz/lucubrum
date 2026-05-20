@@ -63,10 +63,10 @@ export function ExerciseCard({
 
   const submitMutation = useSubmitAttempt();
 
-  // Sync savedAnswer for exam mode
+  // Sync savedAnswer for exam mode (reset to empty for unanswered questions)
   useEffect(() => {
-    if (examMode && savedAnswer !== undefined) {
-      setUserAnswer(savedAnswer);
+    if (examMode) {
+      setUserAnswer(savedAnswer ?? '');
     }
   }, [savedAnswer, examMode]);
 
@@ -126,8 +126,8 @@ export function ExerciseCard({
     };
 
     // In exam mode, correct_answer/rubric are stripped by the backend.
-    // Sub-components only access those fields in practice-mode submit paths,
-    // so casting to Exercise here is safe.
+    // Sub-components guard correct_answer access with optional chaining,
+    // so casting to Exercise here is safe for type routing.
     const fullExercise = exercise as Exercise;
     switch (fullExercise.type) {
       case 'mcq':

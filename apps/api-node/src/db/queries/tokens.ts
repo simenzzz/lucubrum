@@ -113,8 +113,8 @@ export async function revokeAllUserTokens(userId: string): Promise<number> {
 export async function deleteExpiredTokens(): Promise<number> {
   const result = await db.query(
     `DELETE FROM refresh_tokens
-     WHERE expires_at < NOW()
-     OR revoked_at IS NOT NULL AND revoked_at < NOW() - INTERVAL '7 days'`
+     WHERE (expires_at < NOW())
+        OR (revoked_at IS NOT NULL AND revoked_at < NOW() - INTERVAL '7 days')`
   );
 
   const count = result.rowCount ?? 0;

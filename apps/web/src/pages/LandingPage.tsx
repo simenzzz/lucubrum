@@ -20,7 +20,7 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { addToast } = useUIStore();
-  const { isAuthenticated, isLoading: authLoading, login } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   const [topic, setTopic] = useState('');
   const [showConfig, setShowConfig] = useState(false);
@@ -96,7 +96,7 @@ export function LandingPage() {
   };
 
   const handleLogin = () => {
-    login();
+    navigate('/login');
   };
 
   return (

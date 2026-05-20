@@ -1,4 +1,4 @@
-# SPEC.md — Learning Helper Technical Specification
+# SPEC.md — Lucubrum Technical Specification
 
 ## Overview
 A learning orchestration system that generates personalized learning roadmaps, attaches YouTube resources, creates adaptive exercises, and tracks mastery. The system uses LLMs as components within a larger deterministic architecture.
@@ -403,15 +403,15 @@ Every plan/exercise/grade must be reproducible via logs:
 ## Development Environment
 
 ### Recommended: WSL2 (Windows Subsystem for Linux)
-- Work inside Linux filesystem: `/home/<user>/learning-helper`
+- Work inside Linux filesystem: `/home/<user>/lucubrum`
 - Avoid `/mnt/c/...` (Windows filesystem) for performance
 - Use native Linux tools (git, docker, node, python)
 
 ### Local Setup
 ```bash
 # Clone repo
-git clone <repo> ~/learning-helper
-cd ~/learning-helper
+git clone <repo> ~/lucubrum
+cd ~/lucubrum
 
 # Start infrastructure
 docker-compose up -d postgres redis
@@ -432,7 +432,7 @@ npm run dev  # Runs on port 3000
 ## Repository Structure
 
 ```
-learning-helper/
+lucubrum/
 ├── apps/
 │   ├── api-node/              # Node/TypeScript service
 │   │   ├── src/
@@ -513,7 +513,7 @@ PYTHON_SERVICE_URL=http://localhost:8000
 SERVICE_TOKEN=<internal-token>
 
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/learning_helper
+DATABASE_URL=postgresql://user:pass@localhost:5432/lucubrum
 
 # YouTube API
 YOUTUBE_API_KEY=<your-key>
@@ -767,7 +767,7 @@ CREATE INDEX idx_llm_calls_created ON llm_calls(created_at);
 - RAG over proprietary learning corpora
 - Multi-language support (English only for MVP)
 - Social features (sharing plans, leaderboards)
-- Payments and subscriptions
+- Payments and subscriptions (see `docs/TIERS.md` for tier enforcement implementation)
 - Mobile apps (web-first)
 - Claude provider (migration path designed, but Gemini only for MVP)
 

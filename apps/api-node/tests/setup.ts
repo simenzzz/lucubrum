@@ -1,6 +1,10 @@
 // Mock environment variables (will be overridden by Docker)
 process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test_user:test_password@localhost:5433/learning_helper_test';
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test_user:test_password@localhost:5433/lucubrum_test';
+process.env.POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
+process.env.POSTGRES_DB = process.env.POSTGRES_DB || 'lucubrum_test';
+process.env.POSTGRES_USER = process.env.POSTGRES_USER || 'test_user';
+process.env.POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'test_password';
 process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6380';
 process.env.SERVICE_TOKEN = 'test-service-token';
 process.env.JWT_SECRET = 'test-secret-key-for-testing-only-38chars!!';

@@ -1,5 +1,5 @@
 networks:
-  learning-helper:
+  lucubrum:
     driver: bridge
 
 services:
@@ -18,32 +18,58 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
     networks:
-      - learning-helper
+      - lucubrum
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
     networks:
-      - learning-helper
+      - lucubrum
 
   api-node:
     build:
-      context: ../apps/api-node
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: apps/api-node/Dockerfile
     environment:
       NODE_ENV: production
       PORT: 3000
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       PYTHON_SERVICE_URL: http://curriculum-python:8000
       SERVICE_TOKEN: ${SERVICE_TOKEN}
       JWT_SECRET: ${JWT_SECRET}
@@ -56,8 +82,33 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
-    ports:
-      - "3000:3000"
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      FACEBOOK_REDIRECT_URI: ${FACEBOOK_REDIRECT_URI:-}
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      EXERCISE_MASTERY_CAP: ${EXERCISE_MASTERY_CAP:-0.35}
+      MASTERY_VOLUME_TARGET: ${MASTERY_VOLUME_TARGET:-15}
+      YOUTUBE_CACHE_TTL_SECONDS: ${YOUTUBE_CACHE_TTL_SECONDS:-604800}
+      LEARN_CACHE_TTL_SECONDS: ${LEARN_CACHE_TTL_SECONDS:-86400}
+      LEARN_PRELOAD_CONCURRENCY: ${LEARN_PRELOAD_CONCURRENCY:-2}
+      VIDEO_VALIDATION_ENABLED: ${VIDEO_VALIDATION_ENABLED:-true}
+      VIDEO_MIN_RELEVANCE_SCORE: ${VIDEO_MIN_RELEVANCE_SCORE:-0.6}
+      VIDEO_VALIDATION_CONCURRENCY: ${VIDEO_VALIDATION_CONCURRENCY:-5}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-100}
+      STALENESS_CONTRADICTION_THRESHOLD: ${STALENESS_CONTRADICTION_THRESHOLD:-0.10}
+      STALENESS_CHECK_COOLDOWN_HOURS: ${STALENESS_CHECK_COOLDOWN_HOURS:-24}
+      TIER_PRO_ROLE: ${TIER_PRO_ROLE:-pro}
+      TIER_SUPER_ROLE: ${TIER_SUPER_ROLE:-super}
+      FREE_MAX_ACTIVE_PLANS: ${FREE_MAX_ACTIVE_PLANS:-3}
+      FREE_ALLOWED_PLAN_SIZES: ${FREE_ALLOWED_PLAN_SIZES:-basic,moderate}
+      FREE_DAILY_LLM_ATTEMPTS: ${FREE_DAILY_LLM_ATTEMPTS:-15}
+      FREE_MAX_EXAMS_PER_NODE: ${FREE_MAX_EXAMS_PER_NODE:-2}
+      FREE_EXERCISE_REGENERATIONS: ${FREE_EXERCISE_REGENERATIONS:-0}
+      FREE_PLAN_HISTORY_DAYS: ${FREE_PLAN_HISTORY_DAYS:-30}
+      QUALITY_SIGNALS_ENABLED: ${QUALITY_SIGNALS_ENABLED:-true}
+      QUALITY_SIGNALS_SCHEDULE: ${QUALITY_SIGNALS_SCHEDULE:-0 2 * * *}
+      QUALITY_SIGNALS_MIN_SAMPLE_SIZE: ${QUALITY_SIGNALS_MIN_SAMPLE_SIZE:-20}
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,8 +122,18 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
     networks:
-      - learning-helper
+      - lucubrum
 
   curriculum-python:
     build:
@@ -90,19 +151,40 @@ services:
       CONTEXT7_ENABLED: ${CONTEXT7_ENABLED:-true}
       BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
       WEB_SEARCH_ENABLED: ${WEB_SEARCH_ENABLED:-true}
-    ports:
-      - "8000:8000"
+      LLM_MAX_RETRIES: ${LLM_MAX_RETRIES:-2}
+      LLM_MAX_TOKENS_PLAN: ${LLM_MAX_TOKENS_PLAN:-}
+      LLM_TEMPERATURE_PLAN: ${LLM_TEMPERATURE_PLAN:-0.7}
+      LLM_TEMPERATURE_EXERCISES: ${LLM_TEMPERATURE_EXERCISES:-0.8}
+      LLM_TEMPERATURE_GRADE: ${LLM_TEMPERATURE_GRADE:-0.3}
+      LLM_TEMPERATURE_VALIDATE: ${LLM_TEMPERATURE_VALIDATE:-0.3}
+      LLM_TEMPERATURE_READING_MATERIAL: ${LLM_TEMPERATURE_READING_MATERIAL:-0.5}
+      LLM_TEMPERATURE_NORMALIZE: ${LLM_TEMPERATURE_NORMALIZE:-0.3}
+      LLM_TEMPERATURE_QUERIES: ${LLM_TEMPERATURE_QUERIES:-0.7}
+      LLM_TEMPERATURE_EXAM: ${LLM_TEMPERATURE_EXAM:-0.7}
+      LLM_TEMPERATURE_STALENESS: ${LLM_TEMPERATURE_STALENESS:-0.3}
+      STALENESS_CONTRADICTION_THRESHOLD: ${STALENESS_CONTRADICTION_THRESHOLD:-0.10}
+      STALENESS_POLICIES_CACHE_TTL: ${STALENESS_POLICIES_CACHE_TTL:-300}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
     networks:
-      - learning-helper
+      - lucubrum
 
   web:
     build:
@@ -117,9 +199,24 @@ services:
     depends_on:
       api-node:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     networks:
-      - learning-helper
+      - lucubrum
 
 volumes:
   postgres_data:

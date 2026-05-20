@@ -157,7 +157,7 @@ Create test-specific Docker Compose with:
 
 **Key differences from dev compose**:
 - Different ports (avoid conflicts with dev environment)
-- Test database name: `learning_helper_test`
+- Test database name: `lucubrum_test`
 - Test credentials
 - Named volumes for dependencies
 - Test command execution
@@ -198,7 +198,7 @@ export default {
 import { jest } from '@jest/globals';
 
 process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test_user:test_password@localhost:5433/learning_helper_test';
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test_user:test_password@localhost:5433/lucubrum_test';
 process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6380';
 process.env.SERVICE_TOKEN = 'test-service-token';
 
@@ -692,7 +692,7 @@ docker-compose -f docker-compose.test.yml up test-postgres test-redis -d
 
 # Run tests locally
 cd apps/api-node
-export DATABASE_URL="postgresql://test_user:test_password@localhost:5433/learning_helper_test"
+export DATABASE_URL="postgresql://test_user:test_password@localhost:5433/lucubrum_test"
 npm test
 ```
 

@@ -180,7 +180,7 @@ class FactsService:
         Uses the existing web_search utility.
         """
         try:
-            from ..utils.web_search import search_web
+            from ..utils.web_search import search_exercises as search_web
 
             # Build search query
             query = topic.replace("_", " ")
@@ -188,13 +188,13 @@ class FactsService:
                 query += f" {keywords[0]}"
 
             # Search and extract facts from snippets
-            search_results = await search_web(query, num_results=5)
+            search_results = await search_web(query, "practice", 5)
 
             facts = []
             for result in search_results:
-                # Create a fact from the title + snippet
-                if result.get("snippet"):
-                    fact = f"{result.get('title', '')}: {result['snippet']}"
+                # Create a fact from the title + description
+                if result.get("description"):
+                    fact = f"{result.get('title', '')}: {result['description']}"
                     facts.append(fact[:500])  # Limit length
 
             return facts

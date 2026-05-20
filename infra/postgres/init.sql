@@ -1,4 +1,4 @@
--- Learning Helper Database Schema
+-- Lucubrum Database Schema
 -- This script is run automatically when the Postgres container is first created
 
 -- Plans
@@ -123,17 +123,29 @@ CREATE INDEX idx_llm_calls_operation ON llm_calls(operation);
 CREATE INDEX idx_llm_calls_provider ON llm_calls(provider);
 CREATE INDEX idx_llm_calls_created ON llm_calls(created_at);
 
--- Users table (for OAuth)
+-- Users table (for OAuth and email/password auth)
 CREATE TABLE users (
   user_id VARCHAR(255) PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255),
   picture_url VARCHAR(500),
   roles JSONB NOT NULL DEFAULT '["user"]',
+  password_hash VARCHAR(255),           -- NULL = OAuth-only user
+  email_verified BOOLEAN NOT NULL DEFAULT false,  -- true for OAuth, false for email signups
   created_at TIMESTAMP DEFAULT NOW(),
   last_login_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX idx_users_email ON users(email);
+
+-- Auth providers (maps provider+provider_user_id → user_id for multi-provider support)
+CREATE TABLE auth_providers (
+  user_id VARCHAR(255) NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL,          -- 'google', 'facebook', 'email'
+  provider_user_id VARCHAR(255) NOT NULL, -- Google sub, FB id, or user_id for email
+  created_at TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (provider, provider_user_id)
+);
+CREATE INDEX idx_auth_providers_user ON auth_providers(user_id);
 
 -- User-Plan Junction (many-to-many: tracks which users engage with which plans)
 -- Plans are shared content; this enables "my plans" without ownership restrictions
@@ -260,3 +272,14 @@ INSERT INTO trusted_instructors (channel_id, channel_name, reliability_score, so
   ('UCsBjURrPoezykLs9EqgamOA', 'Fireship', 0.80, 'manual', 'Tech quick guides'),
   ('UCxX9wt5FWQUAAz4UrysqK9A', 'CS Dojo', 0.80, 'manual', 'Clear explanations')
 ON CONFLICT (channel_id) DO NOTHING;
+
+-- Exercise Generation Events (tracks when exercises were generated/regenerated per node)
+CREATE TABLE IF NOT EXISTS exercise_generation_events (
+  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id VARCHAR(255) NOT NULL,
+  plan_id UUID NOT NULL,
+  node_id VARCHAR(255) NOT NULL,
+  is_force BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_exercise_gen_events_user_node ON exercise_generation_events(user_id, plan_id, node_id);

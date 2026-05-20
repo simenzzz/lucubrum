@@ -9,6 +9,9 @@ import { isValidUUID } from '../utils/validation';
 import { exerciseService, ExerciseServiceError } from '../services/exercise.service';
 import { CreateExercisesRequestSchema } from '../validation/schemas';
 import { requireAuth } from '../middleware/auth.middleware';
+import { rateLimit } from '../middleware/rate-limit.middleware';
+import { enforceExerciseRegenLimit } from '../middleware/tier.middleware';
+import { recordExerciseGenerationEvent } from '../db/queries/tier';
 import { ExerciseRow } from '../db/queries/exercises';
 
 const router = Router();
@@ -73,6 +76,8 @@ function transformExercise(row: ExerciseRow): TransformedExercise {
  */
 router.post(
   '/:planId/nodes/:nodeId/exercises',
+  rateLimit.exerciseGeneration(),
+  enforceExerciseRegenLimit(),
   async (
     req: Request<ExerciseParams>,
     res: Response<ExerciseResponse | ErrorResponse>
@@ -128,6 +133,18 @@ router.post(
         force ?? false
       );
 
+      // Record exercise generation event for tier tracking
+      if (!result.cached) {
+        recordExerciseGenerationEvent(
+          req.user!.user_id,
+          planId,
+          nodeId,
+          force ?? false
+        ).catch((error) => {
+          logger.warn({ error, planId, nodeId }, 'Failed to record exercise generation event');
+        });
+      }
+
       logger.info(
         { planId, nodeId, requestId, exerciseCount: result.exercises.length, cached: result.cached },
         'Exercises response ready'
@@ -168,6 +185,7 @@ router.post(
  */
 router.get(
   '/:planId/nodes/:nodeId/exercises',
+  rateLimit.general(),
   async (
     req: Request<ExerciseParams>,
     res: Response<ExerciseResponse | ErrorResponse>

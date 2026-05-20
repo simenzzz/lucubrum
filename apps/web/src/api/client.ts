@@ -199,7 +199,7 @@ export function notifyLogout(): void {
  */
 export function clearLegacyTokens(): void {
   try {
-    localStorage.removeItem('learning_helper_refresh_token');
+    localStorage.removeItem('lucubrum_refresh_token');
   } catch {
     // Ignore errors
   }

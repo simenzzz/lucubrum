@@ -13,7 +13,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
 import { curriculumClient } from './curriculum-client';
-import { youtubeService, type SelectedResource, type Node } from './youtube.service';
+import { youtubeService, buildContentText, type SelectedResource, type Node } from './youtube.service';
 import {
   getResourcesForNode,
   insertResourcesForNode,
@@ -215,19 +215,50 @@ async function generateContent(
     if (!hasReading && resources.length > 0) {
       try {
         // Prepare description-based inputs for reading material generation
-        const descriptionInputs = resources.slice(0, 3).map((resource) => {
-          if (!resource.description) {
-            logger.warn(
-              { videoId: resource.videoId, nodeId: node.node_id },
-              'No description for video — using title fallback for reading material (lower quality)'
+        // Filter out videos that can't produce sufficient content text (min 50 chars)
+        const descriptionInputs = resources
+          .slice(0, 3)
+          .map((resource) => {
+            const contentText = buildContentText(
+              {
+                description: resource.description,
+                title: resource.title,
+                channelTitle: resource.channelTitle,
+              },
+              50
             );
-          }
-          return {
-            video_id: resource.videoId,
-            title: resource.title,
-            content_text: resource.description ?? `${resource.title} by ${resource.channelTitle}`,
+            if (!contentText) {
+              logger.warn(
+                { videoId: resource.videoId, nodeId: node.node_id },
+                'Skipping video for reading material — insufficient content text'
+              );
+            }
+            return contentText
+              ? { video_id: resource.videoId, title: resource.title, content_text: contentText }
+              : null;
+          })
+          .filter((input): input is NonNullable<typeof input> => input !== null);
+
+        if (descriptionInputs.length === 0) {
+          logger.warn(
+            { nodeId: node.node_id },
+            'No videos have sufficient content text for reading material generation'
+          );
+          const result: NodeLearnContent = {
+            resources,
+            reading_material: null,
+            cached: false,
+            reading_material_error: 'Insufficient video content for reading material',
           };
-        });
+
+          await redis.setJSON(redisKey, {
+            resources: result.resources,
+            reading_material: result.reading_material,
+            cached: true,
+          }, LEARN_CACHE_TTL);
+
+          return { success: true, content: result };
+        }
 
         const material = await curriculumClient.generateReadingMaterial({
           plan_id: planId,

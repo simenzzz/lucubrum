@@ -10,8 +10,6 @@ let CurriculumClient: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let CurriculumServiceError: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let TranscriptNotAvailableError: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let mockAxiosInstance: any;
 
 // Types for the request objects
@@ -72,7 +70,6 @@ beforeAll(async () => {
   const curriculumModule = await import('../../../src/services/curriculum-client');
   CurriculumClient = curriculumModule.CurriculumClient;
   CurriculumServiceError = curriculumModule.CurriculumServiceError;
-  TranscriptNotAvailableError = curriculumModule.TranscriptNotAvailableError;
 });
 
 describe('CurriculumClient', () => {
@@ -466,91 +463,6 @@ describe('CurriculumClient', () => {
       const result = await client.healthCheck();
 
       expect(result).toBe(false);
-    });
-  });
-
-  describe('fetchTranscript', () => {
-    const mockTranscriptResponse = {
-      schema_version: 'transcript.v1',
-      video_id: 'test-video-id',
-      language: 'en',
-      segments: [
-        {
-          start_seconds: 0,
-          duration_seconds: 5,
-          text: 'Hello world',
-        },
-      ],
-      full_text: 'Hello world',
-      duration_seconds: 5,
-      fetch_source: 'youtube_transcript_api' as const,
-    };
-
-    it('should successfully fetch transcript', async () => {
-      mockAxiosInstance.post.mockResolvedValue({
-        data: { transcript: mockTranscriptResponse },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-      });
-
-      const result = await client.fetchTranscript({ video_id: 'test-video-id' });
-
-      expect(result).toEqual(mockTranscriptResponse);
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        '/llm/transcript',
-        { video_id: 'test-video-id' }
-      );
-    });
-
-    it('should throw TranscriptNotAvailableError on 404 with TRANSCRIPT_NOT_AVAILABLE', async () => {
-      const errorResponse = {
-        response: {
-          status: 404,
-          data: {
-            error: 'TRANSCRIPT_NOT_AVAILABLE',
-            reason: 'Video has no captions',
-          },
-          statusText: 'Not Found',
-        },
-      };
-
-      mockAxiosInstance.post.mockRejectedValue(errorResponse);
-
-      await expect(
-        client.fetchTranscript({ video_id: 'no-caption-video' })
-      ).rejects.toThrow(TranscriptNotAvailableError);
-
-      try {
-        await client.fetchTranscript({ video_id: 'no-caption-video' });
-      } catch (e) {
-        if (e instanceof TranscriptNotAvailableError) {
-          const error = e as { statusCode: number; errorCode: string; details?: { video_id: string; reason: string } };
-          expect(error.statusCode).toBe(404);
-          expect(error.errorCode).toBe('TRANSCRIPT_NOT_AVAILABLE');
-          expect(error.details?.video_id).toBe('no-caption-video');
-          expect(error.details?.reason).toBe('Video has no captions');
-        }
-      }
-    });
-
-    it('should propagate other errors', async () => {
-      const errorResponse = {
-        response: {
-          status: 500,
-          data: {
-            error: 'FETCH_ERROR',
-            message: 'Failed to fetch transcript',
-          },
-          statusText: 'Internal Server Error',
-        },
-      };
-
-      mockAxiosInstance.post.mockRejectedValue(errorResponse);
-
-      await expect(
-        client.fetchTranscript({ video_id: 'error-video' })
-      ).rejects.toThrow(CurriculumServiceError);
     });
   });
 
@@ -985,23 +897,6 @@ describe('CurriculumClient', () => {
       expect(error.errorCode).toBe('TEST_ERROR');
       expect(error.details).toEqual({ detail: 'test detail' });
       expect(error.name).toBe('CurriculumServiceError');
-    });
-  });
-
-  describe('TranscriptNotAvailableError', () => {
-    it('should extend CurriculumServiceError', () => {
-      const error = new TranscriptNotAvailableError('video-123', 'No captions available');
-
-      expect(error).toBeInstanceOf(CurriculumServiceError);
-      expect(error.name).toBe('TranscriptNotAvailableError');
-      expect(error.statusCode).toBe(404);
-      expect(error.errorCode).toBe('TRANSCRIPT_NOT_AVAILABLE');
-      expect(error.message).toContain('video-123');
-      expect(error.message).toContain('No captions available');
-      expect(error.details).toEqual({
-        video_id: 'video-123',
-        reason: 'No captions available',
-      });
     });
   });
 });

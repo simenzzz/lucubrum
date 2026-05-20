@@ -19,7 +19,7 @@ Generate a valid JSON object with this structure:
   "exercises": [
     {{
       "id": "<unique_id>",
-      "type": "<mcq|short_answer|fill_blank|coding|flashcard>",
+      "type": "<mcq|short_answer|fill_blank|coding>",
       "prompt": "<the question or exercise prompt>",
       "rubric": "<grading criteria and expectations>",
       "difficulty": <1-5>,
@@ -90,16 +90,6 @@ The exam_difficulty field should reflect the aggregate difficulty of all exercis
 }}
 - test_cases: 1-20 test cases
 
-### Flashcard
-{{
-  "id": "ex_fc_1",
-  "type": "flashcard",
-  "prompt": "What is the definition of...?",
-  "rubric": "Key points that must be mentioned",
-  "difficulty": 1,
-  "correct_answer": "The expected recall answer"
-}}
-
 ## Exam Generation Guidelines
 
 1. Generate exactly {exercise_count} exercises
@@ -109,7 +99,6 @@ The exam_difficulty field should reflect the aggregate difficulty of all exercis
    - Short Answer: Good for testing recall and explanation
    - Fill Blank: Good for testing specific terminology
    - Coding: Good for testing practical application
-   - Flashcard: Good for testing definitions and quick recall
 4. Cover ALL learning objectives proportionally
 5. All prompts must be at least 10 characters
 6. All rubrics must be 20-500 characters

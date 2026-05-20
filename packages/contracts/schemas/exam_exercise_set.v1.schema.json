@@ -406,11 +406,11 @@
       "type": "object"
     }
   },
-  "description": "A set of exercises for a specific learning node.",
+  "description": "Exam exercise set with LLM-assessed difficulty.",
   "properties": {
     "schema_version": {
-      "const": "exercise_set.v1",
-      "default": "exercise_set.v1",
+      "const": "exam_exercise_set.v1",
+      "default": "exam_exercise_set.v1",
       "title": "Schema Version",
       "type": "string"
     },
@@ -420,7 +420,7 @@
       "type": "string"
     },
     "node_id": {
-      "description": "Reference to node within plan",
+      "pattern": "^[a-z0-9_]{3,100}$",
       "title": "Node Id",
       "type": "string"
     },
@@ -434,7 +434,6 @@
       "type": "string"
     },
     "exercises": {
-      "description": "At least 1 exercise",
       "items": {
         "discriminator": {
           "mapping": {
@@ -464,9 +463,17 @@
           }
         ]
       },
-      "minItems": 1,
+      "maxItems": 20,
+      "minItems": 5,
       "title": "Exercises",
       "type": "array"
+    },
+    "exam_difficulty": {
+      "description": "LLM-assessed aggregate difficulty of the exam",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Exam Difficulty",
+      "type": "number"
     },
     "metadata": {
       "$ref": "#/$defs/ArtifactMetadata"
@@ -477,8 +484,9 @@
     "node_id",
     "user_level",
     "exercises",
+    "exam_difficulty",
     "metadata"
   ],
-  "title": "ExerciseSet",
+  "title": "ExamExerciseSet",
   "type": "object"
 }

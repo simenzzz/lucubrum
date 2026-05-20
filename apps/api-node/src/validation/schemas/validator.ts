@@ -14,8 +14,11 @@ import logger from '../../utils/logger';
 export type SchemaName =
   | 'plan.v1'
   | 'exercise_set.v1'
+  | 'exam_exercise_set.v1'
   | 'grade.v1'
+  | 'normalize_topic.v1'
   | 'query_suggestions.v1'
+  | 'reading_material.v1'
   | 'video_validation.v1'
   | 'staleness_result.v1';
 
@@ -57,8 +60,11 @@ class SchemaValidator {
     const schemaNames: SchemaName[] = [
       'plan.v1',
       'exercise_set.v1',
+      'exam_exercise_set.v1',
       'grade.v1',
+      'normalize_topic.v1',
       'query_suggestions.v1',
+      'reading_material.v1',
       'video_validation.v1',
       'staleness_result.v1',
     ];

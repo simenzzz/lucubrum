@@ -64,44 +64,51 @@
       "type": "object"
     }
   },
-  "description": "Suggested YouTube search queries for a learning node.",
+  "description": "Response from topic normalization.",
   "properties": {
-    "schema_version": {
-      "const": "query_suggestions.v1",
-      "default": "query_suggestions.v1",
-      "title": "Schema Version",
+    "topic_normalized": {
+      "description": "Canonical form of the topic (lowercase with underscores)",
+      "title": "Topic Normalized",
       "type": "string"
     },
-    "plan_id": {
-      "format": "uuid",
-      "title": "Plan Id",
+    "domain_category": {
+      "description": "The domain category for staleness determination",
+      "enum": [
+        "math",
+        "cs",
+        "networking",
+        "cloud",
+        "web",
+        "ai",
+        "general"
+      ],
+      "title": "Domain Category",
       "type": "string"
     },
-    "node_id": {
-      "description": "Reference to node within plan",
-      "title": "Node Id",
+    "staleness_policy": {
+      "description": "How often cached plans for this topic should be checked",
+      "enum": [
+        "never",
+        "7d",
+        "14d",
+        "30d",
+        "90d",
+        "annual"
+      ],
+      "title": "Staleness Policy",
       "type": "string"
-    },
-    "queries": {
-      "description": "1-5 search query strings",
-      "items": {
-        "type": "string"
-      },
-      "maxItems": 5,
-      "minItems": 1,
-      "title": "Queries",
-      "type": "array"
     },
     "metadata": {
-      "$ref": "#/$defs/ArtifactMetadata"
+      "$ref": "#/$defs/ArtifactMetadata",
+      "description": "LLM generation metadata"
     }
   },
   "required": [
-    "plan_id",
-    "node_id",
-    "queries",
+    "topic_normalized",
+    "domain_category",
+    "staleness_policy",
     "metadata"
   ],
-  "title": "QuerySuggestions",
+  "title": "NormalizeTopicResponse",
   "type": "object"
 }

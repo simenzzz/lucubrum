@@ -6,7 +6,10 @@
         "provider": {
           "enum": [
             "gemini",
-            "claude"
+            "claude",
+            "zai",
+            "local",
+            "none"
           ],
           "title": "Provider",
           "type": "string"
@@ -41,8 +44,7 @@
           "type": "string"
         },
         "validation_retry_count": {
-          "description": "Number of schema retries (0-2)",
-          "maximum": 2,
+          "description": "Number of schema retries",
           "minimum": 0,
           "title": "Validation Retry Count",
           "type": "integer"

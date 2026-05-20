@@ -62,34 +62,58 @@
       ],
       "title": "ArtifactMetadata",
       "type": "object"
+    },
+    "ReadingMaterialSection": {
+      "description": "A single section of reading material.",
+      "properties": {
+        "heading": {
+          "description": "Section heading",
+          "maxLength": 50,
+          "minLength": 5,
+          "title": "Heading",
+          "type": "string"
+        },
+        "content": {
+          "description": "Section content in markdown",
+          "minLength": 50,
+          "title": "Content",
+          "type": "string"
+        }
+      },
+      "required": [
+        "heading",
+        "content"
+      ],
+      "title": "ReadingMaterialSection",
+      "type": "object"
     }
   },
-  "description": "Suggested YouTube search queries for a learning node.",
+  "description": "LLM-generated reading material from video transcripts.",
   "properties": {
     "schema_version": {
-      "const": "query_suggestions.v1",
-      "default": "query_suggestions.v1",
+      "const": "reading_material.v1",
+      "default": "reading_material.v1",
       "title": "Schema Version",
       "type": "string"
     },
     "plan_id": {
-      "format": "uuid",
+      "description": "Associated plan UUID",
       "title": "Plan Id",
       "type": "string"
     },
     "node_id": {
-      "description": "Reference to node within plan",
+      "description": "Associated node ID within the plan",
       "title": "Node Id",
       "type": "string"
     },
-    "queries": {
-      "description": "1-5 search query strings",
+    "sections": {
+      "description": "1-8 sections of reading material",
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/ReadingMaterialSection"
       },
-      "maxItems": 5,
+      "maxItems": 8,
       "minItems": 1,
-      "title": "Queries",
+      "title": "Sections",
       "type": "array"
     },
     "metadata": {
@@ -99,9 +123,9 @@
   "required": [
     "plan_id",
     "node_id",
-    "queries",
+    "sections",
     "metadata"
   ],
-  "title": "QuerySuggestions",
+  "title": "ReadingMaterial",
   "type": "object"
 }

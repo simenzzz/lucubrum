@@ -19,8 +19,11 @@ sys.path.insert(0, str(curriculum_src))
 from models.transcript import Transcript, VideoValidation, StalenessResult
 from models.plan import Plan
 from models.exercise import ExerciseSet
+from models.exam import ExamExerciseSet
 from models.grade import Grade
+from models.normalize import NormalizeTopicResponse
 from models.query_suggestions import QuerySuggestions
+from models.reading_material import ReadingMaterial
 
 
 def write_schema(model_class, output_name: str, output_dir: Path) -> None:
@@ -46,8 +49,11 @@ def main():
         "staleness_result.v1": StalenessResult,
         "plan.v1": Plan,
         "exercise_set.v1": ExerciseSet,
+        "exam_exercise_set.v1": ExamExerciseSet,
         "grade.v1": Grade,
+        "normalize_topic.v1": NormalizeTopicResponse,
         "query_suggestions.v1": QuerySuggestions,
+        "reading_material.v1": ReadingMaterial,
     }
 
     for name, model_class in models.items():

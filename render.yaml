@@ -5,16 +5,18 @@
 #
 # Deploy apps/web separately on Vercel.
 # Use Supabase for Postgres and Upstash for Redis.
+# lucubrum-curriculum is a public free web service protected by SERVICE_TOKEN.
 # Configure the API custom domain in Render after the first sync:
 # - api.<domain> for lucubrum-api
 
 services:
-  - type: pserv
+  - type: web
     name: lucubrum-curriculum
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./apps/curriculum-python/Dockerfile
     dockerContext: ./apps/curriculum-python
+    healthCheckPath: /health
     envVars:
       - key: PORT
         value: "8000"
@@ -27,7 +29,7 @@ services:
       - key: DATABASE_POOL_MAX
         value: "3"
       - key: SERVICE_TOKEN
-        generateValue: true
+        sync: false
       - key: LLM_PROVIDER
         value: zai
       - key: LLM_MODEL
@@ -56,7 +58,7 @@ services:
   - type: web
     name: lucubrum-api
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./apps/api-node/Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -82,16 +84,10 @@ services:
         value: "3"
       - key: REDIS_URL
         sync: false
-      - key: PYTHON_SERVICE_HOSTPORT
-        fromService:
-          type: pserv
-          name: lucubrum-curriculum
-          property: hostport
+      - key: PYTHON_SERVICE_URL
+        sync: false
       - key: SERVICE_TOKEN
-        fromService:
-          type: pserv
-          name: lucubrum-curriculum
-          envVarKey: SERVICE_TOKEN
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ACCESS_EXPIRY

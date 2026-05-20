@@ -5,7 +5,7 @@ Lucubrum is deployed as a split stack:
 - Vercel hosts the Vite frontend in `apps/web`.
 - Render hosts backend compute only:
   - `lucubrum-api` as the public Node API.
-  - `lucubrum-curriculum` as the private Python curriculum service.
+  - `lucubrum-curriculum` as a public free web service protected by `SERVICE_TOKEN`.
 - Supabase hosts Postgres.
 - Upstash hosts Redis.
 
@@ -66,10 +66,23 @@ Deploy from `render.yaml`. The Blueprint should create only:
 - `lucubrum-api`
 
 It should not create Render Postgres, Render Key Value, or `lucubrum-web`.
+Both Render services should use the Free instance type.
+
+Generate one shared service token locally:
+
+```bash
+openssl rand -hex 32
+```
+
+Set the same generated value as `SERVICE_TOKEN` on both Render services. This
+is what prevents browser users from calling `/llm/*` endpoints directly even
+though the curriculum service is publicly reachable.
 
 Set these required secrets on `lucubrum-api`:
 
 ```env
+SERVICE_TOKEN=<same-random-token-as-curriculum>
+PYTHON_SERVICE_URL=https://lucubrum-curriculum.onrender.com
 CORS_ORIGIN=https://app.yourdomain.com
 GOOGLE_CLIENT_ID=<google-client-id>
 GOOGLE_CLIENT_SECRET=<google-client-secret>
@@ -80,7 +93,15 @@ YOUTUBE_API_KEY=<youtube-api-key>
 Set these required secrets on `lucubrum-curriculum`:
 
 ```env
+SERVICE_TOKEN=<same-random-token-as-api>
 ZAI_API_KEY=<zai-api-key>
+```
+
+After `lucubrum-curriculum` is created, copy its Render URL into
+`PYTHON_SERVICE_URL` on `lucubrum-api`. The URL usually looks like:
+
+```text
+https://lucubrum-curriculum.onrender.com
 ```
 
 Optional curriculum secrets:
@@ -131,6 +152,12 @@ Check the API health endpoint:
 
 ```text
 https://api.yourdomain.com/health
+```
+
+Check the curriculum health endpoint:
+
+```text
+https://lucubrum-curriculum.onrender.com/health
 ```
 
 Then test:

@@ -83,6 +83,23 @@ class TestNormalizeEndpoint:
 
         assert resp.status_code == 200
 
+    async def test_success_accepts_seeded_web_policy_14d(self, _mock_deps):
+        """The DB seed uses web -> 14d, so normalization must accept that policy."""
+        llm_response = json.dumps({
+            "topic_normalized": "react_hooks",
+            "domain_category": "web",
+            "staleness_policy": "14d",
+        })
+        self.mock_provider.generate.return_value = llm_response
+
+        resp = await self._post(
+            _normalize_request(topic="react hooks"),
+            app_state_overrides={"staleness_policies": self._mock_staleness_service()},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["staleness_policy"] == "14d"
+
     async def test_invalid_llm_json_422(self, _mock_deps):
         self.mock_provider.generate.return_value = "not json at all"
 

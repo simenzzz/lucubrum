@@ -36,6 +36,7 @@ class StalenessPolicyValue(str):
 
     NEVER = "never"
     SEVEN_DAYS = "7d"
+    FOURTEEN_DAYS = "14d"
     THIRTY_DAYS = "30d"
     NINETY_DAYS = "90d"
     ANNUAL = "annual"
@@ -50,7 +51,7 @@ class NormalizeTopicResponse(BaseModel):
     domain_category: Literal[
         "math", "cs", "networking", "cloud", "web", "ai", "general"
     ] = Field(..., description="The domain category for staleness determination")
-    staleness_policy: Literal["never", "7d", "30d", "90d", "annual"] = Field(
+    staleness_policy: Literal["never", "7d", "14d", "30d", "90d", "annual"] = Field(
         ..., description="How often cached plans for this topic should be checked"
     )
     metadata: ArtifactMetadata = Field(..., description="LLM generation metadata")

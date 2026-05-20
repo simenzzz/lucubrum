@@ -71,6 +71,7 @@ class TestZaiProvider:
         call_kwargs = self.mock_client.chat.completions.create.call_args.kwargs
         assert call_kwargs["model"] == "glm-5.1"
         assert call_kwargs["temperature"] == 0.5
+        assert call_kwargs["response_format"] == {"type": "json_object"}
         assert call_kwargs["messages"] == [
             {"role": "user", "content": "Generate a plan"},
         ]

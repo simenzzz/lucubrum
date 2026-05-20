@@ -32,7 +32,7 @@ class RawNormalizeOutput(BaseModel):
     domain_category: Literal[
         "math", "cs", "networking", "cloud", "web", "ai", "general"
     ] = Field(..., description="The domain category for staleness determination")
-    staleness_policy: Literal["never", "7d", "30d", "90d", "annual"] = Field(
+    staleness_policy: Literal["never", "7d", "14d", "30d", "90d", "annual"] = Field(
         ..., description="How often cached plans should be checked"
     )
 

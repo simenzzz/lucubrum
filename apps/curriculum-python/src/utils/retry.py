@@ -202,11 +202,12 @@ async def retry_llm_with_validation(
         try:
             raw_output = await generate_fn(prompt)
         except Exception as e:
+            validation_errors = [f"LLM generation error: {e}"]
             logger.error(f"LLM generation error: {e}")
             attempts.append(
                 AttemptResult(
                     raw_output="",
-                    validation_errors=[f"LLM generation error: {e}"],
+                    validation_errors=validation_errors,
                 )
             )
             continue

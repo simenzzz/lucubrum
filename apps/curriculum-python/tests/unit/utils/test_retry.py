@@ -310,6 +310,23 @@ class TestRetryLlmWithValidation:
         assert len(result.attempts) == 2
         assert "LLM generation error" in result.attempts[0].validation_errors[0]
 
+    async def test_llm_generation_errors_are_reported_when_retries_exhausted(self):
+        generate_fn = AsyncMock(side_effect=RuntimeError("provider unavailable"))
+        template = "Generate {topic}. {validation_errors}"
+        config = RetryConfig(max_retries=2, include_errors_in_prompt=True)
+
+        result = await retry_llm_with_validation(
+            generate_fn=generate_fn,
+            prompt_template=template,
+            prompt_kwargs={"topic": "python"},
+            model_class=SimpleModel,
+            config=config,
+        )
+
+        assert result.success is False
+        assert len(result.attempts) == 3
+        assert result.final_errors == ["LLM generation error: provider unavailable"]
+
     async def test_missing_prompt_variable_returns_failure(self):
         generate_fn = AsyncMock(return_value=VALID_JSON)
         template = "Generate {topic} with {missing_var}. {validation_errors}"

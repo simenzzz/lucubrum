@@ -82,6 +82,8 @@ class PlanCacheService {
         return false;
       case '7d':
         return hoursSinceCheck >= 24 * 7;
+      case '14d':
+        return hoursSinceCheck >= 24 * 14;
       case '30d':
         return hoursSinceCheck >= 24 * 30;
       case '90d':

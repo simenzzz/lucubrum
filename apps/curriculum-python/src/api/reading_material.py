@@ -163,7 +163,7 @@ async def generate_reading_material(
 
         # Construct metadata
         metadata = ArtifactMetadata(
-            provider=provider.provider_name,  # type: ignore[arg-type]
+            provider=provider.provider_name,
             model=provider.model_name,
             prompt_version=prompt_version,
             created_at=datetime.now(timezone.utc),

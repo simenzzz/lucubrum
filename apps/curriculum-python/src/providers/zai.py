@@ -6,7 +6,7 @@ from typing import Any
 
 from zai import ZaiClient
 
-from .base import LLMProvider
+from .base import LLMProvider, LLMProviderName
 
 
 class ZaiProvider(LLMProvider):
@@ -29,7 +29,7 @@ class ZaiProvider(LLMProvider):
             client_kwargs["base_url"] = base_url
 
         self._client = ZaiClient(**client_kwargs)
-        self._model_name = model or os.getenv("LLM_MODEL", "glm-5.1")
+        self._model_name = model or os.getenv("LLM_MODEL") or "glm-5.1"
 
     async def generate(
         self,
@@ -62,7 +62,7 @@ class ZaiProvider(LLMProvider):
         return content or ""
 
     @property
-    def provider_name(self) -> str:
+    def provider_name(self) -> LLMProviderName:
         return "zai"
 
     @property

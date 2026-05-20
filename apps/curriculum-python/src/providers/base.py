@@ -2,6 +2,10 @@
 
 import os
 from abc import ABC, abstractmethod
+from typing import Literal
+
+
+LLMProviderName = Literal["gemini", "claude", "zai"]
 
 
 class LLMProvider(ABC):
@@ -31,8 +35,8 @@ class LLMProvider(ABC):
 
     @property
     @abstractmethod
-    def provider_name(self) -> str:
-        """Return the provider name (e.g., 'gemini', 'claude')."""
+    def provider_name(self) -> LLMProviderName:
+        """Return the provider name."""
         pass
 
     @property

@@ -1,10 +1,11 @@
 """Claude (Anthropic) LLM provider implementation."""
 
 import os
+from typing import Any
 
 import anthropic
 
-from .base import LLMProvider
+from .base import LLMProvider, LLMProviderName
 
 
 class ClaudeProvider(LLMProvider):
@@ -22,7 +23,7 @@ class ClaudeProvider(LLMProvider):
             raise ValueError("ANTHROPIC_API_KEY environment variable is required")
 
         self._client = anthropic.AsyncAnthropic(api_key=api_key)
-        self._model_name = model or os.getenv("LLM_MODEL", "claude-3-sonnet-20240229")
+        self._model_name = model or os.getenv("LLM_MODEL") or "claude-3-sonnet-20240229"
 
     async def generate(
         self,
@@ -42,7 +43,7 @@ class ClaudeProvider(LLMProvider):
         Returns:
             Raw string response from the model.
         """
-        kwargs: dict = {
+        kwargs: dict[str, Any] = {
             "model": self._model_name,
             "max_tokens": max_tokens,
             "temperature": temperature,
@@ -60,7 +61,7 @@ class ClaudeProvider(LLMProvider):
         return "\n".join(text_blocks)
 
     @property
-    def provider_name(self) -> str:
+    def provider_name(self) -> LLMProviderName:
         return "claude"
 
     @property

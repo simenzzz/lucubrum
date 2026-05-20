@@ -6,11 +6,13 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
+ArtifactProviderName = Literal["gemini", "claude", "zai", "local", "none"]
+
 
 class ArtifactMetadata(BaseModel):
     """Metadata attached to every LLM-generated artifact for auditing."""
 
-    provider: Literal["gemini", "claude", "local", "none"]
+    provider: ArtifactProviderName
     model: str
     prompt_version: str = Field(..., description="e.g., 'plan/v1'")
     created_at: datetime
@@ -22,7 +24,7 @@ class ArtifactMetadata(BaseModel):
         ..., description="SHA-256 hash of validated JSON artifact (64 hex chars)"
     )
     validation_retry_count: int = Field(
-        ..., ge=0, le=2, description="Number of schema retries (0-2)"
+        ..., ge=0, description="Number of schema retries"
     )
 
     @field_validator("raw_output_hash", "artifact_hash")

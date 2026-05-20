@@ -1,6 +1,8 @@
 """Models for topic normalization."""
 
 from typing import Literal
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from .metadata import ArtifactMetadata
@@ -10,7 +12,7 @@ class NormalizeTopicRequest(BaseModel):
     """Request to normalize a topic."""
 
     topic: str = Field(..., description="The raw topic string to normalize", min_length=1)
-    request_id: str = Field(..., description="Unique request ID for tracing")
+    request_id: UUID = Field(..., description="Unique request ID for tracing")
 
 
 class DomainCategory(str):

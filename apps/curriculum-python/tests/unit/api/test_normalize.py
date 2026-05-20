@@ -100,6 +100,27 @@ class TestNormalizeEndpoint:
         assert resp.status_code == 200
         assert resp.json()["staleness_policy"] == "14d"
 
+    async def test_success_with_zai_provider_metadata(self, _mock_deps):
+        """Z.ai provider names must be valid artifact metadata."""
+        self.mock_provider.provider_name = "zai"
+        self.mock_provider.model_name = "glm-5.1"
+        llm_response = json.dumps({
+            "topic_normalized": "react_js",
+            "domain_category": "web",
+            "staleness_policy": "30d",
+        })
+        self.mock_provider.generate.return_value = llm_response
+
+        resp = await self._post(
+            _normalize_request(),
+            app_state_overrides={"staleness_policies": self._mock_staleness_service()},
+        )
+
+        assert resp.status_code == 200
+        metadata = resp.json()["metadata"]
+        assert metadata["provider"] == "zai"
+        assert metadata["model"] == "glm-5.1"
+
     async def test_invalid_llm_json_422(self, _mock_deps):
         self.mock_provider.generate.return_value = "not json at all"
 
@@ -132,6 +153,14 @@ class TestNormalizeEndpoint:
             {"topic": "", "request_id": str(uuid4())},
             app_state_overrides={"staleness_policies": self._mock_staleness_service()},
         )
+        assert resp.status_code == 422
+
+    async def test_invalid_request_id_rejected(self, _mock_deps):
+        resp = await self._post(
+            _normalize_request(request_id="not-a-uuid"),
+            app_state_overrides={"staleness_policies": self._mock_staleness_service()},
+        )
+
         assert resp.status_code == 422
 
     async def test_validation_error_on_bad_category(self, _mock_deps):

@@ -5,7 +5,7 @@ import os
 from google import genai
 from google.genai import types
 
-from .base import LLMProvider
+from .base import LLMProvider, LLMProviderName
 
 
 class GeminiProvider(LLMProvider):
@@ -23,7 +23,7 @@ class GeminiProvider(LLMProvider):
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
         self._client = genai.Client(api_key=api_key)
-        self._model_name = model or os.getenv("LLM_MODEL", "gemini-2.0-flash")
+        self._model_name = model or os.getenv("LLM_MODEL") or "gemini-2.0-flash"
 
     async def generate(
         self,
@@ -62,7 +62,7 @@ class GeminiProvider(LLMProvider):
         return text
 
     @property
-    def provider_name(self) -> str:
+    def provider_name(self) -> LLMProviderName:
         return "gemini"
 
     @property

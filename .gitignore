@@ -43,3 +43,6 @@ htmlcov/
 
 # Docker
 *.tar
+
+# Ignore local Python virtualenv used by curriculum app
+apps/curriculum-python/venv/

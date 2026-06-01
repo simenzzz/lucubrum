@@ -1,7 +1,5 @@
 # Implementation Roadmap - Lucubrum
 
-> **For AI Coding Agents**: This roadmap reflects the ACTUAL state of the codebase as of January 2026. Read the "What's Already Built" section carefully before implementing anything.
-
 ---
 
 ## Executive Summary

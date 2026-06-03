@@ -132,4 +132,63 @@ describe('Tier Config', () => {
       expect(limits.dailyLlmAttempts).toBe(15);
     });
   });
+
+  describe('DEFAULT_NEW_USER_ROLES', () => {
+    it('should default to ["user", "pro"] when env var is unset', async () => {
+      delete process.env.DEFAULT_NEW_USER_ROLES;
+      const { DEFAULT_NEW_USER_ROLES } = await import('../../../src/config/tier.config');
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user', 'pro']);
+    });
+
+    it('should parse a custom comma-separated env var, trimming whitespace', async () => {
+      process.env.DEFAULT_NEW_USER_ROLES = 'user, pro ,beta';
+      const { DEFAULT_NEW_USER_ROLES } = await import('../../../src/config/tier.config');
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user', 'pro', 'beta']);
+    });
+
+    it('should strip privileged roles (super/admin) so signups cannot self-escalate', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.DEFAULT_NEW_USER_ROLES = 'user,pro,super,admin';
+      const { DEFAULT_NEW_USER_ROLES, getTierForUser } = await import(
+        '../../../src/config/tier.config'
+      );
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user', 'pro']);
+      // The result must never resolve to the super tier.
+      expect(getTierForUser([...DEFAULT_NEW_USER_ROLES])).toBe('pro');
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it('should respect a custom TIER_SUPER_ROLE when stripping privileged roles', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.TIER_SUPER_ROLE = 'admin_dev';
+      process.env.DEFAULT_NEW_USER_ROLES = 'user,pro,admin_dev';
+      const { DEFAULT_NEW_USER_ROLES } = await import('../../../src/config/tier.config');
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user', 'pro']);
+      warnSpy.mockRestore();
+    });
+
+    it('should fall back to ["user"] if filtering leaves nothing', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      process.env.DEFAULT_NEW_USER_ROLES = 'super,admin';
+      const { DEFAULT_NEW_USER_ROLES } = await import('../../../src/config/tier.config');
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user']);
+      warnSpy.mockRestore();
+    });
+
+    it('should support reverting to free-only via DEFAULT_NEW_USER_ROLES=user', async () => {
+      process.env.DEFAULT_NEW_USER_ROLES = 'user';
+      const { DEFAULT_NEW_USER_ROLES, getTierForUser } = await import(
+        '../../../src/config/tier.config'
+      );
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user']);
+      expect(getTierForUser([...DEFAULT_NEW_USER_ROLES])).toBe('free');
+    });
+
+    it('should drop empty entries from the env var', async () => {
+      process.env.DEFAULT_NEW_USER_ROLES = 'user,,pro,';
+      const { DEFAULT_NEW_USER_ROLES } = await import('../../../src/config/tier.config');
+      expect(DEFAULT_NEW_USER_ROLES).toEqual(['user', 'pro']);
+    });
+  });
 });

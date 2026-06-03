@@ -4,6 +4,7 @@
 
 import { db } from '../client';
 import logger from '../../utils/logger';
+import { DEFAULT_NEW_USER_ROLES } from '../../config/tier.config';
 
 /**
  * User row from database.
@@ -37,14 +38,14 @@ export async function upsertUser(input: UpsertUserInput): Promise<UserRow> {
 
   const result = await db.query(
     `INSERT INTO users (user_id, email, name, picture_url, roles, last_login_at)
-     VALUES ($1, $2, $3, $4, '["user"]'::jsonb, NOW())
+     VALUES ($1, $2, $3, $4, $5::jsonb, NOW())
      ON CONFLICT (user_id) DO UPDATE SET
        email = EXCLUDED.email,
        name = EXCLUDED.name,
        picture_url = EXCLUDED.picture_url,
        last_login_at = NOW()
      RETURNING user_id, email, name, picture_url, roles, created_at, last_login_at`,
-    [user_id, email, name || null, picture_url || null]
+    [user_id, email, name || null, picture_url || null, JSON.stringify(DEFAULT_NEW_USER_ROLES)]
   );
 
   logger.debug({ user_id, email }, 'User upserted');
@@ -108,9 +109,9 @@ export async function createEmailUser(input: CreateEmailUserInput): Promise<User
 
   const result = await db.query(
     `INSERT INTO users (user_id, email, name, picture_url, roles, password_hash, email_verified, last_login_at)
-     VALUES ($1, $2, $3, NULL, '["user"]'::jsonb, $4, false, NOW())
+     VALUES ($1, $2, $3, NULL, $5::jsonb, $4, false, NOW())
      RETURNING user_id, email, name, picture_url, roles, created_at, last_login_at`,
-    [user_id, email, name, password_hash]
+    [user_id, email, name, password_hash, JSON.stringify(DEFAULT_NEW_USER_ROLES)]
   );
 
   logger.debug({ user_id, email }, 'Email user created');

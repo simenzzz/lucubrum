@@ -12,6 +12,44 @@ export const TIER_PRO_ROLE = process.env.TIER_PRO_ROLE || 'pro';
 /** Role string that identifies a Super (admin/dev) user. */
 export const TIER_SUPER_ROLE = process.env.TIER_SUPER_ROLE || 'super';
 
+/**
+ * Privileged roles that must never be granted automatically at signup.
+ * Self-service accounts may be upgraded to these only via the admin endpoint.
+ */
+const NON_SELF_SERVICE_ROLES: readonly string[] = [TIER_SUPER_ROLE, 'admin'];
+
+/**
+ * Roles assigned to newly created accounts.
+ *
+ * TEMPORARY (private portfolio phase): defaults to `user,pro` so every visitor
+ * who signs up gets Pro for free. When monetization launches, set
+ * DEFAULT_NEW_USER_ROLES=user (see .env.example) and redeploy.
+ *
+ * Defense-in-depth: privileged roles (super/admin) are stripped here so a
+ * misconfigured env var can never escalate every signup to admin/super. Those
+ * roles can only be granted through `PUT /admin/users/:userId/tier`.
+ */
+export const DEFAULT_NEW_USER_ROLES: readonly string[] = (() => {
+  const requested = (process.env.DEFAULT_NEW_USER_ROLES || 'user,pro')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const safe = requested.filter((r) => !NON_SELF_SERVICE_ROLES.includes(r));
+
+  if (safe.length !== requested.length) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[tier.config] DEFAULT_NEW_USER_ROLES requested privileged role(s) ` +
+        `${requested.filter((r) => NON_SELF_SERVICE_ROLES.includes(r)).join(', ')}; ` +
+        `stripped. Use PUT /admin/users/:userId/tier to grant those.`
+    );
+  }
+
+  // Fall back to a safe baseline if filtering left nothing.
+  return safe.length > 0 ? safe : ['user'];
+})();
+
 /** Allowed plan size strings for free tier. */
 const FREE_ALLOWED_PLAN_SIZES: readonly string[] = (
   process.env.FREE_ALLOWED_PLAN_SIZES || 'basic,moderate'

@@ -23,6 +23,7 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
   );
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
+  const [isConfiguringGeneration, setIsConfiguringGeneration] = useState(false);
 
   // Fetch existing exercises
   const {
@@ -34,16 +35,33 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
   const generateMutation = useGenerateExercises();
 
   const exercises = exerciseSet?.exercises || [];
-  const currentExercise = exercises[currentExerciseIndex];
+  const isChoosingDifficulty = isConfiguringGeneration || exercises.length === 0;
+  const visibleExercises = isChoosingDifficulty ? [] : exercises;
+  const currentExercise = visibleExercises[currentExerciseIndex];
 
   const handleGenerate = () => {
+    const isRegenerating = exercises.length > 0;
     generateMutation.mutate({
       planId,
       nodeId: node.node_id,
       params: { difficulty_target: difficulty, force: true },
+    }, {
+      onSuccess: () => {
+        setIsConfiguringGeneration(false);
+        setCurrentExerciseIndex(0);
+        setCompletedExercises(new Set());
+      },
+      onError: () => {
+        if (isRegenerating) {
+          setIsConfiguringGeneration(false);
+        }
+      },
     });
+  };
+
+  const handleStartRegeneration = () => {
+    setIsConfiguringGeneration(true);
     setCurrentExerciseIndex(0);
-    setCompletedExercises(new Set());
   };
 
   const handleExerciseComplete = (exerciseId: string) => {
@@ -56,27 +74,33 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
     <div className="space-y-6">
       {/* Controls */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-warm-200">Difficulty:</label>
-          <div className="flex gap-1">
-            {([1, 2, 3, 4, 5] as const).map((level) => (
-              <button
-                key={level}
-                onClick={() => setDifficulty(level)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                  difficulty === level
-                    ? 'bg-amber text-hearth-900'
-                    : 'bg-hearth-700 text-warm-400 hover:bg-hearth-600'
-                }`}
-              >
-                {level}
-              </button>
-            ))}
+        {isChoosingDifficulty ? (
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-warm-200">Difficulty:</label>
+            <div className="flex gap-1">
+              {([1, 2, 3, 4, 5] as const).map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setDifficulty(level)}
+                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                    difficulty === level
+                      ? 'bg-amber text-hearth-900'
+                      : 'bg-hearth-700 text-warm-400 hover:bg-hearth-600'
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-sm text-warm-400">
+            {visibleExercises.length} exercises ready
+          </div>
+        )}
 
         <Button
-          onClick={handleGenerate}
+          onClick={isChoosingDifficulty ? handleGenerate : handleStartRegeneration}
           disabled={isLoading}
           variant="primary"
           size="sm"
@@ -88,14 +112,14 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
           ) : (
             <Play className="w-4 h-4 mr-2" />
           )}
-          {exercises.length > 0 ? 'Generate New' : 'Generate Exercises'}
+          {isChoosingDifficulty ? 'Generate Exercises' : 'Regenerate Exercises'}
         </Button>
       </div>
 
       {/* Exercise navigation */}
-      {exercises.length > 0 && (
+      {visibleExercises.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          {exercises.map((ex, index) => (
+          {visibleExercises.map((ex, index) => (
             <button
               key={ex.id}
               onClick={() => setCurrentExerciseIndex(index)}
@@ -111,7 +135,7 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
             </button>
           ))}
           <span className="text-xs text-warm-400 ml-2">
-            {completedExercises.size}/{exercises.length} completed
+            {completedExercises.size}/{visibleExercises.length} completed
           </span>
         </div>
       )}
@@ -126,10 +150,12 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
             </p>
           </div>
         </div>
-      ) : exercises.length === 0 ? (
+      ) : visibleExercises.length === 0 ? (
         <div className="text-center py-12 bg-hearth-700/30 rounded-xl border border-border-moderate">
           <Play className="w-10 h-10 text-warm-400 mx-auto mb-3" />
-          <p className="text-warm-200 mb-2">No exercises generated yet</p>
+          <p className="text-warm-200 mb-2">
+            {exercises.length > 0 ? 'Choose a difficulty to regenerate exercises' : 'No exercises generated yet'}
+          </p>
           <p className="text-sm text-warm-400">
             Click "Generate Exercises" to create practice questions for this topic.
           </p>
@@ -147,11 +173,11 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
       ) : null}
 
       {/* Session summary */}
-      {exercises.length > 0 && completedExercises.size === exercises.length && (
+      {visibleExercises.length > 0 && completedExercises.size === visibleExercises.length && (
         <div className="p-4 rounded-xl bg-sage/10 border border-sage/30">
           <h4 className="font-heading font-semibold text-sage mb-2">Practice Complete!</h4>
           <p className="text-sm text-warm-200">
-            You've completed all {exercises.length} exercises. Generate new ones to continue practicing.
+            You've completed all {visibleExercises.length} exercises. Regenerate exercises to continue practicing.
           </p>
         </div>
       )}

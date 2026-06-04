@@ -94,6 +94,32 @@ interface ErrorResponse {
   request_id: string;
 }
 
+function getSafeRetryAfter(details?: Record<string, unknown>): string | undefined {
+  const retryAfter = details?.retry_after;
+  if (typeof retryAfter !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = retryAfter.trim();
+  if (!trimmed || /[\r\n]/.test(trimmed)) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
+function getClientSafeDetails(details?: Record<string, unknown>): Record<string, unknown> | undefined {
+  const retryAfter = getSafeRetryAfter(details);
+  return retryAfter ? { retry_after: retryAfter } : undefined;
+}
+
+function setRetryAfterHeader(res: Response, details?: Record<string, unknown>): void {
+  const retryAfter = getSafeRetryAfter(details);
+  if (retryAfter) {
+    res.setHeader('Retry-After', retryAfter);
+  }
+}
+
 /**
  * POST /api/plan
  *
@@ -129,6 +155,9 @@ router.post(
       const { topic, user_level, plan_size } = parseResult.data;
 
       logger.info({ topic, user_level, plan_size, requestId }, 'Creating plan');
+
+      // Wake cold Render/free-tier curriculum service before the first LLM call.
+      await curriculumClient.warmUp(requestId);
 
       // Step 1: Normalize topic
       const normalized = await curriculumClient.normalizeTopic({
@@ -218,10 +247,11 @@ router.post(
       // Handle curriculum service errors (from normalizeTopic — generatePlan errors are wrapped as PlanServiceError by the service)
       if (error instanceof CurriculumServiceError) {
         logger.error({ error, requestId }, 'Curriculum service error during plan creation');
+        setRetryAfterHeader(res, error.details);
         return res.status(error.statusCode).json({
           error: error.errorCode,
           message: error.message,
-          details: error.details,
+          details: getClientSafeDetails(error.details),
           request_id: requestId,
         });
       }
@@ -229,10 +259,11 @@ router.post(
       // Handle plan service errors (from createPlan)
       if (error instanceof PlanServiceError) {
         logger.error({ error, requestId }, 'Plan creation failed');
+        setRetryAfterHeader(res, error.details);
         return res.status(error.statusCode).json({
           error: error.code,
           message: error.message,
-          details: error.details,
+          details: getClientSafeDetails(error.details),
           request_id: requestId,
         });
       }

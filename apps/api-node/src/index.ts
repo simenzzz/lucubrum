@@ -201,13 +201,16 @@ app.get('/health', rateLimit.healthIP(), async (_req, res) => {
         ? 'degraded'
         : 'unhealthy';
 
-  res.status(status === 'unhealthy' ? 503 : 200).json({
+  const statusCode = status === 'unhealthy' ? 503 : 200;
+  const body = {
     status,
     service: 'api-node',
     timestamp: new Date().toISOString(),
     dependencies: checks,
     ...(errors.length > 0 && { errors }),
-  });
+  };
+
+  res.status(statusCode).json(body);
 });
 
 // Routes
@@ -247,9 +250,13 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, 'Node API listening');
+if (require.main === module) {
+  app.listen(PORT, () => {
+    logger.info({ port: PORT }, 'Node API listening');
 
-  // Start background jobs after server is listening
-  startQualitySignalsJob();
-});
+    // Start background jobs after server is listening
+    startQualitySignalsJob();
+  });
+}
+
+export default app;

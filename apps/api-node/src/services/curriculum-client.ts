@@ -266,6 +266,14 @@ export class CurriculumServiceError extends Error {
   }
 }
 
+const UPSTREAM_RATE_LIMIT_STATUS = 429;
+const UPSTREAM_RATE_LIMIT_ERROR = 'CURRICULUM_SERVICE_RATE_LIMITED';
+const UPSTREAM_RATE_LIMIT_MESSAGE =
+  'Curriculum generation is temporarily rate-limited upstream. Please try again shortly.';
+const DEFAULT_WARMUP_ATTEMPTS = 3;
+const DEFAULT_WARMUP_TIMEOUT_SECONDS = 15;
+const DEFAULT_WARMUP_BACKOFF_MS = 1000;
+
 /**
  * Client for the Python Curriculum Service.
  */
@@ -304,12 +312,16 @@ export class CurriculumClient {
       },
       (error: AxiosError) => {
         const respData = error.response?.data as Record<string, unknown> | undefined;
+        const headers = error.response?.headers as Record<string, unknown> | undefined;
         logger.error(
           {
             url: error.config?.url,
             status: error.response?.status,
             errorCode: respData?.error,
             errorMessage: respData?.message,
+            retryAfter: headers?.['retry-after'],
+            cfRay: headers?.['cf-ray'],
+            contentType: headers?.['content-type'],
           },
           'Curriculum API error'
         );
@@ -334,6 +346,148 @@ export class CurriculumClient {
     return value as T;
   }
 
+  private getHeader(headers: unknown, name: string): string | undefined {
+    if (!headers || typeof headers !== 'object') {
+      return undefined;
+    }
+
+    const record = headers as Record<string, unknown>;
+    const direct = record[name];
+    if (typeof direct === 'string') {
+      return direct;
+    }
+
+    const lowerName = name.toLowerCase();
+    const matchingKey = Object.keys(record).find((key) => key.toLowerCase() === lowerName);
+    const value = matchingKey ? record[matchingKey] : undefined;
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  private buildDetails(error: AxiosError, data?: Record<string, unknown>): Record<string, unknown> {
+    const details: Record<string, unknown> = {
+      ...(data && typeof data === 'object' ? data : {}),
+      upstream_status: error.response?.status,
+      upstream_url: error.config?.url,
+    };
+
+    const retryAfter = this.getHeader(error.response?.headers, 'retry-after');
+    const cfRay = this.getHeader(error.response?.headers, 'cf-ray');
+    const contentType = this.getHeader(error.response?.headers, 'content-type');
+
+    if (retryAfter) details.retry_after = retryAfter;
+    if (cfRay) details.cf_ray = cfRay;
+    if (contentType) details.content_type = contentType;
+
+    return details;
+  }
+
+  private toServiceError(error: AxiosError, fallbackCode: string): CurriculumServiceError {
+    const data = error.response?.data as Record<string, unknown> | undefined;
+    const status = error.response?.status || 500;
+    const details = this.buildDetails(error, data);
+
+    if (status === UPSTREAM_RATE_LIMIT_STATUS && !data?.error) {
+      return new CurriculumServiceError(
+        UPSTREAM_RATE_LIMIT_MESSAGE,
+        503,
+        UPSTREAM_RATE_LIMIT_ERROR,
+        details
+      );
+    }
+
+    return new CurriculumServiceError(
+      (data?.message as string) || error.message,
+      status,
+      (data?.error as string) || fallbackCode,
+      details
+    );
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private isRetryableWarmupError(error: AxiosError): boolean {
+    const status = error.response?.status;
+    if (!status) {
+      return true;
+    }
+
+    return status === 429 || status === 502 || status === 503 || status === 504;
+  }
+
+  private toWarmupRateLimitError(error: AxiosError): CurriculumServiceError {
+    return new CurriculumServiceError(
+      UPSTREAM_RATE_LIMIT_MESSAGE,
+      503,
+      UPSTREAM_RATE_LIMIT_ERROR,
+      this.buildDetails(error)
+    );
+  }
+
+  /**
+   * Wake the curriculum service before expensive LLM generation.
+   * Render free services may be asleep; this probes /health with a short,
+   * bounded retry loop before the real plan flow begins.
+   */
+  async warmUp(requestId?: string): Promise<void> {
+    const attempts = DEFAULT_WARMUP_ATTEMPTS;
+    const timeoutMs = DEFAULT_WARMUP_TIMEOUT_SECONDS * 1000;
+    const baseBackoffMs = DEFAULT_WARMUP_BACKOFF_MS;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        await this.client.get('/health', {
+          timeout: timeoutMs,
+          headers: requestId ? { 'X-Request-ID': requestId } : undefined,
+        });
+        if (attempt > 1) {
+          logger.info({ requestId, attempt }, 'Curriculum service warm-up succeeded');
+        }
+        return;
+      } catch (error) {
+        lastError = error;
+
+        if (axios.isAxiosError(error) && error.response?.status === UPSTREAM_RATE_LIMIT_STATUS) {
+          throw this.toWarmupRateLimitError(error);
+        }
+
+        if (!axios.isAxiosError(error) || !this.isRetryableWarmupError(error) || attempt === attempts) {
+          break;
+        }
+
+        const delayMs = baseBackoffMs * attempt;
+        logger.warn(
+          {
+            requestId,
+            attempt,
+            attempts,
+            delayMs,
+            status: error.response?.status,
+            code: error.code,
+          },
+          'Curriculum service warm-up failed, retrying'
+        );
+        await this.sleep(delayMs);
+      }
+    }
+
+    const axiosError = axios.isAxiosError(lastError) ? lastError : undefined;
+    throw new CurriculumServiceError(
+      'Curriculum service is still waking up. Please try again shortly.',
+      503,
+      'CURRICULUM_SERVICE_WARMUP_FAILED',
+      {
+        attempts,
+        timeout_ms: timeoutMs,
+        last_status: axiosError?.response?.status,
+        last_code: axiosError?.code,
+        last_message: lastError instanceof Error ? lastError.message : String(lastError),
+      }
+    );
+  }
+
   /**
    * Validate that a video's transcript matches a learning node.
    */
@@ -346,13 +500,7 @@ export class CurriculumClient {
       return this.extractField<VideoValidation>(response.data, 'validation', '/llm/validate-video');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'VALIDATION_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'VALIDATION_FAILED');
       }
       throw error;
     }
@@ -370,13 +518,7 @@ export class CurriculumClient {
       return this.extractField<StalenessResult>(response.data, 'result', '/llm/check-staleness');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'STALENESS_CHECK_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'STALENESS_CHECK_FAILED');
       }
       throw error;
     }
@@ -388,7 +530,7 @@ export class CurriculumClient {
   async healthCheck(): Promise<boolean> {
     try {
       const response = await this.client.get('/health');
-      return response.data?.status === 'ok';
+      return response.data?.status === 'ok' || response.data?.status === 'healthy';
     } catch {
       return false;
     }
@@ -408,13 +550,7 @@ export class CurriculumClient {
       return this.extractField<Plan>(response.data, 'plan', '/llm/plan');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'PLAN_GENERATION_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'PLAN_GENERATION_FAILED');
       }
       throw error;
     }
@@ -432,13 +568,7 @@ export class CurriculumClient {
       return this.extractField<ExerciseSet>(response.data, 'exercise_set', '/llm/exercises');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'EXERCISE_GENERATION_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'EXERCISE_GENERATION_FAILED');
       }
       throw error;
     }
@@ -453,13 +583,7 @@ export class CurriculumClient {
       return this.extractField<Grade>(response.data, 'grade', '/llm/grade');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'GRADING_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'GRADING_FAILED');
       }
       throw error;
     }
@@ -477,13 +601,7 @@ export class CurriculumClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'NORMALIZATION_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'NORMALIZATION_FAILED');
       }
       throw error;
     }
@@ -508,13 +626,7 @@ export class CurriculumClient {
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'FACT_FETCH_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'FACT_FETCH_FAILED');
       }
       throw error;
     }
@@ -532,13 +644,7 @@ export class CurriculumClient {
       return this.extractField<ExamExerciseSet>(response.data, 'exam_exercise_set', '/llm/exam');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'EXAM_GENERATION_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'EXAM_GENERATION_FAILED');
       }
       throw error;
     }
@@ -556,13 +662,7 @@ export class CurriculumClient {
       return this.extractField<QuerySuggestions>(response.data, 'suggestions', '/llm/queries');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'QUERY_GENERATION_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'QUERY_GENERATION_FAILED');
       }
       throw error;
     }
@@ -580,13 +680,7 @@ export class CurriculumClient {
       return this.extractField<ReadingMaterial>(response.data, 'reading_material', '/llm/reading-material');
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const data = error.response?.data as Record<string, unknown> | undefined;
-        throw new CurriculumServiceError(
-          (data?.message as string) || error.message,
-          error.response?.status || 500,
-          (data?.error as string) || 'READING_MATERIAL_FAILED',
-          data
-        );
+        throw this.toServiceError(error, 'READING_MATERIAL_FAILED');
       }
       throw error;
     }

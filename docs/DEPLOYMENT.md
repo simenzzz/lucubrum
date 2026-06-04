@@ -9,6 +9,19 @@ Lucubrum is deployed as a split stack:
 - Supabase hosts Postgres.
 - Upstash hosts Redis.
 
+The app is served from a single **app origin** — the examples below use
+`https://lucubrum.samibk.com`. The browser only ever talks to that origin: the
+frontend is static files on Vercel, and API calls (`/auth`, `/api`, `/admin`)
+are proxied **same-origin** to the Render API by the rewrites in
+`apps/web/vercel.json`. This keeps the auth cookies first-party, which is what
+makes cookie-based sign-in work.
+
+> **Do not put the app in an `<iframe>` on another domain to get a custom
+> domain.** Google OAuth refuses to render inside a frame (returns 403), and the
+> auth cookies become third-party cookies that browsers drop — so sign-in and
+> registration silently fail. Use DNS to point a (sub)domain at Vercel instead
+> (see [DNS](#dns)).
+
 ## Supabase Postgres
 
 Create a Supabase project and use the Session Pooler connection string.
@@ -97,12 +110,17 @@ Set these required secrets on `lucubrum-api`:
 ```env
 SERVICE_TOKEN=<same-random-token-as-curriculum>
 PYTHON_SERVICE_URL=https://lucubrum-curriculum.onrender.com
-CORS_ORIGIN=https://app.yourdomain.com
+CORS_ORIGIN=https://lucubrum.samibk.com
 GOOGLE_CLIENT_ID=<google-client-id>
 GOOGLE_CLIENT_SECRET=<google-client-secret>
-GOOGLE_REDIRECT_URI=https://app.yourdomain.com/oauth/callback
+GOOGLE_REDIRECT_URI=https://lucubrum.samibk.com/oauth/callback
 YOUTUBE_API_KEY=<youtube-api-key>
 ```
+
+`CORS_ORIGIN` must be the exact app origin (no wildcard), and leave
+`COOKIE_DOMAIN` empty so cookies are host-only on the app origin. Because the
+API is reached through the Vercel same-origin proxy, the browser's `Origin`
+on those requests is the app origin, so CORS and the CSRF origin check both pass.
 
 Set these required secrets on `lucubrum-curriculum`:
 
@@ -127,11 +145,24 @@ CONTEXT7_API_KEY=
 BRAVE_SEARCH_API_KEY=
 ```
 
-After the first successful Render deploy, attach the API custom domain:
+A dedicated API custom domain (e.g. `api.samibk.com -> lucubrum-api`) is
+**optional and not used by default** — the Vercel same-origin proxy means the
+browser never calls the Render host directly. Only attach one if you decide to
+stop using the proxy (in which case set `VITE_API_BASE_URL` to that origin and
+`COOKIE_DOMAIN=.samibk.com` so cookies are shared across the sub-domains).
+
+## DNS
+
+Keep the apex `samibk.com` pointing at the existing Hostinger marketing site.
+Add one record for the app sub-domain and point it at Vercel:
 
 ```text
-api.yourdomain.com -> lucubrum-api
+CNAME  lucubrum  ->  cname.vercel-dns.com   (use the exact target Vercel shows)
 ```
+
+Then add `lucubrum.samibk.com` under the Vercel project's Settings → Domains so
+Vercel issues the certificate. Do not embed the app in an iframe on the
+Hostinger site; link to `https://lucubrum.samibk.com` instead.
 
 ## Vercel
 
@@ -147,25 +178,36 @@ Output Directory: dist
 Set these Vercel env vars:
 
 ```env
-VITE_API_BASE_URL=https://api.yourdomain.com
-VITE_APP_URL=https://app.yourdomain.com
+# Leave empty — the API is proxied same-origin via apps/web/vercel.json.
+VITE_API_BASE_URL=
+VITE_APP_URL=https://lucubrum.samibk.com
 VITE_API_TIMEOUT_SECONDS=120
 ```
 
 ## OAuth
 
-In Google Cloud Console, set the redirect URI exactly:
+In Google Cloud Console, open the OAuth 2.0 Client and set:
 
-```text
-https://app.yourdomain.com/oauth/callback
-```
+- **Authorized JavaScript origins:** `https://lucubrum.samibk.com`
+  (keep `http://localhost:5173` for local dev).
+- **Authorized redirect URIs (exact match):**
+
+  ```text
+  https://lucubrum.samibk.com/oauth/callback
+  ```
+
+This must equal `GOOGLE_REDIRECT_URI` on `lucubrum-api` exactly. Finally,
+confirm the **OAuth consent screen** publishing status is **In production** (or
+add the relevant Google accounts as Test users) — a "Testing" app returns a 403
+`access_denied` to everyone else.
 
 ## Smoke Test
 
-Check the API health endpoint:
+Check the API health endpoint directly on Render (the `/health` path is not in
+the Vercel proxy rewrites, so it is not reachable through the app origin):
 
 ```text
-https://api.yourdomain.com/health
+https://lucubrum-api.onrender.com/health
 ```
 
 Check the curriculum health endpoint:
@@ -174,8 +216,10 @@ Check the curriculum health endpoint:
 https://lucubrum-curriculum.onrender.com/health
 ```
 
-Then test:
+Then, on `https://lucubrum.samibk.com` (top-level, not framed), test:
 
-- Google sign-in.
+- Google sign-in (consent screen loads without a 403).
+- Email/password registration, then reload — still signed in (the
+  `access_token` cookie is set on `lucubrum.samibk.com`).
 - Roadmap creation.
 - A reload of a protected page after login.

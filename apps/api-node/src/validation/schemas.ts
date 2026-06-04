@@ -77,7 +77,7 @@ export const SubmitAttemptRequestSchema = z.object({
     .string()
     .regex(/^[a-z0-9_]{3,100}$/, 'Invalid node_id format'),
   exercise_id: z.string(),
-  user_answer: z.union([z.string(), z.record(z.unknown())]),
+  user_answer: z.union([z.string(), z.array(z.string()), z.record(z.unknown())]),
 });
 export type SubmitAttemptRequest = z.infer<typeof SubmitAttemptRequestSchema>;
 
@@ -138,7 +138,7 @@ export const SubmitExamRequestSchema = z.object({
     .array(
       z.object({
         exercise_id: z.string().min(1, 'Exercise ID is required'),
-        user_answer: z.union([z.string(), z.record(z.unknown())]),
+        user_answer: z.union([z.string(), z.array(z.string()), z.record(z.unknown())]),
       })
     )
     .min(1, 'At least one answer is required'),

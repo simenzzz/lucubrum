@@ -14,7 +14,7 @@
     "test:integration": "jest --testPathPattern=tests/integration",
     "test:contract": "jest --testPathPattern=tests/contract",
     "test:e2e": "jest --testPathPattern=tests/e2e",
-    "lint": "eslint src/",
+    "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -160,7 +160,7 @@ export interface StartExamResult {
 
 export interface ExamAnswer {
   exercise_id: string;
-  user_answer: string | Record<string, unknown>;
+  user_answer: string | string[] | Record<string, unknown>;
 }
 
 export interface ExerciseGradeResult {

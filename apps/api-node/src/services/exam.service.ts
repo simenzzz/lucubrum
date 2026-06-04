@@ -516,7 +516,9 @@ class ExamService {
         normalize_whitespace: boolean;
       };
 
-      let userAnswerStr = String(userAnswer);
+      let userAnswerStr = Array.isArray(userAnswer)
+        ? userAnswer.join(' ')
+        : String(userAnswer);
       let answers = correctAnswer.answers;
 
       if (correctAnswer.normalize_whitespace) {

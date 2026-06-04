@@ -12,7 +12,7 @@
  * Detail:     Slowly rotating compass SVG, bottom-border inputs, nautical copy
  */
 
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import type { InputHTMLAttributes } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -24,7 +24,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { EmailLoginRequestSchema, EmailRegisterRequestSchema } from '@/types/schemas';
 
 type LoginForm = z.infer<typeof EmailLoginRequestSchema>;
-type RegisterForm = z.infer<typeof EmailRegisterRequestSchema>;
+type RegisterFormValues = z.infer<typeof EmailRegisterRequestSchema>;
 
 // ─── Decorative SVG ──────────────────────────────────────────────────────────
 
@@ -104,7 +104,10 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   error?: string;
 };
 
-function Field({ label, id, error, ...rest }: FieldProps) {
+const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
+  { label, id, error, ...rest },
+  ref
+) {
   return (
     <div className="group">
       <label
@@ -115,6 +118,7 @@ function Field({ label, id, error, ...rest }: FieldProps) {
       </label>
       <input
         id={id}
+        ref={ref}
         className={[
           'w-full bg-transparent border-0 border-b py-2 text-sm text-warm-50',
           'placeholder:text-warm-600/50 outline-none transition-all duration-300',
@@ -139,7 +143,7 @@ function Field({ label, id, error, ...rest }: FieldProps) {
       </AnimatePresence>
     </div>
   );
-}
+});
 
 // ─── OAuth Row ────────────────────────────────────────────────────────────────
 
@@ -265,13 +269,13 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
 function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const { registerWithEmail, isLoading, error, clearError } = useAuthStore();
   const { addToast } = useUIStore();
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
     resolver: zodResolver(EmailRegisterRequestSchema),
   });
 
   useEffect(() => { return () => { clearError(); }; }, [clearError]);
 
-  const onSubmit = async (data: RegisterForm) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     clearError();
     try {
       await registerWithEmail(data.email, data.name, data.password);
@@ -447,7 +451,7 @@ export function LoginPage() {
             className="text-[52px] font-semibold text-warm-50 leading-[1.05] mb-6"
             style={{ fontFamily: "'Cinzel', 'Georgia', serif", letterSpacing: '-0.01em' }}
           >
-            Learning<br />Helper
+            Lucubrum
           </h1>
 
           <div className="flex items-center justify-center gap-3 mb-6">

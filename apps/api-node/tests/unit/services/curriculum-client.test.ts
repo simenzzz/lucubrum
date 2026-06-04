@@ -271,6 +271,85 @@ describe('CurriculumClient', () => {
 
       await expect(client.generatePlan(request)).rejects.toThrow();
     });
+
+    it('should classify bare upstream 429s as curriculum service rate limits', async () => {
+      const request: GeneratePlanRequest = {
+        topic: 'JavaScript Basics',
+        user_level: 'beginner',
+        request_id: 'test-request-429',
+      };
+
+      const errorResponse = {
+        config: { url: '/llm/plan' },
+        response: {
+          status: 429,
+          data: 'Too many requests',
+          headers: {
+            'retry-after': '30',
+            'cf-ray': 'test-ray',
+            'content-type': 'text/plain',
+          },
+          statusText: 'Too Many Requests',
+        },
+        message: 'Request failed with status code 429',
+      };
+
+      mockAxiosInstance.post.mockRejectedValue(errorResponse);
+
+      await expect(client.generatePlan(request)).rejects.toThrow(CurriculumServiceError);
+
+      try {
+        await client.generatePlan(request);
+      } catch (e) {
+        expect(e).toBeInstanceOf(CurriculumServiceError);
+        const error = e as { statusCode: number; errorCode: string; details?: Record<string, unknown> };
+        expect(error.statusCode).toBe(503);
+        expect(error.errorCode).toBe('CURRICULUM_SERVICE_RATE_LIMITED');
+        expect(error.details).toEqual(
+          expect.objectContaining({
+            upstream_status: 429,
+            upstream_url: '/llm/plan',
+            retry_after: '30',
+            cf_ray: 'test-ray',
+            content_type: 'text/plain',
+          })
+        );
+      }
+    });
+
+    it('should preserve app JSON 429 errors when upstream provides an error code', async () => {
+      const request: GeneratePlanRequest = {
+        topic: 'JavaScript Basics',
+        user_level: 'beginner',
+        request_id: 'test-request-app-429',
+      };
+
+      const errorResponse = {
+        config: { url: '/llm/plan' },
+        response: {
+          status: 429,
+          data: {
+            error: 'RATE_LIMIT_EXCEEDED',
+            message: 'Rate limit exceeded. Try again later.',
+          },
+          headers: {},
+          statusText: 'Too Many Requests',
+        },
+        message: 'Request failed with status code 429',
+      };
+
+      mockAxiosInstance.post.mockRejectedValue(errorResponse);
+
+      try {
+        await client.generatePlan(request);
+      } catch (e) {
+        expect(e).toBeInstanceOf(CurriculumServiceError);
+        const error = e as { statusCode: number; errorCode: string; message: string };
+        expect(error.statusCode).toBe(429);
+        expect(error.errorCode).toBe('RATE_LIMIT_EXCEEDED');
+        expect(error.message).toBe('Rate limit exceeded. Try again later.');
+      }
+    });
   });
 
   describe('gradeAnswer', () => {
@@ -423,6 +502,19 @@ describe('CurriculumClient', () => {
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/health');
     });
 
+    it('should accept the FastAPI healthy status', async () => {
+      mockAxiosInstance.get.mockResolvedValue({
+        data: { status: 'healthy' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      });
+
+      const result = await client.healthCheck();
+
+      expect(result).toBe(true);
+    });
+
     it('should return false when service returns non-ok status', async () => {
       mockAxiosInstance.get.mockResolvedValue({
         data: { status: 'error' },
@@ -463,6 +555,120 @@ describe('CurriculumClient', () => {
       const result = await client.healthCheck();
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('warmUp', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should succeed on first health response', async () => {
+      mockAxiosInstance.get.mockResolvedValue({
+        data: { status: 'healthy' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+      });
+
+      await expect(client.warmUp('warmup-request-1')).resolves.toBeUndefined();
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/health', {
+        timeout: 15000,
+        headers: { 'X-Request-ID': 'warmup-request-1' },
+      });
+    });
+
+    it('should retry a cold-start timeout then succeed', async () => {
+      mockAxiosInstance.get
+        .mockRejectedValueOnce({
+          code: 'ECONNABORTED',
+          message: 'timeout exceeded',
+        })
+        .mockResolvedValueOnce({
+          data: { status: 'healthy' },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+        });
+
+      const warmup = client.warmUp('warmup-request-2');
+      await Promise.resolve();
+      await jest.advanceTimersByTimeAsync(1000);
+      await expect(warmup).resolves.toBeUndefined();
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw warm-up failure after exhausted retryable failures', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        response: {
+          status: 503,
+          data: 'Service unavailable',
+          headers: {},
+        },
+        message: 'Service unavailable',
+      });
+
+      const firstWarmup = client.warmUp('warmup-request-3');
+      const firstExpectation = expect(firstWarmup).rejects.toThrow(CurriculumServiceError);
+      await Promise.resolve();
+      await jest.advanceTimersByTimeAsync(3000);
+      await firstExpectation;
+
+      const secondWarmup = client.warmUp('warmup-request-3');
+      const capturedError = secondWarmup.catch((e: unknown) => e);
+      await Promise.resolve();
+      await jest.advanceTimersByTimeAsync(3000);
+      const e = await capturedError;
+      expect(e).toBeInstanceOf(CurriculumServiceError);
+      const error = e as { statusCode: number; errorCode: string; details?: Record<string, unknown> };
+      expect(error.statusCode).toBe(503);
+      expect(error.errorCode).toBe('CURRICULUM_SERVICE_WARMUP_FAILED');
+      expect(error.details).toEqual(
+        expect.objectContaining({
+          attempts: 3,
+          timeout_ms: 15000,
+          last_status: 503,
+        })
+      );
+    });
+
+    it('should fail fast and preserve Retry-After when health is rate-limited', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        config: { url: '/health' },
+        response: {
+          status: 429,
+          data: 'Too many requests',
+          headers: {
+            'retry-after': '45',
+            'cf-ray': 'warmup-ray',
+            'content-type': 'text/plain',
+          },
+        },
+        message: 'Request failed with status code 429',
+      });
+
+      const e = await client.warmUp('warmup-request-429').catch((error: unknown) => error);
+
+      expect(e).toBeInstanceOf(CurriculumServiceError);
+      const error = e as { statusCode: number; errorCode: string; details?: Record<string, unknown> };
+      expect(error.statusCode).toBe(503);
+      expect(error.errorCode).toBe('CURRICULUM_SERVICE_RATE_LIMITED');
+      expect(error.details).toEqual(
+        expect.objectContaining({
+          upstream_status: 429,
+          upstream_url: '/health',
+          retry_after: '45',
+          cf_ray: 'warmup-ray',
+          content_type: 'text/plain',
+        })
+      );
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(1);
     });
   });
 

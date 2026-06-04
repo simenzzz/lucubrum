@@ -1,7 +1,7 @@
 /**
  * Topic input component with dark styling and amber focus glow
  */
-import { forwardRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,9 @@ export const TopicInput = forwardRef<HTMLInputElement, TopicInputProps>(
     ref
   ) => {
     const [isFocused, setIsFocused] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -53,7 +56,10 @@ export const TopicInput = forwardRef<HTMLInputElement, TopicInputProps>(
           }}
           transition={{ duration: 0.2 }}
         >
-          <div className="relative">
+          <div
+            className="relative cursor-text"
+            onClick={() => inputRef.current?.focus()}
+          >
             {/* Input wrapper with amber glow */}
             <div
               className={cn(
@@ -79,7 +85,7 @@ export const TopicInput = forwardRef<HTMLInputElement, TopicInputProps>(
 
                 {/* Input field */}
                 <Input
-                  ref={ref}
+                  ref={inputRef}
                   type="text"
                   value={value}
                   onChange={(e) => onChange(e.target.value)}

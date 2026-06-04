@@ -135,7 +135,7 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
       const answers: ExamAnswer[] = Array.from(examState.answers.entries()).map(
         ([exercise_id, user_answer]) => ({
           exercise_id,
-          user_answer: user_answer as string | Record<string, unknown>,
+          user_answer: user_answer as string | string[] | Record<string, unknown>,
         })
       );
       const result = await submitExamMutation.mutateAsync({

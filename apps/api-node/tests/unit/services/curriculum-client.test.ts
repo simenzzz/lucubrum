@@ -876,6 +876,87 @@ describe('CurriculumClient', () => {
 
       await expect(client.generateExercises(request)).rejects.toThrow(CurriculumServiceError);
     });
+
+    it('should unwrap FastAPI detail object errors', async () => {
+      const request = {
+        plan_id: 'plan-123',
+        node_id: 'node-123',
+        topic: 'Unknown Topic',
+        node_title: 'Unknown',
+        objectives: [],
+        user_level: 'beginner' as const,
+        request_id: 'exercise-request-error',
+      };
+
+      mockAxiosInstance.post.mockRejectedValue({
+        response: {
+          status: 422,
+          data: {
+            detail: {
+              error: 'VALIDATION_FAILED',
+              message: 'Failed to generate valid exercises after retries',
+              validation_errors: ['Validation error at exercises.0.rubric: String should have at least 20 characters'],
+              attempts: 3,
+            },
+          },
+          statusText: 'Unprocessable Entity',
+        },
+      });
+
+      try {
+        await client.generateExercises(request);
+        throw new Error('Expected generateExercises to throw');
+      } catch (e) {
+        expect(e).toBeInstanceOf(CurriculumServiceError);
+        const error = e as { statusCode: number; errorCode: string; message: string; details?: Record<string, unknown> };
+        expect(error.statusCode).toBe(422);
+        expect(error.errorCode).toBe('VALIDATION_FAILED');
+        expect(error.message).toBe('Failed to generate valid exercises after retries');
+        expect(error.details?.validation_errors).toEqual([
+          'Validation error at exercises.0.rubric: String should have at least 20 characters',
+        ]);
+      }
+    });
+
+    it('should unwrap FastAPI request validation arrays', async () => {
+      const request = {
+        plan_id: 'plan-123',
+        node_id: 'node-123',
+        topic: 'Unknown Topic',
+        node_title: 'Unknown',
+        objectives: [],
+        user_level: 'beginner' as const,
+        request_id: 'exercise-request-error',
+      };
+
+      mockAxiosInstance.post.mockRejectedValue({
+        response: {
+          status: 422,
+          data: {
+            detail: [
+              {
+                type: 'missing',
+                loc: ['body', 'request_id'],
+                msg: 'Field required',
+              },
+            ],
+          },
+          statusText: 'Unprocessable Entity',
+        },
+      });
+
+      try {
+        await client.generateExercises(request);
+        throw new Error('Expected generateExercises to throw');
+      } catch (e) {
+        expect(e).toBeInstanceOf(CurriculumServiceError);
+        const error = e as { statusCode: number; errorCode: string; message: string; details?: Record<string, unknown> };
+        expect(error.statusCode).toBe(422);
+        expect(error.errorCode).toBe('REQUEST_VALIDATION_FAILED');
+        expect(error.message).toBe('body.request_id: Field required');
+        expect(error.details?.validation_errors).toEqual(['body.request_id: Field required']);
+      }
+    });
   });
 
   describe('normalizeTopic', () => {

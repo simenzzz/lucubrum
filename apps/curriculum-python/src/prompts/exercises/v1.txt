@@ -62,7 +62,7 @@ Generate a valid JSON object with this structure:
   "id": "ex_fb_1",
   "type": "fill_blank",
   "prompt": "Complete: The _____ is responsible for...",
-  "rubric": "Grading criteria",
+  "rubric": "Must provide the exact missing concept or an accepted synonym",
   "difficulty": 2,
   "correct_answer": {{
     "answers": ["correct", "also_correct"],

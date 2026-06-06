@@ -370,12 +370,67 @@ export class CurriculumClient {
     return details;
   }
 
+  private normalizeErrorPayload(data?: Record<string, unknown>): {
+    error?: string;
+    message?: string;
+    detailsData?: Record<string, unknown>;
+  } {
+    if (!data) {
+      return {};
+    }
+
+    const detail = data.detail;
+
+    if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+      const detailRecord = detail as Record<string, unknown>;
+      return {
+        error: typeof detailRecord.error === 'string' ? detailRecord.error : undefined,
+        message: typeof detailRecord.message === 'string' ? detailRecord.message : undefined,
+        detailsData: {
+          ...data,
+          ...detailRecord,
+        },
+      };
+    }
+
+    if (Array.isArray(detail)) {
+      const validationErrors = detail.map((entry) => {
+        if (!entry || typeof entry !== 'object') {
+          return String(entry);
+        }
+
+        const record = entry as Record<string, unknown>;
+        const loc = Array.isArray(record.loc) ? record.loc.join('.') : undefined;
+        const msg = typeof record.msg === 'string' ? record.msg : JSON.stringify(record);
+        return loc ? `${loc}: ${msg}` : msg;
+      });
+
+      return {
+        error: typeof data.error === 'string' ? data.error : 'REQUEST_VALIDATION_FAILED',
+        message: typeof data.message === 'string'
+          ? data.message
+          : validationErrors.join('; ') || 'Request validation failed',
+        detailsData: {
+          ...data,
+          validation_errors: validationErrors,
+        },
+      };
+    }
+
+    return {
+      error: typeof data.error === 'string' ? data.error : undefined,
+      message: typeof data.message === 'string' ? data.message : undefined,
+      detailsData: data,
+    };
+  }
+
   private toServiceError(error: AxiosError, fallbackCode: string): CurriculumServiceError {
     const data = error.response?.data as Record<string, unknown> | undefined;
+    const normalized = this.normalizeErrorPayload(data);
     const status = error.response?.status || 500;
-    const details = this.buildDetails(error, data);
+    const details = this.buildDetails(error, normalized.detailsData ?? data);
 
-    if (status === UPSTREAM_RATE_LIMIT_STATUS && !data?.error) {
+    if (status === UPSTREAM_RATE_LIMIT_STATUS && !normalized.error) {
       return new CurriculumServiceError(
         UPSTREAM_RATE_LIMIT_MESSAGE,
         503,
@@ -385,9 +440,9 @@ export class CurriculumClient {
     }
 
     return new CurriculumServiceError(
-      (data?.message as string) || error.message,
+      normalized.message || error.message,
       status,
-      (data?.error as string) || fallbackCode,
+      normalized.error || fallbackCode,
       details
     );
   }

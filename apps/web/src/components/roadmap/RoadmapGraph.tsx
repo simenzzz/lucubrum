@@ -99,15 +99,20 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
     }
   }, [resetView, layout, containerSize, setZoom]);
 
-  // Mouse wheel zoom
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+  // Mouse wheel zoom. Use a native non-passive listener so Chrome allows preventDefault.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      setZoom(zoomLevel * delta);
-    },
-    [zoomLevel, setZoom]
-  );
+      setZoom(useRoadmapStore.getState().zoomLevel * delta);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [layout, setZoom]);
 
   // Pan handlers
   const handleMouseDown = useCallback(
@@ -200,8 +205,7 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-hearth-900 cursor-grab active:cursor-grabbing"
-      onWheel={handleWheel}
+      className="relative w-full h-full overflow-hidden bg-hearth-900 cursor-grab active:cursor-grabbing touch-none overscroll-contain"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

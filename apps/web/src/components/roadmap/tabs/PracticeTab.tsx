@@ -3,6 +3,7 @@ import { Play, RefreshCw, Loader2 } from 'lucide-react';
 import { useGenerateExercises, useExercises } from '@/hooks/usePlan';
 import { Button } from '@/components/ui/button';
 import { ExerciseCard } from '@/components/exercises/ExerciseCard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { PlanNode } from '@/types/api.types';
 
 /**
@@ -38,13 +39,19 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
   const isChoosingDifficulty = isConfiguringGeneration || exercises.length === 0;
   const visibleExercises = isChoosingDifficulty ? [] : exercises;
   const currentExercise = visibleExercises[currentExerciseIndex];
+  const generationError = generateMutation.error instanceof Error
+    ? generateMutation.error.message
+    : null;
 
   const handleGenerate = () => {
     const isRegenerating = exercises.length > 0;
     generateMutation.mutate({
       planId,
       nodeId: node.node_id,
-      params: { difficulty_target: difficulty, force: true },
+      params: {
+        difficulty_target: difficulty,
+        ...(isRegenerating ? { force: true } : {}),
+      },
     }, {
       onSuccess: () => {
         setIsConfiguringGeneration(false);
@@ -115,6 +122,14 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
           {isChoosingDifficulty ? 'Generate Exercises' : 'Regenerate Exercises'}
         </Button>
       </div>
+
+      {generationError && !generateMutation.isPending && (
+        <Alert variant="warning">
+          <AlertDescription>
+            {generationError}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Exercise navigation */}
       {visibleExercises.length > 0 && (

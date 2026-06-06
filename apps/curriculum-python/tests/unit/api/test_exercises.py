@@ -2,12 +2,14 @@
 
 import json
 import pytest
+import re
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 from httpx import ASGITransport, AsyncClient
 
 from src.api.exercises import RawExerciseOutput
+from src.utils.prompts import load_prompt
 from src.utils.retry import RetryResult, AttemptResult
 
 
@@ -179,3 +181,10 @@ class TestExercisesEndpoint:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.post("/llm/exercises", json=_exercise_request())
         assert resp.status_code == 401
+
+    def test_prompt_rubric_examples_match_schema_minimum(self):
+        prompt = load_prompt("exercises", "v1")
+        rubric_examples = re.findall(r'"rubric": "([^"]+)"', prompt)
+
+        assert rubric_examples
+        assert all(len(rubric) >= 20 for rubric in rubric_examples)

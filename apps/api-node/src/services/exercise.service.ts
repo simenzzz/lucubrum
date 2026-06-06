@@ -181,14 +181,19 @@ class ExerciseService {
         const serviceError = error as unknown as { 
           statusCode: number; 
           errorCode: string; 
-          message: string 
+          message: string;
+          details?: Record<string, unknown>;
         };
         
         throw new ExerciseServiceError(
           serviceError.message,
           serviceError.statusCode,
           serviceError.errorCode,
-          { plan_id: planId, node_id: nodeId }
+          {
+            ...(serviceError.details ?? {}),
+            plan_id: planId,
+            node_id: nodeId,
+          }
         );
       }
 

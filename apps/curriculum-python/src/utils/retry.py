@@ -25,6 +25,24 @@ class RetryConfig:
     include_errors_in_prompt: bool = True
 
 
+class NonRetryableLLMError(Exception):
+    """LLM provider error that should not be retried as output validation."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = "LLM_PROVIDER_ERROR",
+        status_code: int = 502,
+        provider_error: str | None = None,
+    ):
+        super().__init__(message)
+        self.message = message
+        self.error_code = error_code
+        self.status_code = status_code
+        self.provider_error = provider_error
+
+
 @dataclass
 class AttemptResult:
     """Result of a single LLM attempt."""
@@ -50,6 +68,46 @@ class RetryResult(Generic[T]):
     def total_attempts(self) -> int:
         """Return total number of attempts made (retry_count + 1 for initial)."""
         return self.retry_count + 1
+
+
+def classify_llm_generation_error(error: Exception) -> NonRetryableLLMError | None:
+    """Classify provider failures that should not enter the validation retry loop."""
+    error_text = str(error)
+    normalized = error_text.lower()
+
+    quota_markers = (
+        "insufficient balance",
+        "no resource package",
+        "please recharge",
+        "quota exceeded",
+        "billing",
+        "payment required",
+        "resource_exhausted",
+    )
+    if any(marker in normalized for marker in quota_markers):
+        return NonRetryableLLMError(
+            "LLM provider quota exhausted. Please check provider billing or API credits.",
+            error_code="LLM_PROVIDER_QUOTA_EXHAUSTED",
+            status_code=503,
+            provider_error=error_text,
+        )
+
+    rate_limit_markers = (
+        "error code: 429",
+        "status code: 429",
+        "rate limit",
+        "rate_limit",
+        "too many requests",
+    )
+    if any(marker in normalized for marker in rate_limit_markers):
+        return NonRetryableLLMError(
+            "LLM provider is rate-limited. Please try again shortly.",
+            error_code="LLM_PROVIDER_RATE_LIMITED",
+            status_code=503,
+            provider_error=error_text,
+        )
+
+    return None
 
 
 def _extract_json_from_response(raw_output: str) -> str:
@@ -202,6 +260,14 @@ async def retry_llm_with_validation(
         try:
             raw_output = await generate_fn(prompt)
         except Exception as e:
+            non_retryable_error = classify_llm_generation_error(e)
+            if non_retryable_error:
+                logger.error(
+                    "Non-retryable LLM generation error: "
+                    f"{non_retryable_error.provider_error or non_retryable_error.message}"
+                )
+                raise non_retryable_error from e
+
             validation_errors = [f"LLM generation error: {e}"]
             logger.error(f"LLM generation error: {e}")
             attempts.append(

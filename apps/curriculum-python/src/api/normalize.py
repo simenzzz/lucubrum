@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel, Field
 
+from .llm_errors import raise_llm_provider_http_exception
 from ..models.metadata import ArtifactMetadata
 from ..models.normalize import (
     NormalizeTopicRequest,
@@ -16,7 +17,7 @@ from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.logger import get_logger
 from ..utils.prompts import load_prompt
-from ..utils.retry import RetryConfig, retry_llm_with_validation
+from ..utils.retry import NonRetryableLLMError, RetryConfig, retry_llm_with_validation
 
 logger = get_logger(__name__)
 
@@ -168,6 +169,8 @@ async def normalize_topic(
 
     except HTTPException:
         raise
+    except NonRetryableLLMError as e:
+        raise_llm_provider_http_exception(e, request.request_id, logger, "topic normalization")
     except Exception as e:
         logger.error(
             "Unexpected error in topic normalization. request_id=%s topic=%s error=%s",

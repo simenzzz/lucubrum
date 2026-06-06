@@ -9,12 +9,13 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from .llm_errors import raise_llm_provider_http_exception
 from ..models.metadata import ArtifactMetadata
 from ..models.reading_material import ReadingMaterial, ReadingMaterialSection
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.prompts import load_prompt
-from ..utils.retry import RetryConfig, retry_llm_with_validation
+from ..utils.retry import NonRetryableLLMError, RetryConfig, retry_llm_with_validation
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +193,8 @@ async def generate_reading_material(
 
     except HTTPException:
         raise
+    except NonRetryableLLMError as e:
+        raise_llm_provider_http_exception(e, request.request_id, logger, "reading material generation")
     except FileNotFoundError as e:
         logger.error(f"Prompt file not found: {e}")
         raise HTTPException(

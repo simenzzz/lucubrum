@@ -86,9 +86,27 @@ function onTokenRefreshed() {
 /**
  * Handle API errors and extract standardized error message
  */
+function appendErrorDetail(message: string | undefined, detail: string): string {
+  if (!message) {
+    return detail;
+  }
+  return `${message.replace(/[.:;\s]+$/, '')}: ${detail}`;
+}
+
 export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiError | undefined;
+    const details = data?.details;
+    if (details && typeof details === 'object') {
+      const detailRecord = details as Record<string, unknown>;
+      const validationErrors = detailRecord.validation_errors;
+      if (Array.isArray(validationErrors) && typeof validationErrors[0] === 'string') {
+        return appendErrorDetail(data?.message, validationErrors[0]);
+      }
+      if (typeof detailRecord.provider_error === 'string') {
+        return appendErrorDetail(data?.message, detailRecord.provider_error);
+      }
+    }
     if (data?.message) {
       return data.message;
     }

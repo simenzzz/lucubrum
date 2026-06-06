@@ -8,9 +8,11 @@ from unittest.mock import AsyncMock
 from pydantic import BaseModel, Field
 
 from src.utils.retry import (
+    NonRetryableLLMError,
     RetryConfig,
     RetryResult,
     AttemptResult,
+    classify_llm_generation_error,
     _extract_json_from_response,
     _parse_and_validate,
     format_errors_for_prompt,
@@ -326,6 +328,35 @@ class TestRetryLlmWithValidation:
         assert result.success is False
         assert len(result.attempts) == 3
         assert result.final_errors == ["LLM generation error: provider unavailable"]
+
+    async def test_provider_quota_error_is_not_retried(self):
+        generate_fn = AsyncMock(
+            side_effect=RuntimeError(
+                'Error code: 429, with error text {"error":{"code":"1113",'
+                '"message":"Insufficient balance or no resource package. Please recharge."}}'
+            )
+        )
+        template = "Generate {topic}. {validation_errors}"
+        config = RetryConfig(max_retries=2, include_errors_in_prompt=True)
+
+        with pytest.raises(NonRetryableLLMError) as exc_info:
+            await retry_llm_with_validation(
+                generate_fn=generate_fn,
+                prompt_template=template,
+                prompt_kwargs={"topic": "python"},
+                model_class=SimpleModel,
+                config=config,
+            )
+
+        assert exc_info.value.error_code == "LLM_PROVIDER_QUOTA_EXHAUSTED"
+        assert exc_info.value.status_code == 503
+        assert generate_fn.call_count == 1
+
+    def test_classifies_provider_rate_limit(self):
+        error = classify_llm_generation_error(RuntimeError("Error code: 429: too many requests"))
+
+        assert error is not None
+        assert error.error_code == "LLM_PROVIDER_RATE_LIMITED"
 
     async def test_missing_prompt_variable_returns_failure(self):
         generate_fn = AsyncMock(return_value=VALID_JSON)

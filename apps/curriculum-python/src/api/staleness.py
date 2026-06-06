@@ -8,13 +8,14 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from .llm_errors import raise_llm_provider_http_exception
 from ..models.metadata import ArtifactMetadata
 from ..models.transcript import StalenessResult
 from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.prompts import load_prompt, format_prompt
 from ..utils.logger import get_logger
-from ..utils.retry import _extract_json_from_response
+from ..utils.retry import _extract_json_from_response, classify_llm_generation_error
 
 logger = get_logger(__name__)
 
@@ -190,6 +191,15 @@ async def check_staleness(request: StalenessCheckRequest) -> StalenessCheckRespo
             },
         )
     except Exception as e:
+        non_retryable_error = classify_llm_generation_error(e)
+        if non_retryable_error:
+            raise_llm_provider_http_exception(
+                non_retryable_error,
+                request.request_id,
+                logger,
+                "staleness check",
+            )
+
         logger.exception("Unexpected error during staleness check", error=str(e), request_id=str(request.request_id))
         raise HTTPException(
             status_code=500,

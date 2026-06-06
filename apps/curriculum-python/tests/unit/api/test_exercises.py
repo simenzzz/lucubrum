@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 
 from src.api.exercises import RawExerciseOutput
 from src.utils.prompts import load_prompt
-from src.utils.retry import RetryResult, AttemptResult
+from src.utils.retry import NonRetryableLLMError, RetryResult, AttemptResult
 
 
 # --- Helpers ---
@@ -152,6 +152,22 @@ class TestExercisesEndpoint:
 
         assert resp.status_code == 422
         assert resp.json()["detail"]["error"] == "VALIDATION_FAILED"
+
+    async def test_provider_quota_error_503(self, _mock_deps):
+        self.mock_retry.side_effect = NonRetryableLLMError(
+            "LLM provider quota exhausted. Please check provider billing or API credits.",
+            error_code="LLM_PROVIDER_QUOTA_EXHAUSTED",
+            status_code=503,
+            provider_error="Insufficient balance or no resource package. Please recharge.",
+        )
+
+        resp = await self._post(_exercise_request())
+
+        assert resp.status_code == 503
+        detail = resp.json()["detail"]
+        assert detail["error"] == "LLM_PROVIDER_QUOTA_EXHAUSTED"
+        assert "quota exhausted" in detail["message"]
+        assert "Insufficient balance" in detail["provider_error"]
 
     async def test_prompt_not_found_500(self, _mock_deps):
         self.mock_prompt.side_effect = FileNotFoundError("not found")

@@ -378,9 +378,6 @@ export const rateLimit = {
   /** Record a failed login attempt (increments counter) */
   recordFailedLogin: (email: string) => rateLimitByKey(email, RateLimits.LOGIN_EMAIL),
 
-  /** @deprecated Use isLoginLimited + recordFailedLogin instead */
-  loginEmail: (email: string) => rateLimitByKey(email, RateLimits.LOGIN_EMAIL),
-
   /** Reset password login rate limit for an email on successful login */
   resetLoginEmail: (email: string) => resetRateLimitByKey(email, RateLimits.LOGIN_EMAIL),
 };

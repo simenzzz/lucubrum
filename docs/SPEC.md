@@ -240,7 +240,7 @@ Node checks Redis: GET plan_cache:{cache_key}
       │
       ├─ HIT (needs staleness check) → Python staleness validation
       │     ↓
-      │   Python calls MCP servers (Context7, web search tools)
+      │   Python performs staleness analysis
       │     ↓
       │   Python fetches YouTube transcripts for cached resources
       │     → (via transcript tool: TBD - user to specify)
@@ -318,10 +318,8 @@ Every plan/exercise/grade must be reproducible via logs:
 ### 5. Staleness Detection Strategy
 
 #### MCP Integration (Python Service)
-- Uses **FastMCP Python SDK** for all MCP server communication
-- Primary MCP servers:
-  - **Context7**: Documentation and up-to-date technical references
-  - **Web search tools**: Google/Bing for recent developments
+- Uses **FastMCP Python SDK** for MCP server communication
+- External fact sources (Context7, Brave Search) removed — to be re-implemented
 - MCP staleness check cached for 24 hours per topic
 
 #### YouTube Transcript Validation

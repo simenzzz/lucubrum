@@ -16,7 +16,7 @@ from pathlib import Path
 curriculum_src = Path(__file__).parent.parent / "apps" / "curriculum-python" / "src"
 sys.path.insert(0, str(curriculum_src))
 
-from models.transcript import Transcript, VideoValidation, StalenessResult
+from models.transcript import VideoValidation, StalenessResult
 from models.plan import Plan
 from models.exercise import ExerciseSet
 from models.exam import ExamExerciseSet
@@ -44,7 +44,6 @@ def main():
 
     # Map of models to their output names
     models = {
-        "transcript.v1": Transcript,
         "video_validation.v1": VideoValidation,
         "staleness_result.v1": StalenessResult,
         "plan.v1": Plan,

@@ -61,7 +61,7 @@ class TestStalenessEndpoint:
     async def test_success_not_stale(self, _mock_deps):
         llm_response = json.dumps({
             "contradictions_found": [],
-            "sources_checked": ["Context7"],
+            "sources_checked": ["llm_knowledge"],
             "stale_reason": None,
         })
         self.mock_provider.generate.return_value = llm_response
@@ -78,7 +78,7 @@ class TestStalenessEndpoint:
         # 2 facts, 1 contradiction → rate 0.5 >= 0.10 → stale
         llm_response = json.dumps({
             "contradictions_found": ["var is deprecated in favor of let/const"],
-            "sources_checked": ["Context7"],
+            "sources_checked": ["llm_knowledge"],
             "stale_reason": "Outdated variable declaration advice",
         })
         self.mock_provider.generate.return_value = llm_response

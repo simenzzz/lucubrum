@@ -25,7 +25,6 @@ from ..providers import get_provider
 from ..utils.hashing import compute_sha256
 from ..utils.prompts import load_prompt
 from ..utils.retry import RetryConfig, retry_llm_with_validation
-from ..utils.web_search import SearchResult, search_exercises
 
 logger = logging.getLogger(__name__)
 
@@ -103,25 +102,6 @@ async def generate_exercises(
     prompt_version = "exercises/v1"
 
     try:
-        # 1. Search for inspiration (graceful degradation)
-        search_results: list[SearchResult] = []
-        if os.getenv("WEB_SEARCH_ENABLED", "true").lower() == "true":
-            try:
-                # Use the first exercise type for search
-                primary_type = request.exercise_types[0]
-                search_results = await search_exercises(
-                    topic=request.topic,
-                    exercise_type=primary_type,
-                    max_results=5,
-                )
-                logger.info(f"Web search returned {len(search_results)} results")
-            except Exception as e:
-                logger.warning(f"Web search failed, continuing without inspiration: {e}")
-                search_results = []
-
-        # Format search results for prompt
-        search_results_text = _format_search_results(search_results)
-
         # Load prompt template
         prompt_template = load_prompt("exercises", "v1")
 
@@ -142,7 +122,6 @@ async def generate_exercises(
             "difficulty_target": request.difficulty_target,
             "exercise_types": ", ".join(request.exercise_types),
             "count": request.count,
-            "search_results": search_results_text,
         }
 
         # Configure retry
@@ -233,21 +212,3 @@ async def generate_exercises(
         )
 
 
-def _format_search_results(results: list[SearchResult]) -> str:
-    """Format search results for inclusion in prompt.
-
-    Args:
-        results: List of search results.
-
-    Returns:
-        Formatted string for the prompt, or indication that no results found.
-    """
-    if not results:
-        return "No web search results available. Generate exercises based on your knowledge."
-
-    formatted = "Found the following resources for inspiration (DO NOT copy, only use for ideas):\n\n"
-    for i, result in enumerate(results, 1):
-        formatted += f"{i}. {result['title']}\n"
-        formatted += f"   {result['snippet']}\n\n"
-
-    return formatted

@@ -87,8 +87,8 @@ def create_test_facts(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, A
     """Create a test facts response."""
     defaults = {
         "facts": [
-            {"fact": "React 19 was released in 2024", "source": "context7"},
-            {"fact": "React Server Components are now stable", "source": "brave_search"},
+            {"fact": "React 19 was released in 2024"},
+            {"fact": "React Server Components are now stable"},
         ],
         "request_id": str(uuid.uuid4()),
         "gathered_at": datetime.utcnow().isoformat(),

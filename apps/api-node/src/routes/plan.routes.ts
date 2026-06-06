@@ -210,34 +210,20 @@ router.post(
       // Step 4.5: Preload initially-unlocked nodes and depth-1 neighbors (fire and forget)
       triggerPlanPreload(result.plan_id, result.plan.nodes);
 
-      // Step 5: Get MCP facts for staleness tracking
-      let factSnapshot: string[] = [];
-      try {
-        const factsResponse = await curriculumClient.getFacts({
-          normalized_topic: normalized.topic_normalized,
-          request_id: requestId,
-        });
-        factSnapshot = factsResponse.facts;
-        logger.info({ factCount: factSnapshot.length, requestId }, 'MCP facts gathered');
-      } catch (error) {
-        // Log warning but don't fail - continue without facts
-        logger.warn({ error, requestId }, 'Failed to get MCP facts, continuing without fact snapshot');
-      }
-
-      // Step 6: Cache the plan with metadata (including plan_id for consistent tracking)
+      // Step 5: Cache the plan with metadata (including plan_id for consistent tracking)
       const cacheData: CachedPlanWithMetadata = {
         plan_id: result.plan_id,
         plan: result.plan,
         topic_normalized: normalized.topic_normalized,
         domain_category: normalized.domain_category,
         staleness_policy: normalized.staleness_policy,
-        factSnapshot,
+        factSnapshot: [],
         created_at: new Date().toISOString(),
       };
 
       // Cache for 24 hours (will be checked for staleness before serving)
       await redis.setJSON(cacheKey, cacheData, 86400);
-      logger.info({ cacheKey, planId: result.plan_id, factCount: factSnapshot.length, requestId }, 'Plan cached with plan_id');
+      logger.info({ cacheKey, planId: result.plan_id, requestId }, 'Plan cached with plan_id');
 
       return res.status(201).json({
         plan_id: result.plan_id,

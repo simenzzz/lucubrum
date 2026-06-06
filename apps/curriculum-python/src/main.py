@@ -18,7 +18,6 @@ from .api.reading_material import router as reading_material_router
 from .api.staleness import router as staleness_router
 from .api.validate_video import router as validate_video_router
 from .api.normalize import router as normalize_router
-from .api.facts import router as facts_router
 from .api.exam import router as exam_router
 from .middleware import ServiceTokenMiddleware
 from .services import StalenessPolicyService
@@ -130,7 +129,6 @@ app.include_router(grade_router)
 app.include_router(staleness_router)
 app.include_router(validate_video_router)
 app.include_router(normalize_router)
-app.include_router(facts_router)
 app.include_router(exam_router)
 
 

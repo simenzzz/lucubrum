@@ -172,17 +172,6 @@ export interface NormalizeTopicResponse {
   metadata: ArtifactMetadata;
 }
 
-export interface GetFactsRequest {
-  normalized_topic: string;
-  keywords?: string[];
-  request_id: string;
-}
-
-export interface GetFactsResponse {
-  facts: string[];
-  sources: string[];
-}
-
 // Query generation types
 export interface GenerateQueriesRequest {
   plan_id: string;
@@ -602,31 +591,6 @@ export class CurriculumClient {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw this.toServiceError(error, 'NORMALIZATION_FAILED');
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get current facts about a topic from MCP sources.
-   */
-  async getFacts(request: GetFactsRequest): Promise<GetFactsResponse> {
-    try {
-      const response = await this.client.post<Record<string, unknown>>(
-        '/llm/get-facts',
-        {
-          normalized_topic: request.normalized_topic,
-          keywords: request.keywords || [],
-          request_id: request.request_id,
-        }
-      );
-      return {
-        facts: this.extractField<string[]>(response.data, 'facts', '/llm/get-facts'),
-        sources: this.extractField<string[]>(response.data, 'sources', '/llm/get-facts'),
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw this.toServiceError(error, 'FACT_FETCH_FAILED');
       }
       throw error;
     }

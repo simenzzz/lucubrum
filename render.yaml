@@ -42,14 +42,6 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: CONTEXT7_API_KEY
-        sync: false
-      - key: CONTEXT7_ENABLED
-        value: "true"
-      - key: BRAVE_SEARCH_API_KEY
-        sync: false
-      - key: WEB_SEARCH_ENABLED
-        value: "true"
       - key: LLM_MAX_RETRIES
         value: "2"
       - key: STALENESS_POLICIES_CACHE_TTL

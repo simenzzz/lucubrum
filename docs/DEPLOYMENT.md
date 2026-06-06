@@ -141,8 +141,6 @@ Optional curriculum secrets:
 ```env
 GEMINI_API_KEY=
 ANTHROPIC_API_KEY=
-CONTEXT7_API_KEY=
-BRAVE_SEARCH_API_KEY=
 ```
 
 A dedicated API custom domain (e.g. `api.samibk.com -> lucubrum-api`) is

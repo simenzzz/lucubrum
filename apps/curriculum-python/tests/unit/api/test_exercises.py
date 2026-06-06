@@ -83,7 +83,6 @@ class TestExercisesEndpoint:
     def _setup(self, monkeypatch):
         monkeypatch.setenv("SERVICE_TOKEN", "test-service-token")
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        monkeypatch.setenv("WEB_SEARCH_ENABLED", "false")
         self.headers = {"X-Service-Token": "test-service-token"}
 
     @pytest.fixture
@@ -97,7 +96,7 @@ class TestExercisesEndpoint:
             "Generate exercises for {topic} ({node_title}). "
             "Objectives: {objectives}. Level: {user_level}. "
             "Difficulty: {difficulty_target}. Types: {exercise_types}. "
-            "Count: {count}. Search: {search_results}. {validation_errors}"
+            "Count: {count}. {validation_errors}"
         )
         mock_provider = MagicMock()
         mock_provider.provider_name = "gemini"
@@ -166,27 +165,6 @@ class TestExercisesEndpoint:
         resp = await self._post(_exercise_request())
 
         assert resp.status_code == 500
-
-    async def test_web_search_disabled(self, _mock_deps, mocker):
-        mock_search = mocker.patch("src.api.exercises.search_exercises", new_callable=AsyncMock)
-        self.mock_retry.return_value = _make_retry_result(_valid_raw_exercises())
-
-        await self._post(_exercise_request())
-
-        mock_search.assert_not_called()
-
-    async def test_web_search_graceful_degradation(self, _mock_deps, monkeypatch, mocker):
-        monkeypatch.setenv("WEB_SEARCH_ENABLED", "true")
-        mock_search = mocker.patch(
-            "src.api.exercises.search_exercises",
-            new_callable=AsyncMock,
-            side_effect=Exception("Brave API down"),
-        )
-        self.mock_retry.return_value = _make_retry_result(_valid_raw_exercises())
-
-        resp = await self._post(_exercise_request())
-
-        assert resp.status_code == 200  # should not fail
 
     async def test_count_bounds_validation(self, _mock_deps):
         resp = await self._post(_exercise_request(count=0))

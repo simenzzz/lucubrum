@@ -9,11 +9,6 @@ You are an expert educational content creator. Generate exercises for a learning
 - Requested Exercise Types: {exercise_types}
 - Exercise Count: {count}
 
-## Web Search Inspiration (if available)
-{search_results}
-
-IMPORTANT: Use the search results above ONLY for inspiration about exercise formats, question styles, and topic coverage. Create ORIGINAL exercises - do NOT copy questions, answers, or phrasing from the search results.
-
 ## Output Requirements
 Generate a valid JSON object with this structure:
 

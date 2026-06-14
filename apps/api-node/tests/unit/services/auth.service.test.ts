@@ -157,15 +157,43 @@ describe('AuthService', () => {
         statusCode: 409,
       });
 
-      // Verify the error message does NOT mention providers
+      // The message must not leak the provider, nor confirm that the account
+      // exists (enumeration-safe). Generic, actionable copy only.
       try {
         await authService.registerWithEmail('test@example.com', 'Test User', 'Password1', REQUEST_ID);
       } catch (e: any) {
         expect(e.message).not.toContain('OAuth');
         expect(e.message).not.toContain('Google');
         expect(e.message).not.toContain('Facebook');
-        expect(e.message).not.toContain('email');
+        expect(e.message).not.toMatch(/already (registered|exists)|taken|in use/i);
+        expect(mockedCreateEmailUser).not.toHaveBeenCalled();
       }
+    });
+
+    it('should map a unique-constraint race (23505) to the same generic 409', async () => {
+      // Pre-check passes (null), but the insert loses the unique-constraint race.
+      mockedGetUserByEmail.mockResolvedValue(null);
+      mockedHashPassword.mockResolvedValue('hashed-password');
+      mockedCreateEmailUser.mockRejectedValue(Object.assign(new Error('duplicate key'), { code: '23505' }));
+
+      await expect(
+        authService.registerWithEmail('race@example.com', 'Race User', 'Password1', REQUEST_ID)
+      ).rejects.toMatchObject({
+        code: 'REGISTRATION_FAILED',
+        statusCode: 409,
+      });
+    });
+
+    it('should rethrow non-23505 DB errors (becomes a 500 upstream)', async () => {
+      mockedGetUserByEmail.mockResolvedValue(null);
+      mockedHashPassword.mockResolvedValue('hashed-password');
+      mockedCreateEmailUser.mockRejectedValue(Object.assign(new Error('connection lost'), { code: '08006' }));
+
+      // The original DB error must propagate unchanged (becomes a 500 upstream),
+      // not be swallowed/remapped into the collision rejection.
+      await expect(
+        authService.registerWithEmail('db@example.com', 'DB User', 'Password1', REQUEST_ID)
+      ).rejects.toMatchObject({ code: '08006' });
     });
   });
 

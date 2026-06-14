@@ -50,6 +50,15 @@ export function isFacebookConfigured(): boolean {
 // Google OAuth scopes
 const GOOGLE_SCOPES = ['openid', 'email', 'profile'];
 
+// Postgres unique-constraint violation error code (SQLSTATE 23505).
+const PG_UNIQUE_VIOLATION = '23505';
+
+// Generic, enumeration-safe message for email registration collisions.
+// Intentionally does NOT confirm whether the email exists (OWASP WSTG-IDNT-04),
+// matching the generic message returned by email login.
+const REGISTRATION_COLLISION_MESSAGE =
+  "We couldn't create your account. If you already have one, sign in instead, or use a different email.";
+
 /**
  * Result from OAuth callback handling.
  */
@@ -296,21 +305,29 @@ class AuthService {
     const existing = await getUserByEmail(email);
     if (existing) {
       logger.warn({ email, existingUserId: existing.user_id, requestId }, 'Registration collision');
-      throw createAuthError(
-        'Unable to create account. If you already have an account, try signing in or use "Forgot sign-in method".',
-        'REGISTRATION_FAILED',
-        409
-      );
+      throw createAuthError(REGISTRATION_COLLISION_MESSAGE, 'REGISTRATION_FAILED', 409);
     }
 
     // Hash password and create user
     const password_hash = await hashPassword(password);
     const user_id = uuidv4();
 
-    const user = await createEmailUser({ user_id, email, name, password_hash });
+    let user: UserRow;
+    try {
+      user = await createEmailUser({ user_id, email, name, password_hash });
 
-    // Create auth provider mapping
-    await createAuthProvider({ user_id, provider: 'email', provider_user_id: user_id });
+      // Create auth provider mapping
+      await createAuthProvider({ user_id, provider: 'email', provider_user_id: user_id });
+    } catch (err) {
+      // Concurrent signup race: two requests passed the pre-check above, then one
+      // lost the Postgres unique-constraint race (23505). Collapse it into the
+      // same generic collision rejection instead of a generic 500.
+      if ((err as { code?: string }).code === PG_UNIQUE_VIOLATION) {
+        logger.warn({ email, requestId }, 'Registration collision (unique constraint race)');
+        throw createAuthError(REGISTRATION_COLLISION_MESSAGE, 'REGISTRATION_FAILED', 409);
+      }
+      throw err;
+    }
 
     // Create tokens
     const tokenPair = createTokenPair({

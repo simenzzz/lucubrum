@@ -95,6 +95,11 @@ function appendErrorDetail(message: string | undefined, detail: string): string 
 
 export function getApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
+    // No response = network failure, timeout, or CORS — surface a friendly
+    // message instead of raw axios text ("Network Error", "timeout of ...ms").
+    if (!error.response) {
+      return 'Unable to reach the server. Check your connection and try again.';
+    }
     const data = error.response?.data as ApiError | undefined;
     const details = data?.details;
     if (details && typeof details === 'object') {

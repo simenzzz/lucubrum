@@ -257,7 +257,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
 
 // ─── Register Form ────────────────────────────────────────────────────────────
 
-function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
+function RegisterForm({ onSuccess, onSwitchToSignIn }: { onSuccess: () => void; onSwitchToSignIn: () => void }) {
   const { registerWithEmail, isLoading, error, clearError } = useAuthStore();
   const { addToast } = useUIStore();
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
@@ -280,12 +280,20 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       <AnimatePresence>
         {error && (
           <motion.div
+            role="alert"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="text-[11px] text-rose-400 tracking-wide border border-rose-500/20 bg-rose-500/5 rounded-sm px-3 py-2.5"
           >
-            {error}
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={onSwitchToSignIn}
+              className="mt-2 text-amber hover:text-amber/70 underline underline-offset-4 transition-colors"
+            >
+              Sign in
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -537,7 +545,7 @@ export function LoginPage() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
               >
-                <RegisterForm onSuccess={handleSuccess} />
+                <RegisterForm onSuccess={handleSuccess} onSwitchToSignIn={() => setActiveTab('signin')} />
               </motion.div>
             )}
           </AnimatePresence>

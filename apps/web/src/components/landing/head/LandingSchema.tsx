@@ -37,11 +37,6 @@ export function LandingSchema({ topic }: LandingSchemaProps) {
         '@type': 'Organization',
         name: 'Lucubrum',
       },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.8',
-        ratingCount: '150',
-      },
     };
 
     const breadcrumbSchema = {

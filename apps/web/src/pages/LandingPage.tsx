@@ -11,10 +11,16 @@ import { PlanConfigForm } from '@/components/landing/PlanConfigForm';
 import { LoadingState } from '@/components/landing/LoadingState';
 import { ErrorState } from '@/components/landing/ErrorState';
 import { LandingSchema } from '@/components/landing/LandingSchema';
+import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
+import { ProductPreviewSection } from '@/components/landing/ProductPreviewSection';
+import { OutcomesSection } from '@/components/landing/OutcomesSection';
+import { FinalCtaSection } from '@/components/landing/FinalCtaSection';
 import { useCreatePlan } from '@/hooks/usePlan';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/uiStore';
 import type { PlanFormData } from '@/types/plan.types';
+
+const EXAMPLE_TOPICS = ['React Hooks', 'Linear Algebra', 'Renaissance Art', 'Machine Learning'];
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -115,6 +121,7 @@ export function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              id="topic-input"
               className="relative z-20 container mx-auto px-4 -mt-20"
             >
               <TopicInput
@@ -123,6 +130,27 @@ export function LandingPage() {
                 onSubmit={handleTopicSubmit}
                 autoFocus
               />
+
+              {/* Example topics to try */}
+              {!topic && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center justify-center gap-2 flex-wrap mt-5"
+                >
+                  <span className="text-xs text-warm-500 uppercase tracking-wide">Try:</span>
+                  {EXAMPLE_TOPICS.map((exampleTopic) => (
+                    <button
+                      key={exampleTopic}
+                      type="button"
+                      onClick={() => setTopic(exampleTopic)}
+                      className="px-3 py-1 rounded-full text-xs font-medium border border-border-moderate text-warm-300 hover:border-amber/50 hover:text-amber transition-colors"
+                    >
+                      {exampleTopic}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
 
               {/* Sign in prompt if not authenticated */}
               {topic && !isAuthenticated && !authLoading && (
@@ -197,53 +225,16 @@ export function LandingPage() {
           )}
         </AnimatePresence>
 
-        {/* Features Section */}
+        {/* Explainer sections */}
         {!showConfig && !isCreating && !errorMessage && (
-          <motion.section
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            className="container mx-auto px-4 py-20"
-          >
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <FeatureCard
-                icon="🗺️"
-                title="Personalized Roadmaps"
-                description="AI-generated learning paths tailored to your level and goals"
-              />
-              <FeatureCard
-                icon="📚"
-                title="Curated Resources"
-                description="Expert-ranked YouTube videos for every learning milestone"
-              />
-              <FeatureCard
-                icon="⚔️"
-                title="Adaptive Challenges"
-                description="Exercises that evolve with your growing mastery"
-              />
-            </div>
-          </motion.section>
+          <>
+            <HowItWorksSection />
+            <ProductPreviewSection />
+            <OutcomesSection />
+            <FinalCtaSection />
+          </>
         )}
       </div>
     </>
-  );
-}
-
-interface FeatureCardProps {
-  icon: string;
-  title: string;
-  description: string;
-}
-
-function FeatureCard({ icon, title, description }: FeatureCardProps) {
-  return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className="organic-card p-6 rounded-xl text-center border border-border-moderate"
-    >
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="font-heading font-semibold text-warm-50 mb-2">{title}</h3>
-      <p className="text-sm text-warm-200">{description}</p>
-    </motion.div>
   );
 }

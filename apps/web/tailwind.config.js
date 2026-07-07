@@ -17,8 +17,11 @@ export default {
         // Text
         warm: {
           50:  '#F0EAE0',  // text-primary (warm off-white)
+          100: '#D4CDC2',  // text-primary/secondary midpoint
           200: '#B8AFA3',  // text-secondary (muted tan)
+          300: '#9B9186',  // text-secondary/muted midpoint
           400: '#7D7268',  // text-muted (warm gray)
+          500: '#6A6056',  // text-muted/disabled midpoint
           600: '#564E44',  // text-disabled (dim)
         },
 

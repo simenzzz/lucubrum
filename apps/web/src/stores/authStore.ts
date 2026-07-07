@@ -5,7 +5,6 @@ import {
   clearAuthStorage,
   getPKCEState,
   removePKCEState,
-  getOAuthProvider,
   removeOAuthProvider,
 } from '@/lib/tokenStorage';
 import { notifyLogout, clearLegacyTokens } from '@/api/client';
@@ -21,7 +20,6 @@ interface AuthState {
 
   // Actions
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, name: string, password: string) => Promise<void>;
   handleCallback: (code: string, state: string) => Promise<void>;
@@ -49,19 +47,6 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const { authorization_url } = await authApi.getGoogleAuthUrl();
-          window.location.href = authorization_url;
-        } catch (error) {
-          set({ error: (error as Error).message, isLoading: false });
-        }
-      },
-
-      /**
-       * Initiate Facebook OAuth login
-       */
-      loginWithFacebook: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const { authorization_url } = await authApi.getFacebookAuthUrl();
           window.location.href = authorization_url;
         } catch (error) {
           set({ error: (error as Error).message, isLoading: false });
@@ -97,7 +82,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       /**
-       * Handle OAuth callback — routes to correct provider based on sessionStorage
+       * Handle Google OAuth callback — verifies PKCE state, then exchanges the code
        */
       handleCallback: async (code: string, state: string) => {
         set({ isLoading: true, error: null });
@@ -109,13 +94,9 @@ export const useAuthStore = create<AuthState>()(
           removePKCEState();
 
           clearLegacyTokens();
-
-          const provider = getOAuthProvider() || 'google';
           removeOAuthProvider();
 
-          const response = provider === 'facebook'
-            ? await authApi.exchangeFacebookCallback({ code, state })
-            : await authApi.callback({ code, state });
+          const response = await authApi.callback({ code, state });
 
           set({ user: response.user, isAuthenticated: true, isLoading: false, error: null });
         } catch (error) {

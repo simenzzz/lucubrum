@@ -32,7 +32,7 @@ export function RoadmapControls({
         onClick={onZoomIn}
         disabled={zoom >= 2}
         aria-label="Zoom in"
-        className="h-8 w-8"
+        className="h-10 w-10 sm:h-8 sm:w-8"
       >
         <ZoomIn className="h-4 w-4" />
       </Button>
@@ -47,7 +47,7 @@ export function RoadmapControls({
         onClick={onZoomOut}
         disabled={zoom <= 0.25}
         aria-label="Zoom out"
-        className="h-8 w-8"
+        className="h-10 w-10 sm:h-8 sm:w-8"
       >
         <ZoomOut className="h-4 w-4" />
       </Button>
@@ -59,7 +59,7 @@ export function RoadmapControls({
         size="icon"
         onClick={onFit}
         aria-label="Fit to screen"
-        className="h-8 w-8"
+        className="h-10 w-10 sm:h-8 sm:w-8"
       >
         <Maximize className="h-4 w-4" />
       </Button>
@@ -69,7 +69,7 @@ export function RoadmapControls({
         size="icon"
         onClick={onReset}
         aria-label="Reset view"
-        className="h-8 w-8"
+        className="h-10 w-10 sm:h-8 sm:w-8"
       >
         <RotateCcw className="h-4 w-4" />
       </Button>

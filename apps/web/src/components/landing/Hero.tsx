@@ -2,6 +2,8 @@
  * Hero component with warm radial gradient and organic styling
  */
 import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
+import { RoadmapPreview } from './RoadmapPreview';
 
 export function Hero() {
   return (
@@ -42,7 +44,7 @@ export function Hero() {
           className="max-w-3xl mx-auto space-y-6"
         >
           {/* Main heading */}
-          <h1 className="font-heading text-5xl md:text-7xl font-bold text-warm-50 tracking-tight">
+          <h1 className="font-heading text-4xl md:text-6xl font-bold text-warm-50 tracking-tight">
             Shape Your
             <span className="block text-gradient-amber mt-2">
               Learning Path
@@ -50,40 +52,27 @@ export function Hero() {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg md:text-xl text-warm-200 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-warm-200 max-w-2xl mx-auto leading-relaxed">
             Build a personalized learning roadmap powered by AI. Curated resources,
             adaptive exercises, and mastery tracking to guide your growth.
           </p>
-
-          {/* Decorative organic element */}
-          <motion.div
-            className="w-16 h-16 mx-auto mt-8"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <svg viewBox="0 0 64 64" className="w-full h-full text-amber">
-              <circle
-                cx="32"
-                cy="32"
-                r="30"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                opacity="0.3"
-              />
-              <circle
-                cx="32"
-                cy="32"
-                r="20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                opacity="0.2"
-              />
-              <circle cx="32" cy="32" r="4" fill="currentColor" opacity="0.6" />
-            </svg>
-          </motion.div>
         </motion.div>
+
+        <RoadmapPreview />
+        <p className="mt-4 text-xs text-warm-400 uppercase tracking-wide text-center">
+          Example roadmap — yours is generated from your topic
+        </p>
+
+        <motion.a
+          href="#how-it-works"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="mt-12 inline-flex flex-col items-center gap-1 text-xs text-warm-400 hover:text-amber transition-colors"
+        >
+          <span className="uppercase tracking-wide">See how it works</span>
+          <ChevronDown className="w-4 h-4 animate-bounce" style={{ animationDuration: '2s' }} />
+        </motion.a>
       </div>
     </section>
   );

@@ -81,25 +81,13 @@ export function removePKCEState(): void {
 }
 
 /**
- * Store OAuth provider name in sessionStorage (e.g. 'google', 'facebook')
+ * Store OAuth provider name in sessionStorage (currently only 'google')
  */
 export function setOAuthProvider(provider: string): void {
   try {
     sessionStorage.setItem(STORAGE_KEYS.OAUTH_PROVIDER, provider);
   } catch (error) {
     console.error('Failed to store OAuth provider:', error);
-  }
-}
-
-/**
- * Get OAuth provider name from sessionStorage
- */
-export function getOAuthProvider(): string | null {
-  try {
-    return sessionStorage.getItem(STORAGE_KEYS.OAUTH_PROVIDER);
-  } catch (error) {
-    console.error('Failed to retrieve OAuth provider:', error);
-    return null;
   }
 }
 

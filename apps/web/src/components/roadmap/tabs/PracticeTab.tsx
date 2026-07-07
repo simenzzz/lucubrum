@@ -6,12 +6,6 @@ import { ExerciseCard } from '@/components/exercises/ExerciseCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { PlanNode } from '@/types/api.types';
 
-/**
- * Known limitation: mastery passed to ExerciseCard is from mount time.
- * If multiple exercises are completed quickly, delta calculations may use
- * stale data. Proper fix requires refetching mastery after each attempt.
- */
-
 interface PracticeTabProps {
   node: PlanNode;
   planId: string;
@@ -25,6 +19,9 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [isConfiguringGeneration, setIsConfiguringGeneration] = useState(false);
+  // Tracks mastery as it updates within this session, since the `mastery` prop
+  // reflects the value at mount and doesn't refetch between rapid completions.
+  const [liveMastery, setLiveMastery] = useState(mastery);
 
   // Fetch existing exercises
   const {
@@ -71,8 +68,11 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
     setCurrentExerciseIndex(0);
   };
 
-  const handleExerciseComplete = (exerciseId: string) => {
+  const handleExerciseComplete = (exerciseId: string, newMastery?: number) => {
     setCompletedExercises((prev) => new Set(prev).add(exerciseId));
+    if (newMastery !== undefined) {
+      setLiveMastery(newMastery);
+    }
   };
 
   const isLoading = exercisesLoading || generateMutation.isPending;
@@ -181,9 +181,9 @@ export function PracticeTab({ node, planId, mastery }: PracticeTabProps) {
           exercise={currentExercise}
           planId={planId}
           nodeId={node.node_id}
-          onComplete={() => handleExerciseComplete(currentExercise.id)}
+          onComplete={(newMastery) => handleExerciseComplete(currentExercise.id, newMastery)}
           isCompleted={completedExercises.has(currentExercise.id)}
-          currentMastery={mastery}
+          currentMastery={liveMastery}
         />
       ) : null}
 

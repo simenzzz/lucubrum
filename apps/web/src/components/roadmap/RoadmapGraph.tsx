@@ -288,8 +288,8 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
         className="absolute bottom-4 right-4 z-10"
       />
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 z-10 glass-panel p-3">
+      {/* Legend — hidden on small screens to leave more room for panning/zooming */}
+      <div className="hidden sm:block absolute bottom-4 left-4 z-10 glass-panel p-3">
         <div className="text-xs font-medium text-warm-400 mb-2">Legend</div>
         <div className="space-y-1.5">
           <LegendItem color="locked" label="Locked" />

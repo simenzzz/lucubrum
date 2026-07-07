@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, Menu, X, LogOut, User, Map } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 
 export function Navbar() {
@@ -9,6 +10,7 @@ export function Navbar() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isPro = user?.roles?.includes('pro') ?? false;
 
   const navLinks = [
     { name: 'Create', href: '/', icon: Sparkles },
@@ -89,11 +91,15 @@ export function Navbar() {
                   <span className="text-sm text-warm-200">
                     {user?.name || user?.email?.split('@')[0]}
                   </span>
+                  <Badge variant={isPro ? 'available' : 'secondary'} size="sm">
+                    {isPro ? 'Pro' : 'Free'}
+                  </Badge>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleLogout}
                     title="Sign out"
+                    aria-label="Sign out"
                   >
                     <LogOut className="h-4 w-4" />
                   </Button>
@@ -151,14 +157,20 @@ export function Navbar() {
               <div className="flex items-center justify-between px-4 py-2 mt-2 border-t border-border-moderate">
                 {isAuthenticated ? (
                   <>
-                    <span className="text-sm text-warm-200">
-                      {user?.name || user?.email?.split('@')[0]}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-warm-200">
+                        {user?.name || user?.email?.split('@')[0]}
+                      </span>
+                      <Badge variant={isPro ? 'available' : 'secondary'} size="sm">
+                        {isPro ? 'Pro' : 'Free'}
+                      </Badge>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleLogout}
                       title="Sign out"
+                      aria-label="Sign out"
                     >
                       <LogOut className="h-4 w-4" />
                     </Button>

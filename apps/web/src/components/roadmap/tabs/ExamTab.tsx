@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { ExerciseCard } from '@/components/exercises/ExerciseCard';
 import { EXERCISE_MASTERY_CAP, MASTERY_THRESHOLD } from '@/constants/mastery';
 import { useStartExam, useSubmitExam } from '@/hooks/usePlan';
@@ -38,6 +46,8 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   const [showResults, setShowResults] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   const startExamMutation = useStartExam();
   const submitExamMutation = useSubmitExam();
@@ -154,10 +164,13 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
   };
 
   const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel the exam? Your progress will be lost.')) {
-      cancelExam();
-      setShowResults(false);
-    }
+    setShowCancelConfirm(true);
+  };
+
+  const confirmCancel = () => {
+    cancelExam();
+    setShowResults(false);
+    setShowCancelConfirm(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -338,7 +351,8 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
             <Button
               onClick={() => {
                 const unanswered = getUnansweredCount();
-                if (unanswered > 0 && !confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
+                if (unanswered > 0) {
+                  setShowSubmitConfirm(true);
                   return;
                 }
                 handleSubmit();
@@ -357,6 +371,50 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
             </Button>
           )}
         </div>
+
+        <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+          <DialogContent className="p-6">
+            <DialogHeader>
+              <DialogTitle>Cancel exam?</DialogTitle>
+              <DialogDescription>
+                Your progress will be lost and you'll need to start over.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCancelConfirm(false)}>
+                Keep Going
+              </Button>
+              <Button variant="destructive" onClick={confirmCancel}>
+                Cancel Exam
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+          <DialogContent className="p-6">
+            <DialogHeader>
+              <DialogTitle>Unanswered questions</DialogTitle>
+              <DialogDescription>
+                You have {getUnansweredCount()} unanswered question(s). Submit anyway?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSubmitConfirm(false)}>
+                Go Back
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setShowSubmitConfirm(false);
+                  handleSubmit();
+                }}
+              >
+                Submit Anyway
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

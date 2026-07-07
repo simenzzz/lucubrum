@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { LoadingSkeleton } from './LoadingSkeleton';
 
@@ -8,6 +8,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, isHydrated } = useAuthStore();
+  const location = useLocation();
 
   // Wait for both hydration AND any refresh operation to complete
   // This prevents flash of authenticated/unauthenticated states
@@ -16,7 +17,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    const redirectTo = `${location.pathname}${location.search}`;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTo)}`} replace />;
   }
 
   return <>{children}</>;

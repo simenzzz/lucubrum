@@ -5,7 +5,7 @@ export interface GoogleAuthRequest {
   redirect_uri?: string;
 }
 
-/** Provider-agnostic OAuth initiation response (Google, Facebook) */
+/** Google OAuth initiation response */
 export interface OAuthInitResponse {
   authorization_url: string;
   state: string;

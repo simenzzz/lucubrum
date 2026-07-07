@@ -14,7 +14,7 @@ interface ExerciseCardProps {
   exercise: Exercise | ExamExercise;
   planId: string;
   nodeId: string;
-  onComplete?: () => void;
+  onComplete?: (newMastery?: number) => void;
   isCompleted?: boolean;
   examMode?: boolean;
   savedAnswer?: unknown;
@@ -60,6 +60,10 @@ export function ExerciseCard({
   const [userAnswer, setUserAnswer] = useState<unknown>(savedAnswer);
   const [result, setResult] = useState<AttemptResponse | null>(null);
   const [showResult, setShowResult] = useState(false);
+  // Snapshot mastery as it was before this attempt, so the delta shown in
+  // GradeResult isn't computed against the post-attempt value once the
+  // parent's currentMastery updates on the same render.
+  const [attemptStartMastery, setAttemptStartMastery] = useState(currentMastery);
 
   const submitMutation = useSubmitAttempt();
 
@@ -89,6 +93,7 @@ export function ExerciseCard({
     }
 
     // Normal practice mode - submit for grading
+    setAttemptStartMastery(currentMastery);
     try {
       const fullEx = exercise as Exercise;
       const response = await submitMutation.mutateAsync({
@@ -108,7 +113,7 @@ export function ExerciseCard({
       setShowResult(true);
 
       if (onComplete) {
-        onComplete();
+        onComplete(response.mastery.score);
       }
     } catch (error) {
       console.error('Failed to submit attempt:', error);
@@ -167,7 +172,7 @@ export function ExerciseCard({
 
         {/* Show result after submission (practice mode only) */}
         {showResult && result && !examMode && (
-          <GradeResult result={result} explanation={(exercise as Exercise).rubric} previousMastery={currentMastery} />
+          <GradeResult result={result} explanation={(exercise as Exercise).rubric} previousMastery={attemptStartMastery} />
         )}
       </CardContent>
     </Card>

@@ -35,21 +35,6 @@ export const authApi = {
   },
 
   /**
-   * Get Facebook OAuth authorization URL
-   */
-  async getFacebookAuthUrl(): Promise<OAuthInitResponse> {
-    try {
-      const response = await apiClient.get('/auth/facebook');
-      const data = safeParseWithLogging(OAuthInitResponseSchema, response.data, 'getFacebookAuthUrl');
-      setPKCEState(data.state);
-      setOAuthProvider('facebook');
-      return data;
-    } catch (error) {
-      throw new Error(getApiError(error));
-    }
-  },
-
-  /**
    * Exchange Google OAuth code for tokens
    * Server sets HTTP-only cookies, returns user data
    */
@@ -57,18 +42,6 @@ export const authApi = {
     try {
       const response = await apiClient.post('/auth/callback', request);
       return safeParseWithLogging(AuthCallbackResponseSchema, response.data, 'callback');
-    } catch (error) {
-      throw new Error(getApiError(error));
-    }
-  },
-
-  /**
-   * Exchange Facebook OAuth code for tokens
-   */
-  async exchangeFacebookCallback(request: AuthCallbackRequest): Promise<AuthCallbackResponse> {
-    try {
-      const response = await apiClient.post('/auth/facebook/callback', request);
-      return safeParseWithLogging(AuthCallbackResponseSchema, response.data, 'exchangeFacebookCallback');
     } catch (error) {
       throw new Error(getApiError(error));
     }

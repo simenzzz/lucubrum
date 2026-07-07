@@ -16,8 +16,14 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <div className="min-h-screen bg-hearth-900">
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-amber focus:text-hearth-900 focus:font-semibold"
+          >
+            Skip to main content
+          </a>
           <Navbar />
-          <main className="min-h-[calc(100vh-64px)]">
+          <main id="main-content" className="min-h-[calc(100vh-64px)]">
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />

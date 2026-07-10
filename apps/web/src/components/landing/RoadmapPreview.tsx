@@ -15,8 +15,8 @@ interface PreviewNode {
 
 const PREVIEW_NODES: PreviewNode[] = [
   { title: 'Fundamentals', status: 'mastered', mastery: 1 },
-  { title: 'Core Concepts', status: 'in_progress', mastery: 0.62 },
-  { title: 'Advanced Topics', status: 'available', mastery: 0 },
+  { title: 'Core Concepts', status: 'in_progress', mastery: 2 / 3 },
+  { title: 'Advanced Topics', status: 'available', mastery: 1 / 3 },
   { title: 'Real Projects', status: 'capstone', mastery: 0 },
 ];
 

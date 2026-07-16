@@ -2,6 +2,7 @@
  * "How it works" — 4 real product steps, each with a small live-styled
  * visual borrowed from the actual roadmap/node/mastery visual language.
  */
+import { Fragment } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Lock, Sparkles, CheckCircle2, BookOpen, Dumbbell, GraduationCap, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,7 +57,7 @@ function TabsVisual() {
       {TAB_PILLS.map(({ icon: Icon, label }) => (
         <div
           key={label}
-          className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-lg bg-hearth-700 border border-border-moderate text-[0.7rem] text-warm-200"
+          className="flex items-center justify-center gap-1 px-1.5 py-1 rounded-lg bg-hearth-700 border border-border-moderate text-xs text-warm-200"
         >
           <Icon className="w-3 h-3 text-amber shrink-0" aria-hidden="true" />
           {label}
@@ -129,7 +130,7 @@ export function HowItWorksSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-100px' }}
         transition={{ duration: 0.6 }}
-        className="text-center max-w-2xl mx-auto mb-14"
+        className="text-center max-w-2xl mx-auto mb-12"
       >
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-warm-50">
           How it works
@@ -139,15 +140,19 @@ export function HowItWorksSection() {
         </p>
       </motion.div>
 
-      <div className="flex flex-col md:flex-row gap-4 md:items-stretch max-w-6xl mx-auto">
+      {/* 1 column on mobile, 2x2 at md (4-across is too cramped there), and a
+          4-across row with connector arrows at lg. Cards and arrows are grid
+          siblings so every card gets an identical column — nesting the arrow
+          inside a card wrapper made the last card wider than the rest. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] gap-4 max-w-6xl mx-auto">
         {STEPS.map((step, i) => (
-          <div key={step.number} className="flex flex-col md:flex-row md:flex-1 items-stretch gap-4">
+          <Fragment key={step.number}>
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-100px' }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="organic-card rounded-xl border border-border-moderate p-5 flex-1 flex flex-col"
+              className="organic-card rounded-xl border border-border-moderate p-5 flex flex-col h-full"
             >
               <div className="flex items-center gap-2 mb-3 min-h-[2.5rem]">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber/15 text-amber text-xs font-mono font-semibold shrink-0">
@@ -156,16 +161,17 @@ export function HowItWorksSection() {
                 <h3 className="font-heading font-semibold text-warm-50 text-sm leading-tight">{step.title}</h3>
               </div>
               <p className="text-sm text-warm-200 mb-4 flex-1">{step.description}</p>
-              <div className="mt-auto">{step.visual}</div>
+              {/* Fixed-height envelope keeps the four visuals level across cards */}
+              <div className="mt-auto flex flex-col justify-center md:min-h-[96px]">{step.visual}</div>
             </motion.div>
 
             {i < STEPS.length - 1 && (
               <ArrowRight
-                className="hidden md:block w-4 h-4 text-amber/40 shrink-0 self-center"
+                className="hidden lg:block w-4 h-4 text-amber/40 shrink-0 self-center"
                 aria-hidden="true"
               />
             )}
-          </div>
+          </Fragment>
         ))}
       </div>
     </section>

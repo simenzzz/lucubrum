@@ -4,7 +4,9 @@
 
 @layer base {
   :root {
-    /* Warm Hearth Dark palette */
+    /* Warm Hearth Dark palette.
+       NOTE: these values (and the shadcn HSL vars below) mirror the hex palette
+       in tailwind.config.js. If you change a color, update all three places. */
     --color-bg-primary:    #1A1614;
     --color-bg-secondary:  #231F1B;
     --color-bg-tertiary:   #2C2722;
@@ -121,24 +123,21 @@
       0 0 12px rgba(212, 165, 90, 0.2);
   }
 
-  /* Typography hierarchy */
+  /* Typography hierarchy.
+     Note: no font sizes here on purpose — global heading sizes silently blow up
+     any <h1>–<h3> that forgets an explicit text-* class (this caused uneven card
+     titles on the landing page). Components always set their own size. */
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading tracking-tight text-warm-50;
     text-wrap: balance;
   }
 
   h1 {
-    @apply text-4xl sm:text-5xl lg:text-6xl font-bold;
     letter-spacing: -0.02em;
   }
 
   h2 {
-    @apply text-3xl sm:text-4xl font-semibold;
     letter-spacing: -0.015em;
-  }
-
-  h3 {
-    @apply text-2xl sm:text-3xl font-semibold;
   }
 
   p {

@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+// NOTE: the palette below is also mirrored in src/index.css as `--color-*` custom
+// properties and shadcn HSL variables. If you change a color here, update both.
 export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],

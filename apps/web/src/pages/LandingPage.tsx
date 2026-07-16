@@ -5,6 +5,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Hero } from '@/components/landing/Hero';
 import { TopicInput } from '@/components/landing/TopicInput';
 import { PlanConfigForm } from '@/components/landing/PlanConfigForm';
@@ -32,6 +34,8 @@ export function LandingPage() {
   const [showConfig, setShowConfig] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Remembered so the error state's "Try Again" can re-submit the same request
+  const [lastFormData, setLastFormData] = useState<PlanFormData | null>(null);
 
   const createPlanMutation = useCreatePlan();
 
@@ -76,6 +80,8 @@ export function LandingPage() {
       return;
     }
 
+    setLastFormData(data);
+    setErrorMessage(null);
     setIsCreating(true);
 
     try {
@@ -159,14 +165,27 @@ export function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center mt-6"
                 >
-                  <button
-                    onClick={handleLogin}
-                    className="text-amber hover:text-amber/70 underline underline-offset-4 transition-colors"
-                  >
+                  <Button variant="link" onClick={handleLogin} className="underline">
                     Sign in to continue
-                  </button>
+                  </Button>
                 </motion.div>
               )}
+
+              {/* Scroll cue to the explainer sections */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                className="text-center mt-10"
+              >
+                <a
+                  href="#how-it-works"
+                  className="inline-flex flex-col items-center gap-1 text-xs text-warm-400 hover:text-amber transition-colors"
+                >
+                  <span className="uppercase tracking-wide">See how it works</span>
+                  <ChevronDown className="w-4 h-4 animate-bounce" style={{ animationDuration: '2s' }} />
+                </a>
+              </motion.div>
             </motion.div>
           )}
 
@@ -190,7 +209,6 @@ export function LandingPage() {
                 onSubmit={handlePlanSubmit}
                 isLoading={createPlanMutation.isPending}
                 topic={topic}
-                onTopicChange={setTopic}
               />
             </motion.div>
           )}
@@ -215,7 +233,15 @@ export function LandingPage() {
             >
               <ErrorState
                 message={errorMessage}
-                onRetry={() => setErrorMessage(null)}
+                onRetry={() => {
+                  // Re-submit the same request; fall back to the config form if
+                  // we somehow have no remembered data
+                  if (lastFormData) {
+                    void handlePlanSubmit(lastFormData);
+                  } else {
+                    setErrorMessage(null);
+                  }
+                }}
                 onChangeTopic={() => {
                   setErrorMessage(null);
                   setShowConfig(false);

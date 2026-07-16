@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { Navbar } from './components/layout/Navbar';
+import { Footer } from './components/layout/Footer';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { ToastContainer } from './components/layout/ToastContainer';
 import { LandingPage } from './pages/LandingPage';
@@ -61,6 +62,7 @@ function App() {
               <Route path="*" element={<Navigate to="/404" replace />} />
             </Routes>
           </main>
+          <Footer />
           <ToastContainer />
         </div>
       </BrowserRouter>

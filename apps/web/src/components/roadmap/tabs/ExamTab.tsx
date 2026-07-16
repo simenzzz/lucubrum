@@ -114,6 +114,9 @@ export function ExamTab({ node, planId, mastery }: ExamTabProps) {
     }, 1000);
 
     return () => clearInterval(interval);
+    // Intentionally NOT depending on the full examState: answer updates mutate it
+    // every keystroke and would restart the countdown interval each time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examState?.sessionId, examState?.isComplete, examState?.timeLimitSeconds]);
 
   const handleStartExam = async () => {

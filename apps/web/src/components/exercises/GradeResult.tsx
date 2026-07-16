@@ -18,10 +18,11 @@ export function GradeResult({ result, explanation, previousMastery }: GradeResul
   const masteryScore = result.mastery.score;
   const masteryDelta = masteryScore - (previousMastery ?? masteryScore);
 
+  // Full class names so Tailwind's content scanner can see them
   const getResultColor = () => {
-    if (isCorrect) return 'sage';
-    if (isPartiallyCorrect) return 'amber';
-    return 'rose';
+    if (isCorrect) return 'text-sage';
+    if (isPartiallyCorrect) return 'text-amber';
+    return 'text-rose';
   };
 
   const getResultIcon = () => {
@@ -52,7 +53,7 @@ export function GradeResult({ result, explanation, previousMastery }: GradeResul
         <div className="flex items-center gap-3">
           {getResultIcon()}
           <div>
-            <h4 className={cn('font-heading font-semibold', `text-${getResultColor()}`)}>
+            <h4 className={cn('font-heading font-semibold', getResultColor())}>
               {getResultMessage()}
             </h4>
             <p className="text-sm text-warm-400">Score: {Math.round(score * 100)}%</p>

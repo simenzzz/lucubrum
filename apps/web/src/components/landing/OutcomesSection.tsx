@@ -56,7 +56,7 @@ export function OutcomesSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-100px' }}
         transition={{ duration: 0.6 }}
-        className="text-center max-w-2xl mx-auto mb-14"
+        className="text-center max-w-2xl mx-auto mb-12"
       >
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-warm-50">
           What you'll walk away with
@@ -82,7 +82,7 @@ export function OutcomesSection() {
                   <div className={cn('inline-flex p-2.5 rounded-xl mb-4', accent.bg)}>
                     <outcome.icon className={cn('w-5 h-5', accent.text)} />
                   </div>
-                  <h3 className="font-heading font-semibold text-warm-50 mb-2">{outcome.title}</h3>
+                  <h3 className="font-heading text-base font-semibold text-warm-50 mb-2">{outcome.title}</h3>
                   <p className="text-sm text-warm-200">{outcome.description}</p>
                 </CardContent>
               </Card>

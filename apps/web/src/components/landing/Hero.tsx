@@ -2,7 +2,6 @@
  * Hero component with warm radial gradient and organic styling
  */
 import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
 import { RoadmapPreview } from './RoadmapPreview';
 
 export function Hero() {
@@ -44,7 +43,7 @@ export function Hero() {
           className="max-w-3xl mx-auto space-y-6"
         >
           {/* Main heading */}
-          <h1 className="font-heading text-4xl md:text-6xl font-bold text-warm-50 tracking-tight">
+          <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold text-warm-50 tracking-tight">
             Shape Your
             <span className="block text-gradient-amber mt-2">
               Learning Path
@@ -62,17 +61,8 @@ export function Hero() {
         <p className="mt-4 text-xs text-warm-400 uppercase tracking-wide text-center">
           Example roadmap — yours is generated from your topic
         </p>
-
-        <motion.a
-          href="#how-it-works"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-          className="mt-12 inline-flex flex-col items-center gap-1 text-xs text-warm-400 hover:text-amber transition-colors"
-        >
-          <span className="uppercase tracking-wide">See how it works</span>
-          <ChevronDown className="w-4 h-4 animate-bounce" style={{ animationDuration: '2s' }} />
-        </motion.a>
+        {/* The scroll cue lives in LandingPage, below the topic input, so the
+            input's -mt-20 overlap never collides with it */}
       </div>
     </section>
   );

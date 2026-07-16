@@ -116,7 +116,7 @@ const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           'placeholder:text-warm-600/50 outline-none transition-all duration-300',
           'focus:ring-0',
           error
-            ? 'border-rose-500/50 focus:border-rose-400'
+            ? 'border-rose/50 focus:border-rose-light'
             : 'border-warm-400/20 focus:border-amber/60',
         ].join(' ')}
         {...rest}
@@ -127,7 +127,7 @@ const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-[10px] text-rose-400 mt-1.5 tracking-wide"
+            className="text-[10px] text-rose-light mt-1.5 tracking-wide"
           >
             {error}
           </motion.p>
@@ -205,7 +205,7 @@ function SignInForm({ onSuccess }: { onSuccess: () => void }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="text-[11px] text-rose-400 tracking-wide border border-rose-500/20 bg-rose-500/5 rounded-sm px-3 py-2.5"
+            className="text-[11px] text-rose-light tracking-wide border border-rose/20 bg-rose/5 rounded-sm px-3 py-2.5"
           >
             {error}
           </motion.div>
@@ -285,7 +285,7 @@ function RegisterForm({ onSuccess, onSwitchToSignIn }: { onSuccess: () => void; 
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="text-[11px] text-rose-400 tracking-wide border border-rose-500/20 bg-rose-500/5 rounded-sm px-3 py-2.5"
+            className="text-[11px] text-rose-light tracking-wide border border-rose/20 bg-rose/5 rounded-sm px-3 py-2.5"
           >
             <p>{error}</p>
             <button
@@ -448,7 +448,7 @@ export function LoginPage() {
           />
 
           <h1
-            className="text-[52px] font-semibold text-warm-50 leading-[1.05] mb-6"
+            className="text-5xl font-semibold text-warm-50 leading-[1.05] mb-6"
             style={{ fontFamily: "'Cinzel', 'Georgia', serif", letterSpacing: '-0.01em' }}
           >
             Lucubrum

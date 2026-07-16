@@ -2,7 +2,7 @@
  * Error state component for plan generation failures
  */
 import { motion } from 'framer-motion';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ErrorStateProps {
@@ -41,8 +41,8 @@ export function ErrorState({ message, onRetry, onChangeTopic }: ErrorStateProps)
       {/* Action buttons */}
       <div className="flex gap-3 mt-8">
         <Button variant="primary" onClick={onRetry}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Try Again
         </Button>
         <Button variant="outline" onClick={onChangeTopic}>
           <ArrowLeft className="h-4 w-4 mr-2" />

@@ -81,7 +81,7 @@ export function RoadmapPage() {
       <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-rose mx-auto mb-4" />
-          <h1 className="font-heading text-2xl text-warm-50 mb-2">Invalid Plan</h1>
+          <h1 className="font-heading text-2xl font-bold text-warm-50 mb-2">Invalid Plan</h1>
           <p className="text-warm-400 mb-4">No plan ID was provided.</p>
           <Link to="/">
             <Button variant="primary">Return Home</Button>
@@ -107,7 +107,7 @@ export function RoadmapPage() {
       <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-rose mx-auto mb-4" />
-          <h1 className="font-heading text-2xl text-warm-50 mb-2">Failed to Load Plan</h1>
+          <h1 className="font-heading text-2xl font-bold text-warm-50 mb-2">Failed to Load Plan</h1>
           <p className="text-warm-400 mb-4">
             {getSafeErrorMessage(planError, 'Failed to load your learning roadmap.')}
           </p>

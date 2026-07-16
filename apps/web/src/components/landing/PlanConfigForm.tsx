@@ -15,6 +15,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import {
   Select,
@@ -40,7 +41,6 @@ interface PlanConfigFormProps {
   onSubmit: (data: PlanFormData) => void;
   isLoading?: boolean;
   topic: string;
-  onTopicChange?: (topic: string) => void;
 }
 
 export function PlanConfigForm({
@@ -69,6 +69,12 @@ export function PlanConfigForm({
       transition={{ duration: 0.5, delay: 0.2 }}
       className="w-full max-w-2xl mx-auto mt-8"
     >
+      {/* Chosen topic, so the config step keeps its context visible */}
+      <div className="text-center mb-8">
+        <p className="text-xs text-warm-500 uppercase tracking-wide mb-1">Charting</p>
+        <h2 className="font-heading text-2xl sm:text-3xl font-bold text-warm-50 break-words">{topic}</h2>
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
           {/* Experience Level Selection */}
@@ -119,7 +125,7 @@ export function PlanConfigForm({
                           </div>
 
                           {/* Title */}
-                          <h3 className={`font-heading font-semibold ${badge.color} mb-1`}>
+                          <h3 className={`font-heading text-lg font-semibold ${badge.color} mb-1`}>
                             {badge.label}
                           </h3>
 
@@ -141,6 +147,7 @@ export function PlanConfigForm({
                     ))}
                   </div>
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -181,6 +188,7 @@ export function PlanConfigForm({
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage />
               </FormItem>
             )}
           />

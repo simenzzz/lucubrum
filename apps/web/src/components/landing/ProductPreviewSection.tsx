@@ -39,12 +39,12 @@ function LearnPreview() {
           <div className="flex gap-4 p-3">
             <div className="relative flex-shrink-0 w-32 sm:w-40 h-20 sm:h-24 rounded-lg overflow-hidden bg-gradient-to-br from-hearth-600 to-hearth-700 flex items-center justify-center">
               <Play className="w-7 h-7 text-warm-400" />
-              <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-hearth-900/80 text-warm-50 text-[10px] rounded font-mono">
+              <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-hearth-900/80 text-warm-50 text-xs rounded font-mono">
                 {video.duration}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h5 className="font-medium text-sm text-warm-50 line-clamp-2">{video.title}</h5>
+              <p className="font-medium text-sm text-warm-50 line-clamp-2">{video.title}</p>
               <div className="flex items-center gap-3 mt-2 text-xs text-warm-400">
                 <span className="flex items-center gap-1">
                   <User className="w-3 h-3" />
@@ -145,7 +145,7 @@ export function ProductPreviewSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-100px' }}
         transition={{ duration: 0.6 }}
-        className="text-center max-w-2xl mx-auto mb-10"
+        className="text-center max-w-2xl mx-auto mb-12"
       >
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-warm-50">
           Every node, three ways to learn it

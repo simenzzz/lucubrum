@@ -51,6 +51,14 @@ export default [
     },
   },
   {
+    // shadcn/ui primitives co-export cva variants alongside components, and
+    // test-utils re-exports Testing Library helpers — neither is hot-reloaded UI.
+    files: ['src/components/ui/**/*.{ts,tsx}', 'src/tests/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['**/*.js'],
     languageOptions: {
       globals: {

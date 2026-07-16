@@ -2,10 +2,8 @@ import apiClient, { getApiError } from './client';
 import {
   CreatePlanResponseSchema,
   GetPlanResponseSchema,
-  BackendResourcesResponseSchema,
   ExerciseSetResponseSchema,
   AttemptResponseSchema,
-  NodeMasteryResponseSchema,
   PlanMasteryOverviewResponseSchema,
   UserPlansResponseSchema,
   NodeLearnContentResponseSchema,
@@ -17,12 +15,10 @@ import {
 import type {
   CreatePlanRequest,
   CreatePlanResponse,
-  ResourceAttachmentResponse,
   ExerciseSetResponse,
   GenerateExercisesRequest,
   SubmitAttemptRequest,
   AttemptResponse,
-  NodeMasteryResponse,
   PlanMasteryOverviewResponse,
   NextNodeRecommendationResponse,
   UserPlansResponse,
@@ -40,31 +36,7 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-type BackendResourcesResponse = z.infer<typeof BackendResourcesResponseSchema>;
 type NodeLearnContentResponse = z.infer<typeof NodeLearnContentResponseSchema>;
-
-function transformResourcesResponse(
-  data: BackendResourcesResponse,
-  planId: string,
-): ResourceAttachmentResponse {
-  return {
-    plan_id: planId,
-    resources: Object.entries(data.resources_by_node).map(([nodeId, selected]) => ({
-      node_id: nodeId,
-      resources: selected.map((r) => ({
-        video_id: r.videoId,
-        title: r.title,
-        channel: r.channelTitle,
-        duration_seconds: r.durationSeconds,
-        thumbnail_url: `https://i.ytimg.com/vi/${r.videoId}/mqdefault.jpg`,
-        relevance_score: r.rankScore,
-        url: r.url,
-        type: r.type,
-        rationale: r.rationale,
-      })),
-    })),
-  };
-}
 
 function transformLearnContentResponse(
   data: NodeLearnContentResponse,
@@ -118,39 +90,6 @@ export const planApi = {
         plan_id: planId,
         ...parsed.plan,
       };
-    } catch (error) {
-      throw new Error(getApiError(error));
-    }
-  },
-
-  /**
-   * Attach YouTube resources to a plan
-   */
-  async attachResources(planId: string, options?: RequestOptions): Promise<ResourceAttachmentResponse> {
-    try {
-      const response = await apiClient.post(
-        `/api/plan/${planId}/resources`,
-        null,
-        { signal: options?.signal }
-      );
-      const validated = safeParseWithLogging(BackendResourcesResponseSchema, response.data, 'planApi.attachResources');
-      return transformResourcesResponse(validated, planId);
-    } catch (error) {
-      throw new Error(getApiError(error));
-    }
-  },
-
-  /**
-   * Get resources for a plan
-   */
-  async getResources(planId: string, options?: RequestOptions): Promise<ResourceAttachmentResponse> {
-    try {
-      const response = await apiClient.get(
-        `/api/plan/${planId}/resources`,
-        { signal: options?.signal }
-      );
-      const validated = safeParseWithLogging(BackendResourcesResponseSchema, response.data, 'planApi.getResources');
-      return transformResourcesResponse(validated, planId);
     } catch (error) {
       throw new Error(getApiError(error));
     }
@@ -277,21 +216,6 @@ export const masteryApi = {
         { signal: options?.signal }
       );
       return safeParseWithLogging(AttemptResponseSchema, response.data, 'masteryApi.submitAttempt');
-    } catch (error) {
-      throw new Error(getApiError(error));
-    }
-  },
-
-  /**
-   * Get mastery for a specific node
-   */
-  async getNodeMastery(planId: string, nodeId: string, options?: RequestOptions): Promise<NodeMasteryResponse> {
-    try {
-      const response = await apiClient.get<NodeMasteryResponse>(
-        `/api/plan/${planId}/nodes/${nodeId}/mastery`,
-        { signal: options?.signal }
-      );
-      return safeParseWithLogging(NodeMasteryResponseSchema, response.data, 'masteryApi.getNodeMastery');
     } catch (error) {
       throw new Error(getApiError(error));
     }

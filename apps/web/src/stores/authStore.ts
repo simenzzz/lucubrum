@@ -5,7 +5,6 @@ import {
   clearAuthStorage,
   getPKCEState,
   removePKCEState,
-  removeOAuthProvider,
 } from '@/lib/tokenStorage';
 import { notifyLogout, clearLegacyTokens } from '@/api/client';
 import { authApi } from '@/api/auth.api';
@@ -94,7 +93,6 @@ export const useAuthStore = create<AuthState>()(
           removePKCEState();
 
           clearLegacyTokens();
-          removeOAuthProvider();
 
           const response = await authApi.callback({ code, state });
 

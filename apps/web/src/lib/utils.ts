@@ -1,37 +1,11 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { MASTERY_THRESHOLD } from '@/constants/mastery';
 
 /**
  * Merge Tailwind CSS classes with proper precedence
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-/**
- * Format a date as a readable string
- */
-export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    ...options,
-  }).format(dateObj);
-}
-
-/**
- * Format a duration in minutes to a human-readable string
- */
-export function formatDuration(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
 /**
@@ -45,32 +19,6 @@ export function formatSeconds(totalSeconds: number): string {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-}
-
-/**
- * Format a mastery score (0-1) to a percentage
- */
-export function formatMastery(mastery: number): string {
-  return `${Math.round(mastery * 100)}%`;
-}
-
-/**
- * Get mastery status from score
- */
-export function getMasteryStatus(
-  mastery: number,
-  hasAttempted: boolean
-): 'locked' | 'available' | 'in_progress' | 'mastered' {
-  if (!hasAttempted && mastery === 0) {
-    return 'available';
-  }
-  if (mastery >= MASTERY_THRESHOLD) {
-    return 'mastered';
-  }
-  if (mastery > 0 || hasAttempted) {
-    return 'in_progress';
-  }
-  return 'available';
 }
 
 /**
@@ -98,39 +46,6 @@ export function timeAgo(date: string | Date): string {
   }
 
   return 'just now';
-}
-
-/**
- * Debounce function
- */
-export function debounce<T extends (...args: unknown[]) => unknown>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<T>) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
-
-/**
- * Truncate text with ellipsis
- */
-export function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + '...';
-}
-
-/**
- * Generate a color based on mastery score
- */
-export function getMasteryColor(mastery: number): string {
-  if (mastery >= MASTERY_THRESHOLD) return 'text-sage'; // mastered
-  if (mastery >= 0.4) return 'text-amber'; // in progress
-  return 'text-lavender'; // available
 }
 
 /**

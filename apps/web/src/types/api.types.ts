@@ -209,15 +209,6 @@ export interface AttemptResponse {
   };
 }
 
-export interface NodeMasteryResponse {
-  mastery: {
-    score: number;
-    level: string;
-    total_attempts: number;
-    last_updated?: string | null;
-  };
-}
-
 export interface PlanMasteryOverviewResponse {
   mastery_by_node: Record<string, {
     score: number;
@@ -240,16 +231,6 @@ export interface NextNodeRecommendationResponse {
 }
 
 // YouTube Resource types
-export interface ResourceAttachmentResponse {
-  plan_id: string;
-  resources: NodeResources[];
-}
-
-export interface NodeResources {
-  node_id: string;
-  resources: YouTubeResource[];
-}
-
 export interface YouTubeResource {
   video_id: string;
   title: string;

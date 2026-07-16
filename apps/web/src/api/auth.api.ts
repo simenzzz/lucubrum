@@ -1,5 +1,5 @@
 import apiClient, { getApiError } from './client';
-import { setPKCEState, setOAuthProvider } from '@/lib/tokenStorage';
+import { setPKCEState } from '@/lib/tokenStorage';
 import {
   OAuthInitResponseSchema,
   AuthCallbackResponseSchema,
@@ -27,7 +27,6 @@ export const authApi = {
       const response = await apiClient.get('/auth/google', { params });
       const data = safeParseWithLogging(OAuthInitResponseSchema, response.data, 'getGoogleAuthUrl');
       setPKCEState(data.state);
-      setOAuthProvider('google');
       return data;
     } catch (error) {
       throw new Error(getApiError(error));

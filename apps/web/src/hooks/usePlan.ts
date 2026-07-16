@@ -50,33 +50,6 @@ export function usePlan(planId: string) {
 }
 
 /**
- * Attach YouTube resources to a plan
- */
-export function useAttachResources() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ planId }: { planId: string }) => planApi.attachResources(planId),
-    onSuccess: (data, variables) => {
-      // Update the plan cache with resources
-      queryClient.setQueryData(['plan-resources', variables.planId], data);
-    },
-  });
-}
-
-/**
- * Get resources for a plan
- */
-export function usePlanResources(planId: string) {
-  return useQuery({
-    queryKey: ['plan-resources', planId],
-    queryFn: ({ signal }) => planApi.getResources(planId, { signal }),
-    enabled: !!planId,
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours - resources change rarely
-  });
-}
-
-/**
  * Get learn content for a specific node (on-demand with caching).
  * Fetches videos + reading material when user opens Learn tab.
  * Supports polling based on node resource status.

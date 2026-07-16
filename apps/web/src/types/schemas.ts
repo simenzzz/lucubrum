@@ -14,8 +14,6 @@ export const UserSchema = z.object({
   created_at: z.string(),
 });
 
-export type User = z.infer<typeof UserSchema>;
-
 // Auth response schemas
 /** Provider-agnostic OAuth initiation response schema */
 export const OAuthInitResponseSchema = z.object({
@@ -78,24 +76,6 @@ export const GetPlanResponseSchema = z.object({
   plan: PlanSchema,
 });
 
-// YouTube Resource schemas (frontend shape after transformation)
-export const YouTubeResourceSchema = z.object({
-  video_id: z.string(),
-  title: z.string(),
-  channel: z.string(),
-  duration_seconds: z.number(),
-  thumbnail_url: z.string(),
-  relevance_score: z.number(),
-  url: z.string(),
-  type: z.enum(['must_watch', 'recommended']),
-  rationale: z.string(),
-});
-
-export const NodeResourcesSchema = z.object({
-  node_id: z.string(),
-  resources: z.array(YouTubeResourceSchema),
-});
-
 // Backend resource response schema (camelCase from Node API)
 export const BackendSelectedResourceSchema = z.object({
   videoId: z.string(),
@@ -106,11 +86,6 @@ export const BackendSelectedResourceSchema = z.object({
   rankScore: z.number(),
   type: z.enum(['must_watch', 'recommended']),
   rationale: z.string(),
-});
-
-export const BackendResourcesResponseSchema = z.object({
-  resources_by_node: z.record(z.string(), z.array(BackendSelectedResourceSchema)),
-  skipped_nodes: z.array(z.string()).optional(),
 });
 
 // Node Learn Content schema (GET /api/plan/:planId/nodes/:nodeId/learn)
@@ -210,15 +185,6 @@ export const AttemptResponseSchema = z.object({
   }),
 });
 
-export const NodeMasteryResponseSchema = z.object({
-  mastery: z.object({
-    score: z.number(),
-    level: z.string(),
-    total_attempts: z.number(),
-    last_updated: z.string().nullable().optional(),
-  }),
-});
-
 export const PlanMasteryOverviewResponseSchema = z.object({
   mastery_by_node: z.record(
     z.string(),
@@ -283,14 +249,6 @@ export const UserPlansResponseSchema = z.object({
   offset: z.number(),
 });
 
-// Error schema
-export const ApiErrorSchema = z.object({
-  error: z.string(),
-  message: z.string(),
-  details: z.unknown().optional(),
-  request_id: z.string(),
-});
-
 // Email auth request validation schemas (for LoginPage forms)
 export const EmailRegisterRequestSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -309,16 +267,6 @@ export const EmailRegisterRequestSchema = z.object({
 export const EmailLoginRequestSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
-});
-
-// Request validation schemas
-export const CreatePlanRequestSchema = z.object({
-  topic: z.string()
-    .min(3, 'Topic must be at least 3 characters')
-    .max(200, 'Topic must be at most 200 characters')
-    .trim(),
-  user_level: z.enum(['beginner', 'intermediate', 'advanced']),
-  plan_size: z.enum(['basic', 'moderate', 'large', 'dynamic']).optional(),
 });
 
 /**

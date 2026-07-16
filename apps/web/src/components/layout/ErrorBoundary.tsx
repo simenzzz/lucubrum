@@ -91,34 +91,3 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return this.props.children;
   }
 }
-
-/**
- * Fallback component for async errors (e.g., route loading)
- */
-export function ErrorFallback({
-  error,
-  resetError,
-}: {
-  error: Error;
-  resetError: () => void;
-}) {
-  return (
-    <div className="min-h-screen bg-hearth-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="w-20 h-20 mx-auto">
-          <AlertCircle className="w-full h-full text-rose/60" />
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-heading font-bold text-warm-50">
-            Something Went Wrong
-          </h1>
-          <p className="text-warm-200">{getSafeErrorMessage(error, 'An unexpected error occurred.')}</p>
-        </div>
-        <Button variant="primary" onClick={resetError}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Try Again
-        </Button>
-      </div>
-    </div>
-  );
-}

@@ -127,20 +127,3 @@ export function broadcastLogout(): void {
   }
 }
 
-/**
- * Close the broadcast channel (call on app unmount)
- */
-export function closeAuthBroadcast(): void {
-  if (channel) {
-    channel.close();
-    channel = null;
-  }
-  messageHandler = {};
-}
-
-/**
- * Check if broadcast channel is active
- */
-export function isAuthBroadcastActive(): boolean {
-  return channel !== null;
-}

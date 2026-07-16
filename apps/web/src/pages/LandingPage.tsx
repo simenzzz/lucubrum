@@ -12,7 +12,7 @@ import { TopicInput } from '@/components/landing/TopicInput';
 import { PlanConfigForm } from '@/components/landing/PlanConfigForm';
 import { LoadingState } from '@/components/landing/LoadingState';
 import { ErrorState } from '@/components/landing/ErrorState';
-import { LandingSchema } from '@/components/landing/LandingSchema';
+import { LandingSchema } from '@/components/landing/head/LandingSchema';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
 import { ProductPreviewSection } from '@/components/landing/ProductPreviewSection';
 import { OutcomesSection } from '@/components/landing/OutcomesSection';

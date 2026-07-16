@@ -37,9 +37,7 @@ interface RoadmapState {
 
   // Actions - Node selection
   selectNode: (node: PlanNode) => void;
-  clearSelection: () => void;
   setActiveTab: (tab: NodeTab) => void;
-  openNodePopup: () => void;
   closeNodePopup: () => void;
 
   // Actions - Graph interaction
@@ -136,20 +134,8 @@ export const useRoadmapStore = create<RoadmapState>()(
         });
       },
 
-      clearSelection: () => {
-        set({
-          selectedNode: null,
-          selectedNodeId: null,
-          isNodePopupOpen: false,
-        });
-      },
-
       setActiveTab: (tab: NodeTab) => {
         set({ activeTab: tab });
-      },
-
-      openNodePopup: () => {
-        set({ isNodePopupOpen: true });
       },
 
       closeNodePopup: () => {

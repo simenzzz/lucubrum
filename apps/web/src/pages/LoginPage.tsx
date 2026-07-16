@@ -150,28 +150,21 @@ function OAuthRow({ disabled }: { disabled: boolean }) {
         <div className="flex-1 h-px bg-warm-400/10" />
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        {[
-          { label: 'Google', icon: <GoogleIcon />, action: loginWithGoogle },
-        ].map(({ label, icon, action }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => action()}
-            disabled={disabled}
-            className={[
-              'flex items-center justify-center gap-2 py-2.5',
-              'border border-warm-400/12 rounded-sm',
-              'text-warm-400 text-[11px] tracking-[0.12em]',
-              'hover:border-warm-400/28 hover:text-warm-200 hover:bg-white/[0.02]',
-              'transition-all duration-200 disabled:opacity-40',
-            ].join(' ')}
-          >
-            {icon}
-            {label}
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={() => loginWithGoogle()}
+        disabled={disabled}
+        className={[
+          'w-full flex items-center justify-center gap-2 py-2.5',
+          'border border-warm-400/12 rounded-sm',
+          'text-warm-400 text-[11px] tracking-[0.12em]',
+          'hover:border-warm-400/28 hover:text-warm-200 hover:bg-white/[0.02]',
+          'transition-all duration-200 disabled:opacity-40',
+        ].join(' ')}
+      >
+        <GoogleIcon />
+        Google
+      </button>
     </>
   );
 }

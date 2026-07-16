@@ -45,9 +45,21 @@ export function removePKCEState(): void {
 }
 
 /**
- * Clear all auth-related storage.
- * (Legacy localStorage token cleanup lives in api/client.ts clearLegacyTokens.)
+ * Clear old localStorage tokens (migration from Bearer to cookie auth)
+ */
+export function clearLegacyTokens(): void {
+  try {
+    localStorage.removeItem('lucubrum_refresh_token');
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Clear all auth-related storage (PKCE state + legacy tokens).
+ * Called on logout, refresh failure, and cross-tab logout.
  */
 export function clearAuthStorage(): void {
   removePKCEState();
+  clearLegacyTokens();
 }

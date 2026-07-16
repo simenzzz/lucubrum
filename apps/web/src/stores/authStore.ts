@@ -3,10 +3,11 @@ import { persist } from 'zustand/middleware';
 import type { User } from '@/types/api.types';
 import {
   clearAuthStorage,
+  clearLegacyTokens,
   getPKCEState,
   removePKCEState,
 } from '@/lib/tokenStorage';
-import { notifyLogout, clearLegacyTokens } from '@/api/client';
+import { notifyLogout } from '@/api/client';
 import { authApi } from '@/api/auth.api';
 
 interface AuthState {

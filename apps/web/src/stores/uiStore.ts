@@ -10,6 +10,9 @@ export interface Toast {
   duration?: number;
 }
 
+/** Max simultaneously visible toasts — oldest are dropped beyond this */
+const TOAST_LIMIT = 3;
+
 interface UIState {
   // Toast state
   toasts: Toast[];
@@ -29,14 +32,16 @@ export const useUIStore = create<UIState>((set) => ({
    * `duration`), which calls removeToast after the exit animation.
    */
   addToast: (toast) => {
+    // Note: under Radix, duration 0 means "close immediately" (there is no
+    // "never auto-dismiss" sentinel); no caller currently passes duration.
     const newToast: Toast = {
+      ...toast,
       id: crypto.randomUUID(),
       duration: toast.duration ?? 5000,
-      ...toast,
     };
 
     set((state) => ({
-      toasts: [...state.toasts, newToast],
+      toasts: [...state.toasts, newToast].slice(-TOAST_LIMIT),
     }));
   },
 

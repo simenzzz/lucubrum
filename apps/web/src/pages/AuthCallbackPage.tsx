@@ -2,7 +2,7 @@
  * OAuth callback handler page
  * Handles the redirect from Google OAuth
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/uiStore';
@@ -15,7 +15,14 @@ export function AuthCallbackPage() {
   const { addToast } = useUIStore();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
 
+  // The code exchange must run exactly once — StrictMode's dev double-effect
+  // would otherwise consume the one-time code twice (second exchange fails).
+  const callbackStarted = useRef(false);
+
   useEffect(() => {
+    if (callbackStarted.current) return;
+    callbackStarted.current = true;
+
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');

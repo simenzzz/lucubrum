@@ -217,15 +217,4 @@ export function notifyLogout(): void {
   broadcastLogout();
 }
 
-/**
- * Clear old localStorage tokens (migration from Bearer to cookie auth)
- */
-export function clearLegacyTokens(): void {
-  try {
-    localStorage.removeItem('lucubrum_refresh_token');
-  } catch {
-    // Ignore errors
-  }
-}
-
 export default apiClient;

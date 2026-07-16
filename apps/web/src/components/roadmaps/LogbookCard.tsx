@@ -1,34 +1,35 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, BookOpen, ChevronRight, Sparkles, Layers, Star } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { UserPlanSummary } from '@/types/api.types';
-import { timeAgo, cn, SIZE_BADGES } from '@/lib/utils';
+import { timeAgo, cn, SIZE_BADGES, LEVEL_BADGES } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import { useNextNode } from '@/hooks/usePlan';
 
 interface LogbookCardProps {
   plan: UserPlanSummary;
   index?: number;
 }
 
-const LEVEL_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  beginner: {
-    label: 'Beginner',
-    color: 'from-sage/80 to-sage',
-    icon: <Sparkles className="w-3 h-3" />,
-  },
-  intermediate: {
-    label: 'Intermediate',
-    color: 'from-lavender to-lavender/80',
-    icon: <Layers className="w-3 h-3" />,
-  },
-  advanced: {
-    label: 'Advanced',
-    color: 'from-amber to-amber/80',
-    icon: <Star className="w-3 h-3" />,
-  },
+// LEVEL_BADGES stores icon names (it's also consumed by PlanConfigForm);
+// map them to components here.
+const LEVEL_ICONS: Record<string, LucideIcon> = {
+  seedling: Sparkles,
+  layers: Layers,
+  star: Star,
 };
 
 export function LogbookCard({ plan, index = 0 }: LogbookCardProps) {
-  const levelConfig = LEVEL_CONFIG[plan.user_level] || LEVEL_CONFIG.beginner;
+  const levelBadge =
+    LEVEL_BADGES[plan.user_level as keyof typeof LEVEL_BADGES] ?? LEVEL_BADGES.beginner;
+  const LevelIcon = LEVEL_ICONS[levelBadge.icon] ?? Sparkles;
+
+  // Per-plan completion (also powers the roadmap page's "next node" hint)
+  const { data: next, isLoading: progressLoading } = useNextNode(plan.plan_id);
+  const pct = next?.current_progress.completion_percentage ?? null;
+  const nodesCompleted = next?.current_progress.nodes_completed ?? null;
+  const totalNodes = next?.current_progress.total_nodes ?? null;
 
   return (
     <motion.div
@@ -55,10 +56,7 @@ export function LogbookCard({ plan, index = 0 }: LogbookCardProps) {
           }}
         >
           {/* Top accent stripe */}
-          <div className={cn(
-            'h-1 w-full bg-gradient-to-r',
-            levelConfig.color
-          )} />
+          <div className={cn('h-1 w-full bg-gradient-to-r', levelBadge.gradient)} />
 
           {/* Content */}
           <div className="relative p-5">
@@ -72,10 +70,10 @@ export function LogbookCard({ plan, index = 0 }: LogbookCardProps) {
                   <span className={cn(
                     'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
                     'bg-gradient-to-r text-hearth-900',
-                    levelConfig.color
+                    levelBadge.gradient
                   )}>
-                    {levelConfig.icon}
-                    {levelConfig.label}
+                    <LevelIcon className="w-3 h-3" />
+                    {levelBadge.label}
                   </span>
                 </div>
               </div>
@@ -92,6 +90,18 @@ export function LogbookCard({ plan, index = 0 }: LogbookCardProps) {
                 Last accessed {timeAgo(plan.last_accessed_at)}
               </span>
             </div>
+
+            {/* Completion */}
+            {progressLoading ? (
+              <div className="h-2 w-full bg-hearth-700 rounded-full animate-pulse" />
+            ) : pct !== null && totalNodes !== null ? (
+              <div className="flex items-center gap-3">
+                <Progress value={pct} className="flex-1 h-2" />
+                <span className="text-xs text-warm-400 tabular-nums">
+                  {nodesCompleted}/{totalNodes} nodes
+                </span>
+              </div>
+            ) : null}
 
             {/* Divider */}
             <div className="my-4 h-px bg-gradient-to-r from-transparent via-border-moderate to-transparent" />

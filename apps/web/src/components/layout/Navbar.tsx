@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Sparkles, Menu, X, LogOut, User, Map } from 'lucide-react';
+import { Sparkles, Menu, X, LogOut, Map } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +20,7 @@ export function Navbar() {
 
   const links: NavLink[] = [
     { name: 'Create', href: '/', icon: Sparkles },
-    ...(isAuthenticated
-      ? [
-          { name: 'My Roadmaps', href: '/my-roadmaps', icon: Map },
-          { name: 'Progress', href: '/progress', icon: User },
-        ]
-      : []),
+    ...(isAuthenticated ? [{ name: 'My Roadmaps', href: '/my-roadmaps', icon: Map }] : []),
   ];
 
   const isActive = (path: string) => {

@@ -9,7 +9,6 @@ import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { RoadmapPage } from './pages/RoadmapPage';
 import { MyRoadmapsPage } from './pages/MyRoadmapsPage';
-import { ProgressPage } from './pages/ProgressPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
@@ -48,14 +47,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/progress"
-                element={
-                  <ProtectedRoute>
-                    <ProgressPage />
-                  </ProtectedRoute>
-                }
-              />
+              {/* /progress merged into /my-roadmaps */}
+              <Route path="/progress" element={<Navigate to="/my-roadmaps" replace />} />
 
               {/* 404 */}
               <Route path="/404" element={<NotFoundPage />} />

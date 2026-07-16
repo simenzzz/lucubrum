@@ -49,7 +49,8 @@ export function timeAgo(date: string | Date): string {
 }
 
 /**
- * Get level badge configuration
+ * Get level badge configuration — the single source for user-level colors
+ * (PlanConfigForm radio cards, roadmap cards, continue-learning hero).
  */
 export const LEVEL_BADGES = {
   beginner: {
@@ -58,6 +59,7 @@ export const LEVEL_BADGES = {
     icon: 'seedling',
     color: 'text-sage',
     bgColor: 'bg-sage/10',
+    gradient: 'from-sage/80 to-sage',
     description: 'New to this topic, starting with fundamentals',
   },
   intermediate: {
@@ -66,6 +68,7 @@ export const LEVEL_BADGES = {
     icon: 'layers',
     color: 'text-lavender',
     bgColor: 'bg-lavender/10',
+    gradient: 'from-lavender to-lavender/80',
     description: 'Some familiarity, ready to deepen knowledge',
   },
   advanced: {
@@ -74,6 +77,7 @@ export const LEVEL_BADGES = {
     icon: 'star',
     color: 'text-amber',
     bgColor: 'bg-amber/10',
+    gradient: 'from-amber to-amber/80',
     description: 'Experienced, seeking mastery and nuance',
   },
 } as const;

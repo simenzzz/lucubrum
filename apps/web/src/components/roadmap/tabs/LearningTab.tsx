@@ -192,7 +192,7 @@ export function LearningTab({ node, planId, nodeStatus }: LearningTabProps) {
                   </button>
                   {isExpanded && (
                     <div className="px-4 pb-4">
-                      <div className="text-sm text-warm-200 prose prose-invert prose-sm max-w-none">
+                      <div className="text-sm text-warm-200">
                         <ContentRenderer content={section.content} />
                       </div>
                     </div>
@@ -268,26 +268,13 @@ function VideoCard({ resource }: { resource: YouTubeResource }) {
 }
 
 /**
- * Escape HTML entities to prevent XSS attacks.
- * Converts dangerous characters to their HTML entity equivalents.
- */
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-  };
-  return text.replace(/[&<>"']/g, (char) => map[char]);
-}
-
-/**
  * React-based markdown renderer for reading material content.
  * Handles basic formatting: bold, italic, code blocks, lists, headings, line breaks.
- * This is safe from XSS attacks as it escapes HTML entities before rendering.
+ * XSS-safe because everything is rendered as React text children (never
+ * dangerouslySetInnerHTML) — React escapes them. Do NOT add manual HTML
+ * escaping on top: it double-escapes and shows literal entities on screen.
  */
-function ContentRenderer({ content }: { content: string }) {
+export function ContentRenderer({ content }: { content: string }) {
   const lines = content.split('\n');
 
   return (
@@ -326,35 +313,35 @@ function renderInline(text: string): React.ReactNode[] {
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
-    // Add text before the match (escaped)
+    // Add text before the match (React escapes text children — no manual escaping)
     if (match.index > lastIndex) {
-      parts.push(escapeHtml(text.slice(lastIndex, match.index)));
+      parts.push(text.slice(lastIndex, match.index));
     }
 
     const token = match[0];
 
     if (token.startsWith('`')) {
-      // Inline code - escape content, strip backticks
+      // Inline code - strip backticks
       parts.push(
         <code key={match.index} className="bg-hearth-900 px-1.5 py-0.5 rounded text-xs font-mono">
-          {escapeHtml(token.slice(1, -1))}
+          {token.slice(1, -1)}
         </code>
       );
     } else if (token.startsWith('**')) {
-      // Bold - escape content, strip asterisks
-      parts.push(<strong key={match.index}>{escapeHtml(token.slice(2, -2))}</strong>);
+      // Bold - strip asterisks
+      parts.push(<strong key={match.index}>{token.slice(2, -2)}</strong>);
     } else if (token.startsWith('*')) {
-      // Italic - escape content, strip asterisk
-      parts.push(<em key={match.index}>{escapeHtml(token.slice(1, -1))}</em>);
+      // Italic - strip asterisks
+      parts.push(<em key={match.index}>{token.slice(1, -1)}</em>);
     }
 
     lastIndex = match.index + token.length;
   }
 
-  // Add remaining text (escaped)
+  // Add remaining text
   if (lastIndex < text.length) {
-    parts.push(escapeHtml(text.slice(lastIndex)));
+    parts.push(text.slice(lastIndex));
   }
 
-  return parts.length > 0 ? parts : [escapeHtml(text)];
+  return parts.length > 0 ? parts : [text];
 }

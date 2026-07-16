@@ -4,8 +4,9 @@
  */
 import { Fragment } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Lock, Sparkles, CheckCircle2, BookOpen, Dumbbell, GraduationCap, ArrowRight } from 'lucide-react';
+import { Search, Sparkles, BookOpen, Dumbbell, GraduationCap, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NODE_STATUS_CONFIG } from '@/constants/statusConfig';
 
 interface Step {
   number: number;
@@ -24,23 +25,23 @@ function TopicVisual() {
   );
 }
 
-const MINI_NODES = [
-  { icon: CheckCircle2, border: 'border-sage', bg: 'bg-sage/20 text-sage' },
-  { icon: Sparkles, border: 'border-amber', bg: 'bg-amber/20 text-amber' },
-  { icon: Lock, border: 'border-locked/30', bg: 'bg-locked/20 text-locked' },
-] as const;
+// Mini roadmap strip reusing the shared node-status visual language
+const MINI_NODE_STATUSES = ['mastered', 'available', 'locked'] as const;
 
 function RoadmapVisual() {
   return (
     <div className="flex items-center justify-center gap-1.5">
-      {MINI_NODES.map((node, i) => (
-        <div key={i} className="flex items-center gap-1.5">
-          <div className={cn('p-2 rounded-lg border-2 bg-hearth-800', node.border, node.bg)}>
-            <node.icon className="w-3.5 h-3.5" aria-hidden="true" />
+      {MINI_NODE_STATUSES.map((status, i) => {
+        const config = NODE_STATUS_CONFIG[status];
+        return (
+          <div key={status} className="flex items-center gap-1.5">
+            <div className={cn('p-2 rounded-lg border-2 bg-hearth-800', config.border, config.iconBg)}>
+              <config.icon className="w-3.5 h-3.5" aria-hidden="true" />
+            </div>
+            {i < MINI_NODE_STATUSES.length - 1 && <div className="w-3 h-px bg-amber/30" />}
           </div>
-          {i < MINI_NODES.length - 1 && <div className="w-3 h-px bg-amber/30" />}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

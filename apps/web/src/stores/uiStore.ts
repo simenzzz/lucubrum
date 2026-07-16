@@ -19,17 +19,18 @@ interface UIState {
   removeToast: (id: string) => void;
 }
 
-export const useUIStore = create<UIState>((set, get) => ({
+export const useUIStore = create<UIState>((set) => ({
   // Initial state
   toasts: [],
 
   /**
-   * Add a toast notification
+   * Add a toast notification.
+   * Timing/dismissal is owned by the Radix Toast in ToastContainer (via
+   * `duration`), which calls removeToast after the exit animation.
    */
   addToast: (toast) => {
-    const id = crypto.randomUUID();
     const newToast: Toast = {
-      id,
+      id: crypto.randomUUID(),
       duration: toast.duration ?? 5000,
       ...toast,
     };
@@ -37,13 +38,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     set((state) => ({
       toasts: [...state.toasts, newToast],
     }));
-
-    // Auto-remove after duration
-    if (newToast.duration && newToast.duration > 0) {
-      setTimeout(() => {
-        get().removeToast(id);
-      }, newToast.duration);
-    }
   },
 
   /**

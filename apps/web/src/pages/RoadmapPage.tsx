@@ -5,7 +5,8 @@ import { usePlan, usePlanMastery, useNodeResourceStatuses } from '@/hooks/usePla
 import { useRoadmapStore } from '@/stores/roadmapStore';
 import { RoadmapGraph } from '@/components/roadmap/RoadmapGraph';
 import { NodePopup } from '@/components/roadmap/NodePopup';
-import { LoadingSkeleton } from '@/components/layout/LoadingSkeleton';
+import { PageLoading } from '@/components/layout/LoadingSkeleton';
+import { CenteredState } from '@/components/layout/CenteredState';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { getSafeErrorMessage } from '@/lib/utils';
@@ -78,44 +79,35 @@ export function RoadmapPage() {
 
   if (!planId) {
     return (
-      <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-rose mx-auto mb-4" />
-          <h1 className="font-heading text-2xl font-bold text-warm-50 mb-2">Invalid Plan</h1>
-          <p className="text-warm-400 mb-4">No plan ID was provided.</p>
-          <Link to="/">
-            <Button variant="primary">Return Home</Button>
-          </Link>
-        </div>
-      </div>
+      <CenteredState
+        icon={AlertCircle}
+        title="Invalid Plan"
+        message="No plan ID was provided."
+        fullScreen
+      >
+        <Button variant="primary" asChild>
+          <Link to="/">Return Home</Link>
+        </Button>
+      </CenteredState>
     );
   }
 
   if (planLoading || masteryLoading) {
-    return (
-      <div className="min-h-screen bg-hearth-900">
-        <div className="container mx-auto px-4 py-8">
-          <LoadingSkeleton />
-          <p className="text-center text-warm-400 mt-4">Loading your learning roadmap...</p>
-        </div>
-      </div>
-    );
+    return <PageLoading message="Loading your learning roadmap..." />;
   }
 
   if (planError || !plan) {
     return (
-      <div className="min-h-screen bg-hearth-900 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-rose mx-auto mb-4" />
-          <h1 className="font-heading text-2xl font-bold text-warm-50 mb-2">Failed to Load Plan</h1>
-          <p className="text-warm-400 mb-4">
-            {getSafeErrorMessage(planError, 'Failed to load your learning roadmap.')}
-          </p>
-          <Link to="/">
-            <Button variant="primary">Return Home</Button>
-          </Link>
-        </div>
-      </div>
+      <CenteredState
+        icon={AlertCircle}
+        title="Failed to Load Plan"
+        message={getSafeErrorMessage(planError, 'Failed to load your learning roadmap.')}
+        fullScreen
+      >
+        <Button variant="primary" asChild>
+          <Link to="/">Return Home</Link>
+        </Button>
+      </CenteredState>
     );
   }
 

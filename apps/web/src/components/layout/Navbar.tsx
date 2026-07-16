@@ -3,25 +3,30 @@ import { Sparkles, Menu, X, LogOut, User, Map } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { useState } from 'react';
+
+interface NavLink {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+}
 
 export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isPro = user?.roles?.includes('pro') ?? false;
 
-  const navLinks = [
+  const links: NavLink[] = [
     { name: 'Create', href: '/', icon: Sparkles },
+    ...(isAuthenticated
+      ? [
+          { name: 'My Roadmaps', href: '/my-roadmaps', icon: Map },
+          { name: 'Progress', href: '/progress', icon: User },
+        ]
+      : []),
   ];
-
-  const protectedLinks = isAuthenticated
-    ? [
-        { name: 'My Roadmaps', href: '/my-roadmaps', icon: Map },
-        { name: 'Progress', href: '/progress', icon: User },
-      ]
-    : [];
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -30,14 +35,63 @@ export function Navbar() {
     return location.pathname.startsWith(path);
   };
 
-  const handleLogin = () => {
-    navigate('/login');
-  };
-
   const handleLogout = () => {
     logout();
     setMobileMenuOpen(false);
   };
+
+  // Shared auth block: user name + tier badge + sign out / sign in
+  const authBlock = isAuthenticated ? (
+    <>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-warm-200">
+          {user?.name || user?.email?.split('@')[0]}
+        </span>
+        <Badge variant={user?.roles?.includes('pro') ? 'available' : 'secondary'} size="sm">
+          {user?.roles?.includes('pro') ? 'Pro' : 'Free'}
+        </Badge>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleLogout}
+        title="Sign out"
+        aria-label="Sign out"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </>
+  ) : (
+    <Button
+      variant="primary"
+      size="sm"
+      onClick={() => navigate('/login')}
+      className="max-md:w-full"
+    >
+      Sign In
+    </Button>
+  );
+
+  const renderLinks = (variant: 'desktop' | 'mobile') =>
+    links.map((link) => (
+      <Link
+        key={link.href}
+        to={link.href}
+        onClick={variant === 'mobile' ? () => setMobileMenuOpen(false) : undefined}
+        className={cn(
+          'flex items-center gap-2 text-sm font-medium transition-colors',
+          variant === 'desktop' ? 'px-3 py-1.5 rounded-full' : 'px-4 py-2 rounded-xl hover:bg-hearth-700',
+          isActive(link.href)
+            ? 'text-amber bg-amber/10'
+            : variant === 'desktop'
+              ? 'text-warm-200 hover:text-amber hover:bg-hearth-700'
+              : 'text-warm-200'
+        )}
+      >
+        <link.icon className="h-4 w-4" />
+        {link.name}
+      </Link>
+    ));
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border-subtle bg-hearth-800/95 backdrop-blur supports-[backdrop-filter]:bg-hearth-800/60">
@@ -59,56 +113,9 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200 hover:text-amber hover:bg-hearth-700'
-                }`}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.name}
-              </Link>
-            ))}
-
-            {protectedLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200 hover:text-amber hover:bg-hearth-700'
-                }`}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.name}
-              </Link>
-            ))}
-
+            {renderLinks('desktop')}
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border-moderate">
-              {isAuthenticated ? (
-                <>
-                  <span className="text-sm text-warm-200">
-                    {user?.name || user?.email?.split('@')[0]}
-                  </span>
-                  <Badge variant={isPro ? 'available' : 'secondary'} size="sm">
-                    {isPro ? 'Pro' : 'Free'}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleLogout}
-                    title="Sign out"
-                    aria-label="Sign out"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <Button variant="primary" size="sm" onClick={handleLogin}>
-                  Sign In
-                </Button>
-              )}
+              {authBlock}
             </div>
           </div>
 
@@ -126,60 +133,9 @@ export function Navbar() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border-moderate">
             <div className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-hearth-700 ${
-                    isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200'
-                  }`}
-                >
-                  <link.icon className="h-4 w-4" />
-                  {link.name}
-                </Link>
-              ))}
-
-              {protectedLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-hearth-700 ${
-                    isActive(link.href) ? 'text-amber bg-amber/10' : 'text-warm-200'
-                  }`}
-                >
-                  <link.icon className="h-4 w-4" />
-                  {link.name}
-                </Link>
-              ))}
-
+              {renderLinks('mobile')}
               <div className="flex items-center justify-between px-4 py-2 mt-2 border-t border-border-moderate">
-                {isAuthenticated ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-warm-200">
-                        {user?.name || user?.email?.split('@')[0]}
-                      </span>
-                      <Badge variant={isPro ? 'available' : 'secondary'} size="sm">
-                        {isPro ? 'Pro' : 'Free'}
-                      </Badge>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleLogout}
-                      title="Sign out"
-                      aria-label="Sign out"
-                    >
-                      <LogOut className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button variant="primary" size="sm" onClick={handleLogin} className="w-full">
-                    Sign In
-                  </Button>
-                )}
+                {authBlock}
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CenteredState } from '@/components/layout/CenteredState';
 
 interface ErrorStateProps {
   message: string;
@@ -18,28 +19,13 @@ export function ErrorState({ message, onRetry, onChangeTopic }: ErrorStateProps)
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col items-center justify-center py-20"
+      className="py-20"
     >
-      {/* Error icon with glow */}
-      <div className="relative w-32 h-32 mb-8">
-        <div className="absolute inset-0 bg-rose/10 rounded-full blur-xl" />
-        <div className="relative w-full h-full flex items-center justify-center">
-          <AlertCircle className="w-20 h-20 text-rose/60" />
-        </div>
-      </div>
-
-      {/* Error message */}
-      <div className="text-center space-y-2 max-w-md">
-        <h2 className="text-2xl font-heading font-bold text-warm-50">
-          Plan Generation Failed
-        </h2>
-        <p className="text-warm-200">
-          We couldn't generate your learning roadmap. {message}
-        </p>
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex gap-3 mt-8">
+      <CenteredState
+        icon={AlertCircle}
+        title="Plan Generation Failed"
+        message={`We couldn't generate your learning roadmap. ${message}`}
+      >
         <Button variant="primary" onClick={onRetry}>
           <RotateCcw className="h-4 w-4 mr-2" />
           Try Again
@@ -48,7 +34,7 @@ export function ErrorState({ message, onRetry, onChangeTopic }: ErrorStateProps)
           <ArrowLeft className="h-4 w-4 mr-2" />
           Change Topic
         </Button>
-      </div>
+      </CenteredState>
     </motion.div>
   );
 }

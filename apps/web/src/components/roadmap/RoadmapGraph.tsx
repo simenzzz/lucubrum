@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useRoadmapStore } from '@/stores/roadmapStore';
 import { computeDagLayout, centerLayout, computeFitZoom, type LayoutResult } from '@/lib/dagLayout';
 import { GraphNode, type NodeStatus } from './GraphNode';
+import { NODE_STATUS_CONFIG } from '@/constants/statusConfig';
 import { GraphEdge } from './GraphEdge';
 import { RoadmapControls } from './RoadmapControls';
 import type { PlanNode } from '@/types/api.types';
@@ -292,28 +293,14 @@ export function RoadmapGraph({ nodes, masteryData, onNodeSelect }: RoadmapGraphP
       <div className="hidden sm:block absolute bottom-4 left-4 z-10 glass-panel p-3">
         <div className="text-xs font-medium text-warm-400 mb-2">Legend</div>
         <div className="space-y-1.5">
-          <LegendItem color="locked" label="Locked" />
-          <LegendItem color="amber" label="Available" />
-          <LegendItem color="lavender" label="In Progress" />
-          <LegendItem color="sage" label="Mastered" />
+          {Object.values(NODE_STATUS_CONFIG).map(({ label, dot }) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full border ${dot}`} />
+              <span className="text-xs text-warm-200">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function LegendItem({ color, label }: { color: string; label: string }) {
-  const colorClasses: Record<string, string> = {
-    locked: 'bg-locked/40 border-locked/60',
-    amber: 'bg-amber/30 border-amber',
-    lavender: 'bg-lavender/30 border-lavender',
-    sage: 'bg-sage/30 border-sage',
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`w-3 h-3 rounded-full border ${colorClasses[color]}`} />
-      <span className="text-xs text-warm-200">{label}</span>
     </div>
   );
 }

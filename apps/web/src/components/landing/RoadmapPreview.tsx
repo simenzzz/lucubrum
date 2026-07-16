@@ -4,12 +4,13 @@
  * first-time visitor sees the payoff before typing a topic.
  */
 import { motion } from 'framer-motion';
-import { Lock, Sparkles, Loader2, CheckCircle2, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NODE_STATUS_CONFIG, type NodeStatus } from '@/constants/statusConfig';
 
 interface PreviewNode {
   title: string;
-  status: 'locked' | 'available' | 'in_progress' | 'mastered' | 'capstone';
+  status: NodeStatus | 'capstone';
   mastery: number;
 }
 
@@ -20,14 +21,11 @@ const PREVIEW_NODES: PreviewNode[] = [
   { title: 'Real Projects', status: 'capstone', mastery: 0 },
 ];
 
+// Shared node-status visuals plus the landing-only "capstone" destination card.
+// Capstone renders as a gradient glow card (see isCapstone branch below), so
+// `border` is unused — the gradient wrapper supplies the border.
 const STATUS_CONFIG = {
-  locked: { icon: Lock, border: 'border-locked/30', iconBg: 'bg-locked/20 text-locked' },
-  available: { icon: Sparkles, border: 'border-amber', iconBg: 'bg-amber/20 text-amber' },
-  in_progress: { icon: Loader2, border: 'border-lavender', iconBg: 'bg-lavender/20 text-lavender' },
-  mastered: { icon: CheckCircle2, border: 'border-sage', iconBg: 'bg-sage/20 text-sage' },
-  // Capstone = the final chapter / destination. Rendered as a gradient glow card
-  // (see isCapstone branch below), so `border` is unused — the gradient wrapper
-  // supplies the border.
+  ...NODE_STATUS_CONFIG,
   capstone: {
     icon: Trophy,
     border: 'border-transparent',

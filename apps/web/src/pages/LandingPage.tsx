@@ -2,7 +2,7 @@
  * Main landing page - "Chart Your Course"
  * Combines Hero, TopicInput, and PlanConfigForm with full auth flow
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
@@ -39,11 +39,15 @@ export function LandingPage() {
 
   const createPlanMutation = useCreatePlan();
 
-  // Handle logout notification (OAuth callback is handled by AuthCallbackPage)
+  // Handle logout notification (OAuth callback is handled by AuthCallbackPage).
+  // Ref guard: replaceState below doesn't update react-router's searchParams,
+  // so StrictMode's double-effect would otherwise toast twice in dev.
+  const logoutToastShown = useRef(false);
   useEffect(() => {
     const logoutParam = searchParams.get('logout');
 
-    if (logoutParam === 'true') {
+    if (logoutParam === 'true' && !logoutToastShown.current) {
+      logoutToastShown.current = true;
       addToast({
         type: 'info',
         title: 'Signed out',

@@ -1,4 +1,19 @@
 /**
+ * Full-page loading wrapper: spinner + contextual message.
+ * Shared by all pages that block on their initial query.
+ */
+export function PageLoading({ message }: { message?: string }) {
+  return (
+    <div className="min-h-screen bg-hearth-900">
+      <div className="container mx-auto px-4 py-8">
+        <LoadingSkeleton />
+        {message && <p className="text-center text-warm-400 mt-4">{message}</p>}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Dark-themed full-screen loading spinner
  */
 export function LoadingSkeleton() {
